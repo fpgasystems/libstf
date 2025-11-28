@@ -40,7 +40,7 @@ assign in_values.ready = dictionary_in_values.ready;
 generate
 for (genvar i = 0; i < NUM_ELEMENTS; i++) begin
     assign dictionary_in_values.data[i] = in_values.data[(i+1) * TYPED_DICTIONARY_DATA_SIZE - 1:i * TYPED_DICTIONARY_DATA_SIZE];
-    assign dictionary_in_values.keep[i] = in_values.keep[(i+1) * TYPED_DICTIONARY_DATA_SIZE - 1:i * TYPED_DICTIONARY_DATA_SIZE];
+    assign dictionary_in_values.keep[i] = &in_values.keep[(i+1) * TYPED_DICTIONARY_DATA_SIZE - 1:i * TYPED_DICTIONARY_DATA_SIZE];
 end
 endgenerate
 assign dictionary_in_values.last = in_values.last;
@@ -112,6 +112,13 @@ else $fatal(1, "Module TypedDictionary only supports types that are either 32 or
 
 // -- Logic ----------------------------------------------------------------------------------------
 always_comb begin
+    // We need to provide default values to prevent latch inference
+    dictionary_in_ids.data  = 'x;
+    dictionary_in_ids.keep  = 'x;
+    dictionary_in_ids.last  = 'x;
+    dictionary_in_ids.valid = 0;
+    in_ids.ready            = 0;
+
     case (GET_TYPE_WIDTH(typ.data))
         32: begin
             dictionary_in_ids.data   = in_ids.data;
