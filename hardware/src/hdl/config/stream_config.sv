@@ -4,7 +4,6 @@
 `include "config_macros.svh"
 
 module StreamConfig #(
-    parameter NUM_SELECT,
     parameter NUM_STREAMS
 ) (
     input logic clk,

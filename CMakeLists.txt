@@ -1,20 +1,9 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.16)
 project(libstf)
 
-set(CYT_DIR ${CMAKE_SOURCE_DIR}/coyote/)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CYT_DIR}/cmake)
+# NOTE: This CMakeLists.txt is only here because of VSCode
 
-find_package(CoyoteHW REQUIRED)
+# Find dependencies
+add_subdirectory(coyote/sw coyote)
 
-set(N_REGIONS 1)
-set(EN_STRM 1)
-set(N_STRM_AXI 4)
-set(FDEV_NAME u55c)
-
-validation_checks_hw()
-
-load_apps (
-    VFPGA_C0_0 "src"
-)
-
-create_hw()
+add_subdirectory(software)

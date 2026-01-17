@@ -1,10 +1,11 @@
-build_hw/**
+build
+hardware/build_hw/**
 
 # Generated unit test files
-unit-tests/diff/**
-unit-tests/sim_dump.vcd
-unit-tests/sim.out
-unit-tests/vapor_view.json
+hardware/unit-tests/diff/**
+hardware/unit-tests/sim_dump.vcd
+hardware/unit-tests/sim.out
+hardware/unit-tests/vapor_view.json
 
 # Vivado generated files
 *.jou
