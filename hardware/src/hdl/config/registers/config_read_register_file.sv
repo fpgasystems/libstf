@@ -16,7 +16,7 @@ module ConfigReadRegisterFile #(
 );
 
 // -- Assertions -----------------------------------------------------------------------------------
-`ASSERT_ELAB(NUM_REGS > 1)
+`ASSERT_ELAB(NUM_REGS > 0)
 
 // -- Signals --------------------------------------------------------------------------------------
 typedef enum logic {WAIT, RESPOND} state_t;
