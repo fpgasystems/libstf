@@ -9,7 +9,8 @@
 #endif
 
 namespace libstf {
-class profiler {
+
+class Profiler {
 #ifdef LIBSTF_WITH_PROFILING
 private:
   static cali::ConfigManager mgr;

@@ -14,7 +14,7 @@ namespace libstf {
 cali::ConfigManager profiler::mgr;
 #endif
 
-void profiler::init() {
+void Profiler::init() {
 #ifdef LIBSTF_WITH_PROFILING
   cali_config_set("CALI_CALIPER_ATTRIBUTE_DEFAULT_SCOPE", "process");
   mgr = cali::ConfigManager();
@@ -27,19 +27,19 @@ void profiler::init() {
 #endif
 }
 
-void profiler::start() {
+void Profiler::start() {
 #ifdef LIBSTF_WITH_PROFILING
   mgr.start();
 #endif
 }
 
-void profiler::flush() {
+void Profiler::flush() {
 #ifdef LIBSTF_WITH_PROFILING
   mgr.flush();
 #endif
 }
 
-void profiler::open_regions(const std::vector<std::string> &regions) {
+void Profiler::open_regions(const std::vector<std::string> &regions) {
 #ifdef LIBSTF_WITH_PROFILING
   for (const auto &region : regions) {
     CALI_MARK_BEGIN(region.c_str());
@@ -47,7 +47,7 @@ void profiler::open_regions(const std::vector<std::string> &regions) {
 #endif
 }
 
-void profiler::close_regions(const std::vector<std::string> &regions) {
+void Profiler::close_regions(const std::vector<std::string> &regions) {
 #ifdef LIBSTF_WITH_PROFILING
   // iterate over regions in reverse order
   for (auto it = regions.rbegin(); it != regions.rend(); ++it) {

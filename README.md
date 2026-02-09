@@ -47,7 +47,17 @@ You have to install jemalloc which is required for the HugePageMemoryPool like t
 ./scripts/install_jemalloc.sh
 ```
 
-This will install jemalloc in `~/opt/jemalloc`. The you can build the libstf library as follows:
+This will install jemalloc in `~/opt`. 
+
+If you're building with profiling enabled, you will also need Caliper. To install Caliper, you can use the utility script:
+
+```bash
+./scripts/install_caliper.sh
+```
+
+This will install Caliper alongside jemalloc in `~/opt`.
+
+The you can build the libstf library as follows:
 
 ```bash
 mkdir build && cd build
@@ -57,6 +67,7 @@ make
 
 Notice the `-DCMAKE_PREFIX_PATH=$HOME/opt`: this is so that CMake will look in the path where
 jemalloc has been installed with the script and link libstf against it.
+If you want to enable profiling, you must also provide `-DLIBSTF_WITH_PROFILING=ON` to the `cmake` command.
 
 ## Code Style
 For now, we have a couple of code style rules:
