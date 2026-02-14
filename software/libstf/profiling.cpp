@@ -11,7 +11,7 @@ const std::string profile =
 namespace libstf {
 
 #ifdef LIBSTF_WITH_PROFILING
-cali::ConfigManager profiler::mgr;
+cali::ConfigManager Profiler::mgr;
 #endif
 
 void Profiler::init() {
