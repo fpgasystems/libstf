@@ -41,6 +41,7 @@ end
 always_comb begin
     // We need to provide default values to prevent latch inference
     out.data  = 'x;
+    out.typ   = BYTE_T;
     out.keep  = 'x;
     out.last  = 1'bx;
     out.valid = 1'b0;
