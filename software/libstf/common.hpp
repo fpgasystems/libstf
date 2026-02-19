@@ -26,6 +26,12 @@ static constexpr uint32_t INTERRUPT_TRANSFER_SIZE_BITS = 28;
 static constexpr uint32_t BUFFER_SIZE_BITS             = INTERRUPT_TRANSFER_SIZE_BITS - floor_log2(BYTES_PER_FPGA_TRANSFER);
 static constexpr uint32_t MAXIMUM_FPGA_BUFFER_SIZE     = (1 << INTERRUPT_TRANSFER_SIZE_BITS) - 1;
 
+static constexpr uint32_t MAXIMUM_FPGA_NUM_STREAMS          = 64;
+static_assert(MAXIMUM_FPGA_NUM_STREAMS <= 64);
+static constexpr uint32_t FPGA_INTERRUPT_STREAM_ID_BITS     = 3;
+static constexpr uint32_t FPGA_INTERRUPT_TRANSFER_SIZE_BITS = 28;
+static constexpr uint32_t FPGA_INTERRUPT_LAST_BITS          = 1;
+
 // -- Type defs ------------------------------------------------------------------------------------
 typedef uint8_t stream_t; // Type that holds a stream_id
 
