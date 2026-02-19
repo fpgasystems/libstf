@@ -28,7 +28,7 @@ pushd "${download_path}/jemalloc"
 # jemalloc-prefix:  prefix of all methods. This is very important as otherwise we might overwrite the default malloc!
 # nareans:          Disables any default arenas (min = 1). We create own ones in the code so we disable as many of the
 #                   default arenas as we can.
-./configure --prefix=${install_path}/jemalloc --with-jemalloc-prefix=je_ --with-malloc-conf=narenas:1
+./configure --prefix=${install_path} --with-jemalloc-prefix=je_ --with-malloc-conf=narenas:1
 
 # Compile & Install
 make

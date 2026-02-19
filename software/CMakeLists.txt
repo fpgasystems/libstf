@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(libstf VERSION 0.1.0)
 
+option(LIBSTF_WITH_PROFILING "Enable profiling to measure runtime of call groups with Caliper" OFF)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -35,6 +37,14 @@ target_include_directories(libstf
 )
 
 target_link_libraries(libstf PRIVATE Coyote ${JEMALLOC_LIBRARIES})
+
+if (LIBSTF_WITH_PROFILING)
+    find_package(caliper REQUIRED)
+    target_compile_definitions(libstf PRIVATE LIBSTF_WITH_PROFILING)
+
+    target_link_libraries(libstf PRIVATE caliper)
+    target_include_directories(libstf PRIVATE ${CALIPER_INCLUDE_DIR})
+endif()
 
 include(GNUInstallDirs)
 
