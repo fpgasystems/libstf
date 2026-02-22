@@ -1,7 +1,11 @@
-
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb sq_rd.tie_off_m();
 always_comb cq_rd.tie_off_s();
+
+for (genvar I = 0; I < N_CARD_AXI; I++) begin
+    always_comb axis_card_send[I].tie_off_m();
+    always_comb axis_card_recv[I].tie_off_s();
+end
 
 // -- Fix clock and reset names --------------------------------------------------------------------
 logic clk;

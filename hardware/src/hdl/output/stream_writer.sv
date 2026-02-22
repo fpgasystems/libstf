@@ -6,6 +6,7 @@ import libstf::*;
 `include "axi_macros.svh"
 `include "lynx_macros.svh"
 `include "libstf_macros.svh"
+`include "config_macros.svh"
 
 /**
  * This module takes the data from input_data and transfers it to the memory regions provided by 
@@ -40,8 +41,9 @@ module StreamWriter #(
 
     metaIntf.m sq_wr,
     metaIntf.s cq_wr,
-    metaIntf.m notify, // This module triggers an interrupt when all transfers are done
 
+    stream_writer_notify_i .m notify, // This module triggers an interrupt when more
+                                      // memory is required or all transfers are completed
     mem_config_i.s mem_config,
 
     AXI4S.s  input_data,
@@ -159,13 +161,14 @@ FIFO #(
 
 // -- Output logic ---------------------------------------------------------------------------------
 typedef enum logic[2:0] {
-    WAIT_FOR_BUFFER = 0,
-    REQUEST = 1,
-    TRANSFER = 2,
-    WAIT_COMPLETION = 3,
-    WAIT_NOTIFY = 4,
-    ALL_DONE = 5,
-    FLUSH_BUFFERS = 6
+    RESET = 0,
+    WAIT_FOR_BUFFER = 1,
+    REQUEST = 2,
+    TRANSFER = 3,
+    WAIT_COMPLETION = 4,
+    WAIT_NOTIFY = 5,
+    ALL_DONE = 6,
+    FLUSH_BUFFERS = 7
 } output_state_t;
 output_state_t output_state, n_output_state;
 
@@ -235,14 +238,8 @@ assign all_transfers_completed = num_completed_transfers == num_requests;
 
 logic last_transfer, n_last_transfer;
 always_comb begin
-    notify.data.pid   = 6'd0;
-    // The output value has 32 bits and consists of:
-    // 1. The stream id that finished the transfer
-    notify.data.value[2:0] = AXI_STRM_ID;
-    // 2. How much data as written to the vaddr (at most 2^28 bytes are supported)
-    notify.data.value[30:3] = bytes_written_to_allocation;
-    // 3. Whether this was the last transfer, i.e. all output data was written
-    notify.data.value[31] = last_transfer;
+    notify.size = bytes_written_to_allocation;
+    notify.last = last_transfer;
     notify.valid = (output_state == WAIT_COMPLETION && all_transfers_completed) ||
                    (output_state == WAIT_NOTIFY);
 end
@@ -250,7 +247,7 @@ end
 // -- State machine --------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
     if (reset_synced == 1'b0) begin
-        output_state <= WAIT_FOR_BUFFER;
+        output_state <= RESET;
     end else begin
         bytes_written_to_allocation <= n_bytes_written_to_allocation;
         beats_written_to_transfer   <= n_beats_written_to_transfer;
@@ -284,6 +281,9 @@ always_comb begin
     end
 
     case(output_state)
+        RESET: begin
+            n_output_state = WAIT_FOR_BUFFER;
+        end
         WAIT_FOR_BUFFER: begin
             if (buffer.valid) begin
                 // Reset the current state

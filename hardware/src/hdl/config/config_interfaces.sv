@@ -114,7 +114,7 @@ endinterface
 /**
  * Interface that bundles all memory configuration information for the OutputWriter module.
  */
-interface mem_config_i(
+interface mem_config_i (
     input logic clk,
     input logic rst_n
 );

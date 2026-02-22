@@ -79,6 +79,8 @@ MetaIntfArbiter #(
 // -- FPGA-initiated transfers ---------------------------------------------------------------------
 for(genvar I = 0; I < N_STRM_AXI; I++) begin
 `ifndef DISABLE_OUTPUT_WRITER
+    stream_writer_notify_i notify (.clk(clk), .rst_n(reset_synced));
+
     // Invoke the FPGA-initiated transfers for this stream
     StreamWriter #(
         .AXI_STRM_ID(I),
@@ -89,12 +91,19 @@ for(genvar I = 0; I < N_STRM_AXI; I++) begin
 
         .sq_wr(sq_wr_strm[I]),
         .cq_wr(cq_wr_strm[I]),
-        .notify(notify_strm[I]),
+        .notify(notify),
 
         .mem_config(mem_config[I]),
 
         .input_data(data_in[I]),
         .output_data(data_out[I])
+    );
+
+    NotifyMetaIntfAdapter #(
+        .AXI_STRM_ID(I)
+    ) inst_notify_adapter (
+        .in(notify),
+        .out(notify_strm[I])
     );
 `else
     // Tie of the interfaces we don't need
