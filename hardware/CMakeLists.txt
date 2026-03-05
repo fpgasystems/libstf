@@ -9,7 +9,11 @@ find_package(CoyoteHW REQUIRED)
 set(N_REGIONS 1)
 set(EN_STRM 1)
 set(N_STRM_AXI 4)
+
 set(FDEV_NAME u55c)
+
+# Enable 1 GiB huge pages in the TLB
+set(TLBL_BITS 30)
 
 validation_checks_hw()
 
