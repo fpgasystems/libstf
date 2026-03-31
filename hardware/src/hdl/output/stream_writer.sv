@@ -90,26 +90,36 @@ logic[TRANSFER_ADDRESS_LEN_BITS - 1:0] curr_len, curr_len_succ;
 logic curr_len_valid;
 logic curr_len_ready;
 
+// Suppress null data beats. Otherwise, the last interrupt is not correctly triggered
+AXI4S input_data_no_nulls(.aclk(clk), .aresetn(rst_n));
+AXINullBeatSuppressor inst_null_beat_suppressor (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .in(input_data),
+    .out(input_data_no_nulls)
+);
+
 // The input is ready if there is space in both FIFOs
-assign input_data.tready = data_fifo_in.tready & curr_len_ready;
-assign data_fifo_in.tdata   = input_data.tdata;
-assign data_fifo_in.tkeep   = input_data.tkeep;
-assign data_fifo_in.tvalid  = input_data.tvalid;
-assign data_fifo_in.tlast   = input_data.tlast;
+assign input_data_no_nulls.tready = data_fifo_in.tready & curr_len_ready;
+assign data_fifo_in.tdata   = input_data_no_nulls.tdata;
+assign data_fifo_in.tkeep   = input_data_no_nulls.tkeep;
+assign data_fifo_in.tvalid  = input_data_no_nulls.tvalid;
+assign data_fifo_in.tlast   = input_data_no_nulls.tlast;
 
 // Whether the transfer will get full this cycle
 logic is_split;
-assign is_split = curr_len == TRANSFER_LENGTH_BYTES - AXI_DATA_BYTES || input_data.tlast;
+assign is_split = curr_len == TRANSFER_LENGTH_BYTES - AXI_DATA_BYTES || input_data_no_nulls.tlast;
 // Counts the number of bytes we will need to transfer.
 // Whenever we reached a full transfer, the length is split.
-assign curr_len_succ = curr_len + $countones(input_data.tkeep);
-assign curr_len_valid = is_split && input_data.tvalid && input_data.tready;
+assign curr_len_succ = curr_len + $countones(input_data_no_nulls.tkeep);
+assign curr_len_valid = is_split && input_data_no_nulls.tvalid && input_data_no_nulls.tready;
 
 always_ff @(posedge clk) begin
     if (reset_synced == 1'b0) begin
         curr_len <= 0;
     end else begin
-        if (input_data.tvalid && input_data.tready) begin
+        if (input_data_no_nulls.tvalid && input_data_no_nulls.tready) begin
             if (is_split) begin
                 curr_len <= 0;
             end else begin

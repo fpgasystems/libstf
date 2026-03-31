@@ -48,7 +48,7 @@ generate if (REGISTER) begin
         if (!rst_n) begin
             out.valid <= 1'b0;
         end else begin
-            if (out.ready) begin
+            if (!out.valid || out.ready) begin
                 out.data  <= next_data;
                 out.keep  <= next_keep;
                 out.last  <= in.last;

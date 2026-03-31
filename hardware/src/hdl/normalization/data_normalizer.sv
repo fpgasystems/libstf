@@ -67,7 +67,7 @@ always_ff @(posedge clk) begin
         register.valid <= 0;
         out.valid      <= 0;
     end else begin
-        if (out.ready) begin // TODO Add to condition: or !out.valid or new data does not overflow register (but then out needs to be handled differently too)
+        if (!out.valid || out.ready) begin // TODO Add to condition: new data does not overflow register (but then out needs to be handled differently too)
             for (int i = 0; i < NUM_ELEMENTS; i++) begin
                 if (register.valid && register.keep[i]) begin
                     out.data[i] <= register.data[i];
@@ -141,6 +141,6 @@ assign emit = register.valid && shifter_out.valid && &(register.keep | shifter_o
 assign register_and_shifted_keep = register.valid ? register.keep & shifter_out.keep : shifter_out.keep;
 assign register_or_shifted_keep = register.valid ? register.keep | shifter_out.keep : shifter_out.keep;
 
-assign shifter_out.ready = out.ready && !(register.valid && register.last);
+assign shifter_out.ready = (!out.valid || out.ready) && !(register.valid && register.last);
 
 endmodule

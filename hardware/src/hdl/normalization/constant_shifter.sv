@@ -40,7 +40,7 @@ generate if (REGISTER == 1) begin
         if (!rst_n == 1'b1) begin
             out.valid <= 1'b0;
         end else begin
-            if (out.ready) begin
+            if (!out.valid || out.ready) begin
                 out.data  <= data_shifted;
                 out.keep  <= keep_shifted;
                 out.last  <= in.last;
