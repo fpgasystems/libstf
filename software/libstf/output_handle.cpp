@@ -15,11 +15,22 @@ void OutputHandle::push_buffer(stream_t stream_id, Buffer buffer) {
 }
 
 void OutputHandle::mark_done(stream_t stream_id) {
-    std::lock_guard guard(output_buffers_mutex);
+    if (callback_thread != std::nullopt) {
+        callback_thread->join();
+        callback_thread = std::nullopt;
+    }
 
-    finished_streams.set(stream_id);
+    {
+        std::lock_guard guard(output_buffers_mutex);
 
-    output_buffers_cv.notify_all();
+        finished_streams.set(stream_id);
+
+        output_buffers_cv.notify_all();
+    }
+
+    if (callback != nullptr) {
+        callback_thread = std::thread(callback, stream_id);
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -27,6 +38,11 @@ void OutputHandle::mark_done(stream_t stream_id) {
 // ----------------------------------------------------------------------------
 OutputHandle::~OutputHandle() {
     std::lock_guard guard(output_buffers_mutex);
+
+    if (callback_thread != std::nullopt) {
+        callback_thread->join();
+        callback_thread = std::nullopt;
+    }
 
     // Free any memory that has not been taken by users
     for (auto &queue : output_buffers) {
@@ -116,6 +132,17 @@ std::shared_ptr<Buffer> OutputHandle::get_next_stream_output(stream_t stream_id)
     } else {
         return nullptr;
     }
+}
+
+void OutputHandle::add_callback(std::function<void(stream_t)> callback) {
+    auto previous_callback = this->callback;
+    this->callback = [previous_callback, callback](stream_t stream) {
+        if (previous_callback != nullptr) {
+            previous_callback (stream);
+        }
+
+        callback(stream);
+    };
 }
 
 // ----------------------------------------------------------------------------
