@@ -121,3 +121,40 @@ assign right.data  = combined_data.right;
 assign right.valid = in.valid && !seen[1];
 
 endmodule
+
+module ReadyValidShiftRegister #(
+    parameter type data_t,
+    parameter DEPTH
+) (
+    input logic clk,
+    input logic rst_n,
+
+    ready_valid_i.s in, // #(data_t)
+    ready_valid_i.m out // #(data_t)
+);
+
+data_t[DEPTH:0] shift_data;
+logic [DEPTH:0] shift_valid;
+
+assign in.ready = out.ready || !shift_valid[1];
+
+assign shift_data[0]  = in.data;
+assign shift_valid[0] = in.valid;
+
+always_ff @(posedge clk) begin
+    if(!rst_n) begin
+        shift_valid[DEPTH:1] <= '0;
+    end else begin
+        for (int i = 1; i < DEPTH + 1; i++) begin
+            if (out.ready || !shift_valid[i]) begin
+                shift_data[i]  <= shift_data[i - 1];
+                shift_valid[i] <= shift_valid[i - 1];
+            end
+        end
+    end
+end
+
+assign out.data  = shift_data[DEPTH];
+assign out.valid = shift_valid[DEPTH];
+
+endmodule

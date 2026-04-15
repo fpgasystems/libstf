@@ -14,6 +14,8 @@ module ConfigWriteFIFO #(
 
 logic valid;
 
+ready_valid_i #(data_t) internal();
+
 assign valid = write_config.valid && write_config.addr == ADDR;
 
 FIFO #(DEPTH, $bits(data_t)) inst_fifo (
@@ -24,11 +26,19 @@ FIFO #(DEPTH, $bits(data_t)) inst_fifo (
     .i_valid(valid),
     .i_ready(),
 
-    .o_data(data.data),
-    .o_valid(data.valid),
-    .o_ready(data.ready),
+    .o_data(internal.data),
+    .o_valid(internal.valid),
+    .o_ready(internal.ready),
 
     .o_filling_level()
+);
+
+ReadyValidShiftRegister #(data_t, 1) inst_reg (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .in(internal),
+    .out(data)
 );
 
 endmodule
