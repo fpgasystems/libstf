@@ -237,6 +237,26 @@ private:
 };
 
 /**
+ * This is here just if somebody needs to do big consecutive transfers using the C++ simulation and libstf.
+ * This prevents overlapping addresses to be used by the SimpleMemoryAllocator.
+ * That would be an issue with the C++ simulation as the C++ allocator will happily reuse freed memory
+ * and the memory won't be unmapped from the simulation, causing a userMap request for an already mapped region to vivado that will crash it.
+ */
+class LinearAllocator {
+public:
+    explicit LinearAllocator(size_t size);
+    ~LinearAllocator();
+
+    bool allocate(size_t size, size_t alignment, void **out);
+    void free(void *);
+
+private:
+    uint8_t *buffer_;
+    size_t size_;
+    size_t offset_;
+};
+
+/**
  * Implements a naive memory pool that is only used for simulation purposes in systems where there 
  * are no huge pages.
  */
@@ -247,7 +267,7 @@ public:
     // Note: This alignment is required by Coyote anyway
     static inline const size_t DEFAULT_ALIGNMENT = 64;
 
-    SimpleMemoryPool() = default;
+    SimpleMemoryPool();
     ~SimpleMemoryPool() override;
 
     Status allocate(size_t size, size_t alignment, void **out) override;
@@ -276,6 +296,8 @@ private:
     std::atomic<size_t> total_bytes_allocated_{0};
     std::atomic<size_t> bytes_allocated_{0};
     std::atomic<size_t> num_allocs_{0};
+
+    LinearAllocator linear_allocator_;
 };
 
 }  // namespace libstf

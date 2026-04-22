@@ -2,10 +2,12 @@
 
 #include <queue>
 #include <vector>
+#include <optional>
 #include <mutex>
 #include <condition_variable>
 #include <memory>
 #include <stdexcept>
+#include <functional>
 
 #include <libstf/common.hpp>
 #include <libstf/memory_pool.hpp>
@@ -82,9 +84,19 @@ public:
      */
     std::shared_ptr<Buffer> get_next_stream_output(stream_t stream_id);
 
+    /**
+     * @param callback The callback function to call when a stream is marked as done.
+     *
+     * Adds a callback function which will be called when a stream is marked as done,
+     * and thus all output data for this transfer has been received on the host.
+     */
+    void add_callback(std::function<void(stream_t)> callback);
+
 private:
     const stream_t NUM_STREAMS;
     std::shared_ptr<MemoryPool> memory_pool;
+    std::function<void(stream_t)> callback;
+    std::optional<std::thread> callback_thread;
 
     stream_mask_t active_streams;   // Streams active for this handle
     stream_mask_t finished_streams; // Streams that have received their last buffer

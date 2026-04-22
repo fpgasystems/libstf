@@ -378,8 +378,38 @@ bool HugePageMemoryPool::huge_page_merge_extend(extent_hooks_t *hooks,
 }
 
 // ----------------------------------------------------------------------------
+// LinearAllocator implementation
+// ----------------------------------------------------------------------------
+
+LinearAllocator::LinearAllocator(size_t size) : size_(size), offset_(0) {
+    buffer_ = static_cast<uint8_t *>(
+        std::aligned_alloc(HugePageMemoryPool::DEFAULT_ALIGNMENT, size));
+    if (!buffer_)
+        throw std::bad_alloc();
+}
+
+LinearAllocator::~LinearAllocator() { std::free(buffer_); }
+
+bool LinearAllocator::allocate(size_t size, size_t alignment, void **out) {
+    size_t aligned = (offset_ + alignment - 1) & ~(alignment - 1);
+    if (aligned + size > size_)
+        return false;
+
+    *out = buffer_ + aligned;
+    offset_ = aligned + size;
+    return true;
+}
+
+void LinearAllocator::free(void *) {}
+
+// ----------------------------------------------------------------------------
 // SimpleMemoryPool implementation
 // ----------------------------------------------------------------------------
+
+constexpr size_t SIMPLE_ALLOCATOR_SIZE = 1 << 30; // 1GiB
+
+SimpleMemoryPool::SimpleMemoryPool()
+    : linear_allocator_(SIMPLE_ALLOCATOR_SIZE) {}
 
 SimpleMemoryPool::~SimpleMemoryPool() {
     std::lock_guard<std::recursive_mutex> lock(allocated_buffers_mutex);
@@ -395,8 +425,7 @@ Status SimpleMemoryPool::allocate(size_t size, size_t alignment, void **out) {
     } else {
         // Ensure the alignment is a power of two. See: https://stackoverflow.com/a/108360/5589776
         assert((alignment & (alignment - 1)) == 0);
-        *out = std::aligned_alloc(alignment, size);
-        if (!out) {
+        if (!linear_allocator_.allocate(size, alignment, out)) {
             return Status(StatusCode::OutOfMemory, "Unable to allocate memory!");
         }
 
@@ -445,7 +474,7 @@ void SimpleMemoryPool::free(void *ptr, size_t size, size_t alignment) {
     if (ptr) {
         bytes_allocated_ -= size;
         num_allocs_ -= 1;
-        std::free(ptr);
+        linear_allocator_.free(ptr);
 
         std::lock_guard<std::recursive_mutex> lock(allocated_buffers_mutex);
         allocated_buffers.erase(ptr);
