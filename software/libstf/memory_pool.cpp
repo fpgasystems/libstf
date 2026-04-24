@@ -210,7 +210,7 @@ bool HugePageMemoryPool::is_in_bounds(void *ptr, size_t size) {
 
 std::pair<void *, size_t> HugePageMemoryPool::get_page_boundaries(const void *ptr) {
     if (!is_buffer_within_bounds({initial_address_, total_capacity_},
-                                 {const_cast<void *>(ptr), 0})) {
+                                 {const_cast<void *>(ptr), 1})) {
         std::ostringstream err;
         err << "The Provided address " << static_cast<const void *>(ptr)
             << " is not within the bounds of the HugePageMemoryPool";
@@ -463,13 +463,13 @@ std::pair<void *, size_t> SimpleMemoryPool::get_page_boundaries(const void *ptr)
     std::lock_guard<std::recursive_mutex> lock(allocated_buffers_mutex);
 
     for (const auto &buffer : allocated_buffers) {
-        if (is_buffer_within_bounds({buffer.first, buffer.second}, {const_cast<void *>(ptr), 0})) {
+        if (is_buffer_within_bounds({buffer.first, buffer.second}, {const_cast<void *>(ptr), 1})) {
             return {buffer.first, buffer.second};
         }
     }
 
     std::ostringstream err;
-    err << "The Provided address " << ptr << " is not within the bounds of the memory pool!";
+    err << "The provided address " << ptr << " is not within the bounds of the memory pool!";
     throw std::runtime_error(err.str());
 }
 
