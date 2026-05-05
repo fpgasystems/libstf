@@ -58,7 +58,7 @@ install(TARGETS libstf
 )
 
 # Install headers
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libstf
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libstf/"
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libstf
     FILES_MATCHING PATTERN "*.hpp"
 )
