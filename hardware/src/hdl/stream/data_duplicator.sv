@@ -105,3 +105,38 @@ for (genvar O = 0; O < NUM_OUTPUTS; O++) begin
 end
 
 endmodule
+
+/**
+ * The DataDuplicator creates NUM_OUTPUTS output streams based on one input stream. The ready 
+ * signal of the input is driven when all output ready signals are high.
+ */
+module DataDuplicator #(
+    parameter integer NUM_OUTPUTS,
+    parameter type data_t
+) (
+    input logic clk,
+    input logic rst_n,
+
+    data_i.s in,              // #(data_t)
+    data_i.m out[NUM_OUTPUTS] // #(data_t)
+);
+
+ndata_i #(data_t, 1) internal_in(), internal_out[NUM_OUTPUTS]();
+
+`DATA_ASSIGN(in, internal_in)
+
+NDataDuplicator #(
+    .NUM_OUTPUTS(NUM_OUTPUTS)
+) inst_duplicator (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .in(internal_in),
+    .out(internal_out)
+);
+
+for (genvar O = 0; O < NUM_OUTPUTS; O++) begin
+    `DATA_ASSIGN(internal_out[O], out[O])
+end
+
+endmodule
