@@ -34,7 +34,7 @@ always_ff @(posedge clk) begin
 end
 
 always_comb begin
-    in.ready = 1'b0;
+    in.ready = 1'b1;
 
     n_hold_data  = hold_data;
     n_hold_keep  = hold_keep;
@@ -46,8 +46,6 @@ always_comb begin
         n_hold_keep  = in.keep;
         n_hold_last  = in.last;
         n_hold_valid = in.valid && is_last_or_not_null;
-
-        in.ready = 1'b1;
     end else begin
         if (out.ready) begin
             if (hold_last || (in.valid && is_last_or_not_null)) begin
@@ -55,12 +53,12 @@ always_comb begin
                 n_hold_keep  = in.keep;
                 n_hold_last  = in.last;
                 n_hold_valid = in.valid && (in.keep != '0 || (hold_last && in.last));
-
-                in.ready = 1'b1;
             end
         end else begin
             if (in.valid && is_null_last) begin
                 n_hold_last = 1'b1;
+            end else begin
+                in.ready = 1'b0;
             end
         end
     end
