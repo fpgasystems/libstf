@@ -182,9 +182,7 @@ class OutputWriterTestCase(OutputWriterMixin):
     pass
 
 
-class OutputWriterDisabledPerformanceTestCase(
-    ConfiguredTestCase, fpga_performance_test_case.FPGAPerformanceTestCase
-):
+class OutputWriterDisabledPerformanceTestCase(fpga_performance_test_case.FPGAPerformanceTestCase):
     """
     This is the default performance test case class that should be used
     for 99% of the performance tests in this repo.
