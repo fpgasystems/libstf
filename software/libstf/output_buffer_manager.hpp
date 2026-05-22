@@ -35,12 +35,12 @@ class OutputBufferManager {
      * @param buffer_capacity
      */
     OutputBufferManager(std::shared_ptr<coyote::cThread> cthread,
-                        std::shared_ptr<MemConfig> mem_config,
+                        std::shared_ptr<MemConfig>  mem_config,
                         std::shared_ptr<MemoryPool> memory_pool,
                         std::shared_ptr<TLBManager> tlb_manager,
-                        stream_mask_t               managed_streams        = ~stream_mask_t(0),
-                        size_t                      num_buffers_to_enqueue = 2,
-                        size_t buffer_capacity = MAXIMUM_OUTPUT_WRITER_BUFFER_SIZE);
+                        stream_mask_t managed_streams        = ~stream_mask_t(0),
+                        size_t        num_buffers_to_enqueue = 2,
+                        size_t        buffer_capacity        = MAXIMUM_OUTPUT_WRITER_BUFFER_SIZE);
 
     ~OutputBufferManager();
 

@@ -109,7 +109,8 @@ int main(int argc, char *argv[]) {
     auto         perf_config = global_config.get_config<libstf::Config>();
 
     OutputBufferManager output_buffer_manager(cthread, mem_config, mem_pool, tlb_manager,
-                                              args.num_enqueued_buffers, args.buffer_size);
+                                              ~stream_mask_t(0), args.num_enqueued_buffers, 
+                                              args.buffer_size);
     obm_ptr = &output_buffer_manager;
 
     perf_config->write_register(ConfigRegister(0, args.num_runs));
