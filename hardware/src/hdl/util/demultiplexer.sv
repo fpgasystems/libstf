@@ -86,38 +86,42 @@ module CQDemultiplexer #(
     metaIntf.m          data_out[N_STREAMS]
 );
 
-// Intermediate signals for de_mux outputs
-ack_t o_data_packed [N_STREAMS];
-logic o_ready_array [N_STREAMS];
-logic o_valid_array [N_STREAMS];
+`ASSERT_ELAB(N_STREAMS > 1)
 
-// Use the de-muxing implementation from above
-Demultiplexer #(
-    .N_STREAMS(N_STREAMS),
-    .DATA_TYPE(ack_t)
-) inst_de_mux (
-    .clk(clk),
-    .rst_n(rst_n),
-    
-    .i_data(data_in.data),
-    .i_ready(data_in.ready),
-    .i_valid(data_in.valid),
-    
-    // Use the dest field of the data to control the de mux!
-    .stream_select(data_in.data.dest[$clog2(N_STREAMS) - 1:0]),
+generate if (N_STREAMS == 1) begin
+    `READY_VALID_ASSIGN(data_in, data_out[0])
+end else begin : gen_demux
+    // Intermediate signals for de_mux outputs
+    ack_t o_data_packed [N_STREAMS];
+    logic o_ready_array [N_STREAMS];
+    logic o_valid_array [N_STREAMS];
 
-    .o_data(o_data_packed),
-    .o_ready(o_ready_array),
-    .o_valid(o_valid_array)
-);
+    // Use the de-muxing implementation from above
+    Demultiplexer #(
+        .N_STREAMS(N_STREAMS),
+        .DATA_TYPE(ack_t)
+    ) inst_de_mux (
+        .clk(clk),
+        .rst_n(rst_n),
 
-// Unpack the outputs and connect to cq instances
-generate
-    for (genvar stream = 0; stream < N_STREAMS; stream++) begin : gen_de_mux_output_connections
+        .i_data(data_in.data),
+        .i_ready(data_in.ready),
+        .i_valid(data_in.valid),
+
+        // Use the dest field of the data to control the de mux!
+        .stream_select(data_in.data.dest[$clog2(N_STREAMS) - 1:0]),
+
+        .o_data(o_data_packed),
+        .o_ready(o_ready_array),
+        .o_valid(o_valid_array)
+    );
+
+    // Unpack the outputs and connect to cq instances
+    for (genvar stream = 0; stream < N_STREAMS; stream++) begin
         assign data_out[stream].data = o_data_packed[stream];
         assign data_out[stream].valid = o_valid_array[stream];
         assign o_ready_array[stream] = data_out[stream].ready;
     end
-endgenerate
+end endgenerate
 
 endmodule
