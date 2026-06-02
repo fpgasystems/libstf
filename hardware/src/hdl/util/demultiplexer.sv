@@ -86,7 +86,7 @@ module CQDemultiplexer #(
     metaIntf.m          data_out[N_STREAMS]
 );
 
-`ASSERT_ELAB(N_STREAMS > 1)
+`ASSERT_ELAB(N_STREAMS > 0)
 
 generate if (N_STREAMS == 1) begin
     `READY_VALID_ASSIGN(data_in, data_out[0])
