@@ -28,7 +28,8 @@ assign write_enable = state == WRITE ? in_value.valid : 1'b0;
 ReadyRAM #(
     .DATA_WIDTH($bits(value_t)),
     .ADDR_WIDTH($bits(id_t)),
-    .STYLE("ultra")
+    .STYLE("ultra"),
+    .PACK(1)
 ) inst_value_uram (
     .clk(clk),
 
