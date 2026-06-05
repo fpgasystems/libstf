@@ -61,6 +61,7 @@ localparam DEEPER_THAN_CELL = (2 ** ADDR_WIDTH) > CELL_DEPTH;
 localparam WORDS_PER_LINE  = !PACK || !DEEPER_THAN_CELL || LINE_WIDTH < DATA_WIDTH ? 1 : 2 ** $clog2(LINE_WIDTH / DATA_WIDTH);
 localparam SLOT_BITS       = $clog2(WORDS_PER_LINE);
 localparam LINE_ADDR_WIDTH = ADDR_WIDTH - SLOT_BITS;
+localparam LINE_DATA_WIDTH = WORDS_PER_LINE * DATA_WIDTH;
 
 // Packing must leave at least one address bit for the line index.
 `ASSERT_ELAB(ADDR_WIDTH > SLOT_BITS)
@@ -69,6 +70,7 @@ typedef logic[ADDR_WIDTH - 1:0] addr_t;
 typedef logic[DATA_WIDTH - 1:0] data_t;
 
 typedef logic[LINE_ADDR_WIDTH - 1:0]                line_addr_t;
+typedef logic[LINE_DATA_WIDTH - 1:0]                line_t;
 typedef logic[SLOT_BITS == 0 ? 0 : SLOT_BITS - 1:0] slot_t;
 
 function automatic line_addr_t line_of(addr_t a);
@@ -79,21 +81,22 @@ function automatic slot_t slot_of(addr_t a);
     slot_of = SLOT_BITS == 0 ? 0 : slot_t'(a[SLOT_BITS - 1:0]);
 endfunction
 
-(* ram_style = STYLE *) data_t[WORDS_PER_LINE - 1:0] ram[2 ** LINE_ADDR_WIDTH];
+(* ram_style = STYLE *) line_t ram[2 ** LINE_ADDR_WIDTH];
 
 addr_t[1:0] ram_write_addr;
 data_t[1:0] ram_write_data;
 logic[1:0]  ram_write_enable = '0;
 
 addr_t ram_read_addr;
-data_t ram_read_data;
+line_t ram_read_line;
+slot_t ram_read_slot;
 
 always_ff @(posedge clk) begin
     // Write operation
     if (write_enable) begin
         for (int s = 0; s < WORDS_PER_LINE; s++) begin
             if (slot_of(write_addr) == slot_t'(s)) begin
-                ram[line_of(write_addr)][s] <= write_data;
+                ram[line_of(write_addr)][s * DATA_WIDTH +: DATA_WIDTH] <= write_data;
             end
         end
     end
@@ -111,7 +114,8 @@ always_ff @(posedge clk) begin
 
     // Read operation
     ram_read_addr <= read_addr;
-    ram_read_data <= ram[line_of(read_addr)][slot_of(read_addr)];
+    ram_read_slot <= slot_of(read_addr);
+    ram_read_line <= ram[line_of(read_addr)];
 end
 
 always_comb begin
@@ -120,7 +124,7 @@ always_comb begin
     end else if (READ_AFTER_WRITE && ram_write_enable[1] && ram_write_addr[1] == ram_read_addr) begin
         read_data = ram_write_data[1];
     end else begin
-        read_data = ram_read_data;
+        read_data = ram_read_line[ram_read_slot * DATA_WIDTH +: DATA_WIDTH];
     end
 end
 
