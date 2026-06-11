@@ -49,6 +49,14 @@ typedef enum logic[2:0] {
     DOUBLE_T
 } type_t;
 
+// Aggregated StreamProfiler counters for a single stream.
+typedef struct packed {
+    data64_t handshakes_cycles;
+    data64_t starved_cycles;
+    data64_t stalled_cycles;
+    data64_t idle_cycles;
+} stream_profile_t;
+
 // MemConfig
 typedef logic[VADDR_BITS - 1:0]       vaddress_t; // Cannot be vaddr_t because of conflict with Coyote sim
 typedef logic[BUFFER_SIZE_BITS - 1:0] buffer_size_t;
