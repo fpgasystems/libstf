@@ -74,6 +74,16 @@ typedef struct packed {
     select_t select;
 } stream_conf_t;
 
+// Determines whether a pipeline register should be placed on pipe `pos` (1..num_stages) when
+// distributing `register_levels` registers across `num_stages` pipeline stages. A register sits at
+// `pos` whenever the running count of registers that should exist by `pos` increments. This places
+// exactly min(register_levels, num_stages) registers, evenly distributed, with the last always
+// after the final stage. register_levels == 0 => none.
+function automatic bit PUT_REGISTER_AT(int pos, int num_stages, int register_levels);
+    if (register_levels == 0) return 1'b0;
+    return ((pos * register_levels) / num_stages) != (((pos - 1) * register_levels) / num_stages);
+endfunction
+
 // Constant function to return the bit width of type_t types
 function automatic int GET_TYPE_WIDTH(type_t data_type);
     case (data_type)

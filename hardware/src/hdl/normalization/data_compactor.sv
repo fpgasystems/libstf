@@ -5,7 +5,7 @@
 module DataCompactor #(
     parameter type data_t,
     parameter NUM_ELEMENTS,
-    parameter REGISTER_LEVELS = 8
+    parameter REGISTER_LEVELS = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -14,37 +14,38 @@ module DataCompactor #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam PIPELINE_STAGES = NUM_ELEMENTS + 1;
-localparam COUNTER_WIDTH = $clog2(NUM_ELEMENTS);
-localparam REGISTER_GAP = (REGISTER_LEVELS == 0 ? PIPELINE_STAGES + 2 : PIPELINE_STAGES / REGISTER_LEVELS);
+localparam NUM_STAGES = NUM_ELEMENTS;
+localparam NUM_PIPES  = NUM_STAGES + 1;
 
-ndata_i #(data_t, NUM_ELEMENTS) stages[PIPELINE_STAGES](clk, rst_n);
-logic[COUNTER_WIDTH - 1:0] counter_stages[PIPELINE_STAGES];
+localparam COUNTER_WIDTH = $clog2(NUM_ELEMENTS);
+
+ndata_i #(data_t, NUM_ELEMENTS) pipes[NUM_PIPES](clk, rst_n);
+logic[COUNTER_WIDTH - 1:0]      counter_pipes[NUM_PIPES];
 
 // Input assignments
-`DATA_ASSIGN(in, stages[0])
-assign counter_stages[0] = 0;
+`DATA_ASSIGN(in, pipes[0])
+assign counter_pipes[0] = 0;
 
 // Generate pipeline stages
-for (genvar i = 0; i < PIPELINE_STAGES - 1; i++) begin
+for (genvar i = 0; i < NUM_STAGES; i++) begin
     DataCompactorLevel #(
-        .ID(i), 
-        .data_t(data_t), 
-        .NUM_ELEMENTS(NUM_ELEMENTS), 
-        .REGISTER(((i + 1) % REGISTER_GAP) == 0)
+        .ID(i),
+        .data_t(data_t),
+        .NUM_ELEMENTS(NUM_ELEMENTS),
+        .REGISTER(libstf::PUT_REGISTER_AT(i + 1, NUM_STAGES, REGISTER_LEVELS))
     ) inst_compactor_level (
         .clk(clk),
         .rst_n(rst_n),
 
-        .in(stages[i]),
-        .counter_in(counter_stages[i]),
+        .in(pipes[i]),
+        .counter_in(counter_pipes[i]),
 
-        .out(stages[i + 1]),
-        .counter_out(counter_stages[i + 1])
+        .out(pipes[i + 1]),
+        .counter_out(counter_pipes[i + 1])
     );
 end
 
 // Output assignment
-`DATA_ASSIGN(stages[PIPELINE_STAGES - 1], out)
+`DATA_ASSIGN(pipes[NUM_PIPES - 1], out)
 
 endmodule

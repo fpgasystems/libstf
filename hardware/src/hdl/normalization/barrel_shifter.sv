@@ -19,31 +19,36 @@ module BarrelShifter #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam int PIPELINE_STAGES = $clog2(NUM_ELEMENTS) + 1;
-localparam int REGISTER_GAP = (REGISTER_LEVELS == 0 ? PIPELINE_STAGES + 2 : PIPELINE_STAGES / REGISTER_LEVELS);
+localparam int NUM_STAGES = $clog2(NUM_ELEMENTS);
+localparam int NUM_PIPES  = NUM_STAGES + 1;
 
-ndata_i #(data_t, NUM_ELEMENTS) stages[PIPELINE_STAGES](clk, rst_n);
-logic[OFFSET_WIDTH - 1:0] offset_stages[PIPELINE_STAGES];
+ndata_i #(data_t, NUM_ELEMENTS) pipes[NUM_PIPES](clk, rst_n);
+logic[OFFSET_WIDTH - 1:0]       offset_pipes[NUM_PIPES];
 
 // Input assignments
-`DATA_ASSIGN(in, stages[0])
-assign offset_stages[0] = offset;
+`DATA_ASSIGN(in, pipes[0])
+assign offset_pipes[0] = offset;
 
 // Generate pipeline stages
-for (genvar i = 0; i < PIPELINE_STAGES - 1; i++) begin
-    ConstantShifter #(.SHIFT_INDEX(i), .data_t(data_t), .NUM_ELEMENTS(NUM_ELEMENTS), .REGISTER(((i + 1) % REGISTER_GAP) == 0)) inst_shifter (
+for (genvar i = 0; i < NUM_STAGES; i++) begin
+    ConstantShifter #(
+        .SHIFT_INDEX(i),
+        .data_t(data_t),
+        .NUM_ELEMENTS(NUM_ELEMENTS),
+        .REGISTER(libstf::PUT_REGISTER_AT(i + 1, NUM_STAGES, REGISTER_LEVELS))
+    ) inst_shifter (
         .clk(clk),
         .rst_n(rst_n),
 
-        .in(stages[i]),
-        .offset_in(offset_stages[i]),
+        .in(pipes[i]),
+        .offset_in(offset_pipes[i]),
 
-        .out(stages[i + 1]),
-        .offset_out(offset_stages[i + 1])
+        .out(pipes[i + 1]),
+        .offset_out(offset_pipes[i + 1])
     );
 end
 
 // Output assignment
-`DATA_ASSIGN(stages[PIPELINE_STAGES - 1], out)
+`DATA_ASSIGN(pipes[NUM_PIPES - 1], out)
 
 endmodule
