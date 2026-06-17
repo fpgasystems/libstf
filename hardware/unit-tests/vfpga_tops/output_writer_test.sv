@@ -89,7 +89,8 @@ for (genvar I = 0; I < N_STRM_AXI; I++) begin
         end
     end
 
-    stream_profile_t profile;
+    stream_profile_i profile();
+    assign profile.stop = is_stop;
 
     StreamProfiler inst_perf_counter (
         .clk(clk),
@@ -99,15 +100,13 @@ for (genvar I = 0; I < N_STRM_AXI; I++) begin
         .valid(axi_host_recv[I].tvalid),
         .ready(axi_host_recv[I].tready),
 
-        .stop(is_stop),
-
         .profile(profile)
     );
 
-    assign perf_counters[4 * I]     = profile.handshakes_cycles;
-    assign perf_counters[4 * I + 1] = profile.starved_cycles;
-    assign perf_counters[4 * I + 2] = profile.stalled_cycles;
-    assign perf_counters[4 * I + 3] = profile.idle_cycles;
+    assign perf_counters[4 * I]     = profile.counters.handshakes_cycles;
+    assign perf_counters[4 * I + 1] = profile.counters.starved_cycles;
+    assign perf_counters[4 * I + 2] = profile.counters.stalled_cycles;
+    assign perf_counters[4 * I + 3] = profile.counters.idle_cycles;
 end
 
 // -- Output writer --------------------------------------------------------------------------------

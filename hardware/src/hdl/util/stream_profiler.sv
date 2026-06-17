@@ -1,11 +1,10 @@
 `timescale 1ns / 1ps
 
 /**
- * A stream profiler that starts counting when it sees the first valid data beat and only stops upon
- * the stop signal. It counts the number of handshakes, starved cycles, stalled cycles, and idle
- * pauses after a stream finishes with a last before the next stream arrives. After it received the
- * stop signal, it holds its signals until the next valid data beat. The stop signal has to be
- * asserted on the same clock cycle as the last handshake.
+ * A stream profiler that starts counting when it sees the first valid data beat. It counts the
+ * number of handshakes, starved cycles, stalled cycles, and idle pauses after a stream finishes
+ * with a last before the next stream arrives. Asserting stop returns the profiler to the WAIT 
+ * state, holding its counters until the next valid data beat re-zeroes them.
  *
  * Idle cycles between streams are accumulated in a separate register while in the IDLE state and are
  * only added to the idle count once the next valid data beat arrives, so trailing idle cycles after
@@ -21,9 +20,7 @@ module StreamProfiler #(
     input logic valid,
     input logic ready,
 
-    input logic stop,
-
-    output stream_profile_t profile
+    stream_profile_i.m profile
 );
 
 typedef enum logic[1:0] {
@@ -80,14 +77,6 @@ always_comb begin
 
                 if (ready) begin
                     n_handshakes_reg = 1;
-
-                    if (last) begin
-                        if (stop) begin
-                            n_state = WAIT;
-                        end else begin
-                            n_state = STREAM;
-                        end
-                    end
                 end else begin
                     n_stalled_reg = 1;
                 end
@@ -99,11 +88,7 @@ always_comb begin
                     n_handshakes_reg = handshakes_reg + 1;
 
                     if (last) begin
-                        if (stop) begin
-                            n_state = WAIT;
-                        end else begin
-                            n_state = IDLE;
-                        end
+                        n_state = IDLE;
                     end
                 end else begin
                     n_stalled_reg = stalled_reg + 1;
@@ -123,11 +108,7 @@ always_comb begin
                     n_handshakes_reg = handshakes_reg + 1;
 
                     if (last) begin
-                        if (stop) begin
-                            n_state = WAIT;
-                        end else begin
-                            n_state = IDLE;
-                        end
+                        n_state = IDLE;
                     end
                 end else begin
                     n_stalled_reg = stalled_reg + 1;
@@ -137,38 +118,26 @@ always_comb begin
             end
         end
     endcase
+
+    if (profile.stop) begin
+        n_state = WAIT;
+    end
 end
 
-ShiftRegister #(.WIDTH($bits(data64_t)), .LEVELS(OUT_REG_LEVELS)) inst_handshakes_sr (
+stream_profile_t counters_reg;
+assign counters_reg = '{
+    handshakes_cycles: handshakes_reg,
+    starved_cycles:    starved_reg,
+    stalled_cycles:    stalled_reg,
+    idle_cycles:       idle_reg
+};
+
+ShiftRegister #(.WIDTH($bits(stream_profile_t)), .LEVELS(OUT_REG_LEVELS)) inst_counters_sr (
     .i_clk(clk),
     .i_rst_n(rst_n),
 
-    .i_data(handshakes_reg),
-    .o_data(profile.handshakes_cycles)
-);
-
-ShiftRegister #(.WIDTH($bits(data64_t)), .LEVELS(OUT_REG_LEVELS)) inst_starved_sr (
-    .i_clk(clk),
-    .i_rst_n(rst_n),
-
-    .i_data(starved_reg),
-    .o_data(profile.starved_cycles)
-);
-
-ShiftRegister #(.WIDTH($bits(data64_t)), .LEVELS(OUT_REG_LEVELS)) inst_stalled_sr (
-    .i_clk(clk),
-    .i_rst_n(rst_n),
-
-    .i_data(stalled_reg),
-    .o_data(profile.stalled_cycles)
-);
-
-ShiftRegister #(.WIDTH($bits(data64_t)), .LEVELS(OUT_REG_LEVELS)) inst_idle_sr (
-    .i_clk(clk),
-    .i_rst_n(rst_n),
-
-    .i_data(idle_reg),
-    .o_data(profile.idle_cycles)
+    .i_data(counters_reg),
+    .o_data(profile.counters)
 );
 
 endmodule

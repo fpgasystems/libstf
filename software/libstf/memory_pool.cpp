@@ -213,7 +213,7 @@ std::pair<void *, size_t> HugePageMemoryPool::get_page_boundaries(const void *pt
     if (!is_buffer_within_bounds({initial_address_, total_capacity_},
                                  {const_cast<void *>(ptr), 1})) {
         std::ostringstream err;
-        err << "The Provided address " << static_cast<const void *>(ptr)
+        err << "The provided address " << static_cast<const void *>(ptr)
             << " is not within the bounds of the HugePageMemoryPool";
         throw std::runtime_error(err.str());
     }
