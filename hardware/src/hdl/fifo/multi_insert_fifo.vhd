@@ -38,7 +38,7 @@ signal s_valid, s_ready: std_logic;
 
 begin
 
-inst_fifo: entity work.FIFO generic map (
+inst_fifo: entity work.MehdiFIFO generic map (
 	DEPTH               => DEPTH,
 	WIDTH               => FACTOR * WIDTH,
 	RESET_RESYNC_LEVELS => RESET_RESYNC_LEVELS

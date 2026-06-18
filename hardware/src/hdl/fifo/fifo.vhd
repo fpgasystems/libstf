@@ -3,7 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-entity FIFO is
+-- The old module name `FIFO` was clashing with another module in Coyote so the module was renamed
+-- to `MehdiFIFO` after Dr. Mehdi Moghaddamfar who implemented it originally.
+entity MehdiFIFO is
     generic (
         DEPTH: natural; --a power of two except 1
         WIDTH: natural;
@@ -23,9 +25,9 @@ entity FIFO is
 
         o_filling_level: out std_logic_vector(natural(ceil(log2(real(DEPTH)))) downto 0)
     );
-end FIFO;
+end MehdiFIFO;
 
-architecture Behavioral of FIFO is
+architecture Behavioral of MehdiFIFO is
 
 type memory_t is array (DEPTH - 1 downto 0) of std_logic_vector(WIDTH - 1 downto 0);
 

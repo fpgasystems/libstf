@@ -34,7 +34,7 @@ logic                     data_beat_complete;
 ready_valid_i #(mask_t)               curr_mask(clk, rst_n);
 ndata_i       #(data_t, NUM_ELEMENTS) internal(clk, rst_n);
 
-FIFO #(
+MehdiFIFO #(
     .DEPTH(MAX_IN_TRANSIT),
     .WIDTH(NUM_ELEMENTS + 1)
 ) inst_mask_fifo (

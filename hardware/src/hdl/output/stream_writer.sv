@@ -149,7 +149,7 @@ FIFOAXI #(
 
 logic[TRANSFER_ADDRESS_LEN_BITS - 1:0] next_len;
 logic next_len_valid, next_len_ready;
-FIFO #(
+MehdiFIFO #(
     .WIDTH(TRANSFER_ADDRESS_LEN_BITS),
     .DEPTH(16)
 ) inst_len_fifo (

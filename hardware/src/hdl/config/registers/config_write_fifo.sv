@@ -18,7 +18,7 @@ ready_valid_i #(data_t) internal(clk, rst_n);
 
 assign valid = write_config.valid && write_config.addr == ADDR;
 
-FIFO #(DEPTH, $bits(data_t)) inst_fifo (
+MehdiFIFO #(DEPTH, $bits(data_t)) inst_fifo (
     .i_clk(clk),
     .i_rst_n(rst_n),
 

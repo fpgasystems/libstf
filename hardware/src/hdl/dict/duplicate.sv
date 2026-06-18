@@ -18,7 +18,7 @@ module Duplicate #(
 duplicate_i #(NUM_ELEMENTS)         curr_mask();
 ndata_i     #(data_t, NUM_ELEMENTS) data(clk, rst_n), n_data(clk, rst_n);
 
-FIFO #(
+MehdiFIFO #(
     .DEPTH(MAX_IN_TRANSIT),
     .WIDTH($bits(curr_mask.duplicates) + $bits(curr_mask.origins))
 ) inst_mask_fifo (

@@ -15,7 +15,7 @@ module FIFOAXI #(
 
 localparam FIFO_WIDTH = DATA_WIDTH + DATA_WIDTH / 8 + 1;
 
-FIFO #(DEPTH, FIFO_WIDTH, "ultra") inst_fifo (
+MehdiFIFO #(DEPTH, FIFO_WIDTH, "ultra") inst_fifo (
     .i_clk(clk),
     .i_rst_n(rst_n),
 

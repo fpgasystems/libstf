@@ -82,7 +82,7 @@ end
 assign read_port_valid = out_ready && in.read_valid;
 
 // FIFO stores addresses of outstanding reads to match responses
-FIFO #(
+MehdiFIFO #(
     .DEPTH(FIFO_DEPTH),
     .WIDTH(FIFO_WIDTH)
 ) inst_read_fifo (
