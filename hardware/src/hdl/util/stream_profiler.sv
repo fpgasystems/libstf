@@ -74,6 +74,7 @@ always_comb begin
                 n_starved_reg    = '0;
                 n_stalled_reg    = '0;
                 n_idle_reg       = '0;
+                n_idle_acc_reg   = '0;
 
                 if (ready) begin
                     n_handshakes_reg = 1;
