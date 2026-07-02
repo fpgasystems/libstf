@@ -2,7 +2,7 @@
 
 `include "libstf_macros.svh"
 
-// General de-muxing implementation that is used for AXI and metaInf streams below.
+// General de-muxing implementation that is used for AXI and metaIntf streams below.
 module Demultiplexer #(
     parameter integer N_STREAMS = 2,
     parameter type DATA_TYPE = logic[63:0],
@@ -10,59 +10,67 @@ module Demultiplexer #(
     // This should NOT be overwritten.
     parameter integer N_BITS = $clog2(N_STREAMS)
 ) (
-    input logic         clk,
-    input logic         rst_n,
+    input logic clk,
+    input logic rst_n,
 
-    input DATA_TYPE     i_data,
-    output logic        i_ready,
-    input logic         i_valid,
+    input  DATA_TYPE i_data,
+    output logic     i_ready,
+    input  logic     i_valid,
 
     // The index of the stream the input should be assigned to
     input logic [N_BITS - 1: 0] stream_select,
 
-    output DATA_TYPE    o_data [N_STREAMS],
-    input  logic        o_ready[N_STREAMS],
-    output logic        o_valid[N_STREAMS]
+    output DATA_TYPE o_data [N_STREAMS],
+    input  logic     o_ready[N_STREAMS],
+    output logic     o_valid[N_STREAMS]
 );
 
 `RESET_RESYNC // Reset pipelining
 
-// We introduced this logic because the stream_select can in theory go out of range which leads to 
-// undefined behaviour of i_ready
-logic[2**N_BITS - 1:0] o_ready_padded;
+// The vector is padded because stream_select can in theory go out of range. An out-of-range select
+// then yields i_ready = 0 (well-defined) rather than undefined behavior.
+logic[2**N_BITS - 1:0] can_load_padded;
+
+DATA_TYPE n_o_data [N_STREAMS];
+logic     n_o_valid[N_STREAMS];
 
 always_comb begin
-    o_ready_padded = '0;
+    can_load_padded = '0;
 
     for (int i = 0; i < N_STREAMS; i++) begin
-        o_ready_padded[i] = o_ready[i];
+        can_load_padded[i] = ~o_valid[i] | o_ready[i];
     end
 end
 
 // Ready-chaining from the correct output stream
-assign i_ready = o_ready_padded[stream_select];
+assign i_ready = can_load_padded[stream_select];
 
-// Assign the input data to the right output stream
-generate
-    for(genvar out_stream = 0; out_stream < N_STREAMS; out_stream++) begin
-        always_ff @(posedge clk) begin
-            if (reset_synced == 1'b0) begin
-                o_valid[out_stream] <= 0;
-            end else if (i_ready && stream_select == out_stream) begin
-                if (i_valid) begin
-                    o_data[out_stream]  <= i_data;
-                    o_valid[out_stream] <= 1'b1;
-                end else begin 
-                    o_valid[out_stream] <= 1'b0;
-                end
-            end else begin
-                if (o_ready[out_stream] && stream_select != out_stream) begin
-                    o_valid[out_stream] <= 1'b0;
-                end
-            end
+always_ff @(posedge clk) begin
+    if (reset_synced == 1'b0) begin
+        for (int s = 0; s < N_STREAMS; s++) begin
+            o_valid[s] <= 1'b0;
+        end
+    end else begin
+        for (int s = 0; s < N_STREAMS; s++) begin
+            o_data[s]  <= n_o_data[s];
+            o_valid[s] <= n_o_valid[s];
         end
     end
-endgenerate
+end
+
+always_comb begin
+    for (int s = 0; s < N_STREAMS; s++) begin
+        n_o_data[s]  = o_data[s];
+        n_o_valid[s] = o_valid[s];
+
+        if (i_valid && i_ready && stream_select == s) begin
+            n_o_data[s]  = i_data;
+            n_o_valid[s] = 1'b1;
+        end else if (o_valid[s] && o_ready[s]) begin
+            n_o_valid[s] = 1'b0;
+        end
+    end
+end
 
 endmodule
 
