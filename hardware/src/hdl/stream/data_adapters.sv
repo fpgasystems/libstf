@@ -104,13 +104,14 @@ endmodule
 
 /**
  * Converts an AXI stream to a data stream. If the last data beat of the incoming stream is not 
- * full, this returns data beats that have a low keep.
+ * full and PRUNE_EMPTY_DATA = 0, this returns data beats that have a low keep.
  */
 module AXIToData #(
     parameter type data_t,
     parameter AXI_WIDTH = 512,
     parameter DATA_WIDTH = $bits(data_t),
-    parameter NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH
+    parameter NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH,
+    parameter PRUNE_EMPTY_DATA = 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -130,6 +131,37 @@ assign out.last  = in.tlast;
 assign out.valid = in.tvalid;
 assign out.data  = in.tdata;
 
+end else if (PRUNE_EMPTY_DATA) begin
+
+localparam int COUNTER_W = $clog2(NUM_ELEMENTS);
+localparam int AXI_BYTES = AXI_WIDTH / 2;
+logic[COUNTER_W - 1:0] counter;
+logic next_beat_valid;
+logic counter_reset;
+
+assign next_beat_valid = counter == NUM_ELEMENTS - 1 ? 0 : in.tkeep[($clog2(AXI_BYTES)-1)'(counter + 1) * DATA_WIDTH / 8];
+assign counter_reset = counter == NUM_ELEMENTS - 1 || !next_beat_valid;
+
+assign in.tready = out.ready && counter_reset;
+
+always_ff @(posedge clk) begin
+    if (rst_n == 1'b0) begin
+        counter <= '0;
+    end else begin
+        if (in.tvalid && out.ready) begin
+            if (counter_reset)
+                counter <= 0;
+            else
+                counter <= counter + 1;
+        end
+    end
+end
+
+assign out.data  = in.tdata[counter * DATA_WIDTH+:DATA_WIDTH];
+assign out.keep  = in.tkeep[counter * DATA_WIDTH / 8];
+assign out.last  = in.tlast && counter_reset;
+assign out.valid = in.tvalid;
+    
 end else begin
 
 logic[$clog2(NUM_ELEMENTS) - 1:0] counter;
