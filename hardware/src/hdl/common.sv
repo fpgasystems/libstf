@@ -37,6 +37,11 @@ typedef logic[15:0] data16_t;
 typedef logic[31:0] data32_t;
 typedef logic[63:0] data64_t;
 
+typedef logic signed [7:0]  int8_t;
+typedef logic signed [15:0] int16_t;
+typedef logic signed [31:0] int32_t;
+typedef logic signed [63:0] int64_t;
+
 // Width matches the Coyote req_t.len field this size ultimately drives.
 typedef logic[LEN_BITS - 1:0] size_t;
 
