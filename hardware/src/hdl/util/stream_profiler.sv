@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+import libstf::*;
+
 /**
  * A stream profiler that starts counting when it sees the first valid data beat. It counts the
  * number of handshakes, starved cycles, stalled cycles, and idle pauses after a stream finishes
