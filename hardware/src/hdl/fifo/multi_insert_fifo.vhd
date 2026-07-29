@@ -6,10 +6,9 @@ use ieee.math_real.all;
 -- FIFO that reduces an input to smaller chunks as output
 entity MultiInsertFIFO is
     generic (
-        DEPTH:               natural; --a power of two except 1
-        WIDTH:               natural;
-        FACTOR:              natural;
-        RESET_RESYNC_LEVELS: natural := 2
+        DEPTH:  natural; --a power of two except 1
+        WIDTH:  natural;
+        FACTOR: natural
     );
     port (
         i_clk:   in std_logic;
@@ -39,9 +38,8 @@ signal s_valid, s_ready: std_logic;
 begin
 
 inst_fifo: entity work.MehdiFIFO generic map (
-	DEPTH               => DEPTH,
-	WIDTH               => FACTOR * WIDTH,
-	RESET_RESYNC_LEVELS => RESET_RESYNC_LEVELS
+	DEPTH => DEPTH,
+	WIDTH => FACTOR * WIDTH
 ) port map (
 	i_clk   => i_clk,
 	i_rst_n => i_rst_n,
