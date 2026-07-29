@@ -54,6 +54,8 @@ class GlobalConfig:
 # Configures which stream is valid and the stream types
 # -> Is extended by configurations for specific operators like filter or projection
 class StreamConfig:
+    ID = 1
+
     def __init__(self, offset: int, stream_id: int, select: int, type: StreamType):
         """
         Creates a new configuration, which tells the FPGA to use the memory region starting from 
