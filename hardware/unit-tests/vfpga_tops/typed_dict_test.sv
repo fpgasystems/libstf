@@ -20,6 +20,11 @@ end
 // -- Types ----------------------------------------------------------------------------------------
 typedef logic[0:0] select_t;
 
+// The id width bounds the dictionary to 2**18 32-bit slots (1 MiB), i.e. up to 2**18 32-bit or
+// 2**17 64-bit values. The ids still arrive as 32-bit words on the wire. The upper bits are
+// dropped silently.
+typedef logic[17:0] dict_id_t;
+
 // -- Fix clock and reset names --------------------------------------------------------------------
 logic clk;
 logic rst_n;
@@ -31,7 +36,7 @@ assign rst_n = aresetn;
 AXI4S axi_host_recv_0(.aclk(clk), .aresetn(rst_n));
 AXI4S axi_host_recv_1(.aclk(clk), .aresetn(rst_n));
 
-ndata_i #(data32_t, NUM_IDS) dict_ids(clk, rst_n);
+ndata_i #(dict_id_t, NUM_IDS) dict_ids(clk, rst_n);
 typed_ndata_i #(DATABEAT_SIZE) dict_values(clk, rst_n);
 typed_ndata_i #(DATABEAT_SIZE) dict_out(clk, rst_n);
 
@@ -92,7 +97,7 @@ AXIToTypedNData #(
 AXIToNData #(
     .AXI_WIDTH(AXI_DATA_BITS),
     .NUM_AXI_ELEMENTS(16),
-    .data_t(data32_t),
+    .data_t(dict_id_t),
     .NUM_ELEMENTS(NUM_IDS)
 ) inst_dict_id_axi_to_data (
     .clk(clk),
@@ -104,7 +109,8 @@ AXIToNData #(
 
 // -- Materialization ------------------------------------------------------------------------------
 TypedDictionary #(
-    .id_t(data32_t),
+    .id_t(dict_id_t),
+    .NUM_ELEMENTS(NUM_IDS),
     .DATABEAT_SIZE(DATABEAT_SIZE)
 ) inst_dict (
     .clk(clk),
