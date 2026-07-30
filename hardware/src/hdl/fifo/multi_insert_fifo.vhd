@@ -46,11 +46,11 @@ inst_fifo: entity work.MehdiFIFO generic map (
 
 	i_data  => i_data,
     i_valid => i_valid,
-    o_ready => o_ready,
+    i_ready => o_ready,
 
     o_data  => s_data,
     o_valid => s_valid,
-    i_ready => s_ready,
+    o_ready => s_ready,
 
     o_filling_level => o_filling_level
 );
