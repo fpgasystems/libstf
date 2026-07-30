@@ -10,7 +10,6 @@
 using namespace libstf;
 
 struct Args {
-    bool   huge_pages           = true;
     size_t num_enqueued_buffers = 2;
     size_t buffer_size          = MAXIMUM_OUTPUT_WRITER_BUFFER_SIZE;
     size_t num_streams          = 1;
@@ -24,7 +23,6 @@ void print_usage(const char *prog) {
               << "LibSTF output buffer manager example.\n"
               << "\n"
               << "Options:\n"
-              << "  -p, --smallpages        Disable huge pages (for simulation)\n"
               << "  -e, --enqueued N        Number of output buffers to enqueue (default: 2)\n"
               << "  -b, --buffer-size BYTES Output buffer capacity (default: 256MiB - 64KiB)\n"
               << "  -S, --streams N         Number of streams (default: 1)\n"
@@ -36,8 +34,7 @@ void print_usage(const char *prog) {
 Args parse_args(int argc, char *argv[]) {
     Args args;
 
-    static struct option long_options[] = {{"smallpages", no_argument, 0, 'p'},
-                                           {"enqueued", required_argument, 0, 'e'},
+    static struct option long_options[] = {{"enqueued", required_argument, 0, 'e'},
                                            {"buffer-size", required_argument, 0, 'b'},
                                            {"streams", required_argument, 0, 'S'},
                                            {"size", required_argument, 0, 's'},
@@ -45,11 +42,8 @@ Args parse_args(int argc, char *argv[]) {
                                            {0, 0, 0, 0}};
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "pe:b:S:s:r:h", long_options, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "e:b:S:s:r:h", long_options, nullptr)) != -1) {
         switch (opt) {
-        case 'p':
-            args.huge_pages = false;
-            break;
         case 'e':
             args.num_enqueued_buffers = std::stoi(optarg);
             break;
@@ -81,7 +75,6 @@ int main(int argc, char *argv[]) {
     Args args = parse_args(argc, argv);
 
     HEADER("CLI PARAMETERS:");
-    std::cout << "Enable hugepages: " << args.huge_pages << std::endl;
     std::cout << "Number of buffers to enqueue: " << args.num_enqueued_buffers << std::endl;
     std::cout << "Output buffer size: " << args.buffer_size << std::endl;
     std::cout << "Number of streams: " << args.num_streams << std::endl;
@@ -90,11 +83,11 @@ int main(int argc, char *argv[]) {
 
     // Obtain memory pool
     std::shared_ptr<libstf::MemoryPool> mem_pool;
-    if (args.huge_pages) {
-        mem_pool = std::make_shared<libstf::HugePageMemoryPool>();
-    } else {
-        mem_pool = std::make_shared<libstf::SimpleMemoryPool>();
-    }
+#ifdef EN_SIMULATION
+    mem_pool = std::make_shared<libstf::SimpleMemoryPool>();
+#else
+    mem_pool = std::make_shared<libstf::HugePageMemoryPool>();
+#endif
 
     // Initialize environment
     OutputBufferManager *obm_ptr = nullptr;

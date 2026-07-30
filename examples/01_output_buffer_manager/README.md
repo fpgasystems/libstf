@@ -1,39 +1,44 @@
-# LibSTF Example 1: Output Buffer Manager
-This example shows how to use the OutputBufferManager of the libSTF software library that manages 
-output memory buffers together with an OutputWriter on the hardware side.
+# Output Buffer Manager Example
 
-## Hardware synthesis
-You need to copy the content of `hardware/unit-tests/vfpga_tops/output_writer_test.sv` to 
-`hardware/src/vfpga_top.svh`. Then, you can build the hardware in the root directory of this repo as 
-follows (the last step takes several hours so we run it in the background and pipe the output to 
-`bitgen.log`):
+Shows how to use the `OutputBufferManager` of the libSTF software library together with the
+`OutputWriter` on the hardware side against the `output_writer_test` hardware design
+([hardware/unit-tests/vfpga_tops/output_writer_test.sv](../../hardware/unit-tests/vfpga_tops/output_writer_test.sv)).
 
-``` bash
-mkdir build-hw-01 && cd build-hw-01
-cmake ../hardware
-make project
-nohup make bitgen &> bitgen.log &
+Each run performs one loopback pass:
+
+1. Output buffers are enqueued to the `OutputWriter` on the FPGA.
+2. The input data is streamed to the FPGA on the configured streams.
+3. The FPGA writes the data back through the `OutputWriter` into the enqueued buffers. Completed
+   buffers are signaled with interrupts and collected by the `OutputBufferManager`.
+
+## Synthesizing the hardware
+
+```bash
+scripts/synthesize.sh output-writer
 ```
 
-## Software build
-The software side can be built with:
+## Building the software
 
-``` bash
-mkdir build
-cmake -DCMAKE_PREFIX_PATH=$HOME/opt -S . -B build
-cmake --build build -j
+```bash
+cmake -S . -B build && cmake --build build --target output_buffer_manager
 ```
+
+For simulations, add `-DEN_SIMULATION=ON` to the first cmake call.
 
 ## Running the example
-After flashing the design to the hardware, you can run the example as follows with default values:
 
-``` bash
-./build/output_buffer_manager
+```bash
+build/output_buffer_manager [OPTIONS]
 ```
 
-For simulations (add `-DEN_SIMULATION=ON` to the first cmake call of the software build), it is 
-recommended to disable huge pages and set the buffer size to the minimum (65536 Bytes):
+| Option | Description |
+| --- | --- |
+| `-e, --enqueued N` | Number of output buffers to enqueue (default: 2) |
+| `-b, --buffer-size BYTES` | Output buffer capacity (default: 256MiB - 64KiB) |
+| `-S, --streams N` | Number of streams (default: 1) |
+| `-s, --size BYTES` | Input size (default: 512MiB) |
+| `-r, --runs N` | Number of runs (default: 8) |
 
-``` bash
-COYOTE_SIM_DIR="/<path-to-this-repo>/hardware/build-sim" ./build_sw/output_buffer_manager -p -b 65536 -s 1024
-```
+For simulations, add `COYOTE_SIM_DIR="/<path-to-this-repo>/hardware/build-sim"` before executing
+the example software. It is recommended to set the buffer size to the minimum and a small input
+size (`-b 65536 -s 1024`).
