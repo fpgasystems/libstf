@@ -112,4 +112,19 @@ function automatic int GET_TYPE_WIDTH(type_t data_type);
     endcase
 endfunction
 
+function automatic int GET_TYPE_BYTES(type_t data_type);
+    case (data_type)
+        BYTE_T:
+            return 1;
+        INT32_T, FLOAT_T:
+            return 4;
+        INT64_T, DOUBLE_T:
+            return 8;
+        GERMAN_STR_T:
+            return 16;
+        default:
+            return 0;
+    endcase
+endfunction
+
 endpackage
