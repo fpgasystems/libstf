@@ -55,7 +55,9 @@ always_comb begin
                 n_hold_valid = in.valid && (in.keep != '0 || (hold_last && in.last));
             end
         end else begin
-            if (in.valid && is_null_last) begin
+            // A null last beat only ends the held transfer. If that one is already complete, the
+            // beat is an (empty) transfer of its own and has to wait.
+            if (in.valid && is_null_last && !hold_last) begin
                 n_hold_last = 1'b1;
             end else begin
                 in.ready = 1'b0;
