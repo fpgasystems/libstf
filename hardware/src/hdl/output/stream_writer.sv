@@ -104,7 +104,10 @@ AXINullBeatSuppressor inst_null_beat_suppressor (
 assign input_data_no_nulls.tready = data_fifo_in.tready & curr_len_ready;
 assign data_fifo_in.tdata   = input_data_no_nulls.tdata;
 assign data_fifo_in.tkeep   = input_data_no_nulls.tkeep;
-assign data_fifo_in.tvalid  = input_data_no_nulls.tvalid;
+// A transfer without any data only gets an interrupt and no request (see REQUEST), so nothing
+// would ever drain its empty last beat from the data FIFO, and the next transfer would receive it.
+// Only its length (0) is enqueued.
+assign data_fifo_in.tvalid  = input_data_no_nulls.tvalid && !(input_data_no_nulls.tlast && curr_len_succ == 0);
 assign data_fifo_in.tlast   = input_data_no_nulls.tlast;
 
 // Whether the transfer will get full this cycle
