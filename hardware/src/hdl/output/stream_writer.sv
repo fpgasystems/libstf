@@ -20,6 +20,12 @@ import libstf::*;
  * AXI_STRM_ID           = Id of the stream the data will be send on
  * IS_LOCAL              = Whether this is a LOCAL_TRANSFER, i.e. between FPGA and host (1) or if RDMA is used (0)
  * TRANSFER_LENGTH_BYTES = How many bytes each transfer to the host should have
+ * EMPTY_TRANSFER_TAKES_BUFFER = What an input transfer without data does with its memory region.
+ *                         0: Nothing is written to it, so the next input transfer is written to it
+ *                            as well (e.g. for software that provides memory as it is used up).
+ *                         1: It is used up like by any other input transfer, so the next input
+ *                            transfer is written to the next memory region (e.g. for software that
+ *                            provides one memory region per input transfer ahead of time).
  *
  * The output_data port should be connected to the AXI stream of the stream as configured via the
  * STRM parameter.
@@ -33,7 +39,8 @@ module StreamWriter #(
     parameter STRM = STRM_HOST,
     parameter AXI_STRM_ID = 0,
     parameter IS_LOCAL = 1,
-    parameter TRANSFER_LENGTH_BYTES = 4096
+    parameter TRANSFER_LENGTH_BYTES = 4096,
+    parameter EMPTY_TRANSFER_TAKES_BUFFER = 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -375,9 +382,10 @@ always_comb begin
         WAIT_NOTIFY: begin
             if (notify.ready) begin
                 // If no bytes were written, we can just reuse the current buffer for the next 
-                // stream so we null the last_transfer signal and jump to the REQUEST state.
+                // stream so we null the last_transfer signal and jump to the REQUEST state (unless
+                // an empty transfer takes its buffer, see EMPTY_TRANSFER_TAKES_BUFFER).
                 // Otherwise, we fetch the next buffer in in the WAIT_ADDR state.
-                if (bytes_written_to_allocation == 0) begin
+                if (bytes_written_to_allocation == 0 && !EMPTY_TRANSFER_TAKES_BUFFER) begin
                     n_last_transfer = 1'b0;
                     n_output_state  = REQUEST;
                 end else begin
