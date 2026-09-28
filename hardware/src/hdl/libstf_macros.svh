@@ -75,31 +75,37 @@ TYPE  ``NAME``_data;                    \
 logic ``NAME``_valid;                   \
 logic ``NAME``_ready;
 
-`define SKID_SIGNAL(DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)   \
-SkidBuffer #(DTYPE)                                           \
-inst_``SIG_NAME``_``SKID_SIG_NAME``_skidder (                     \
-    .clk    (CLK),                                            \
-    .rst_n  (RST_N),                                          \
-    .in     (SIG_NAME),                                       \
-    .out    (SKID_SIG_NAME)                                   \
+`define SKID_SIGNAL_NAMED(INST_NAME, DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+SkidBuffer #(DTYPE) INST_NAME (                                                 \
+    .clk    (CLK),                                                              \
+    .rst_n  (RST_N),                                                            \
+    .in     (SIG_NAME),                                                         \
+    .out    (SKID_SIG_NAME)                                                     \
 );
 
-`define SKID_DATA_SIGNAL(DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)    \
-DataSkidBuffer #(DTYPE)                                             \
-inst_``SIG_NAME``_``SKID_SIG_NAME``_skidder (                           \
-    .clk    (CLK),                                                  \
-    .rst_n  (RST_N),                                                \
-    .in     (SIG_NAME),                                             \
-    .out    (SKID_SIG_NAME)                                         \
+`define SKID_SIGNAL(DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+`SKID_SIGNAL_NAMED(inst_skid_`__LINE__, DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
+
+`define SKID_DATA_SIGNAL_NAMED(INST_NAME, DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+DataSkidBuffer #(DTYPE) INST_NAME (                                                  \
+    .clk    (CLK),                                                                   \
+    .rst_n  (RST_N),                                                                 \
+    .in     (SIG_NAME),                                                              \
+    .out    (SKID_SIG_NAME)                                                          \
 );
 
-`define SKID_NDATA_SIGNAL(DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)   \
-NDataSkidBuffer #(DTYPE, N_ELEM)                                        \
-inst_``SIG_NAME``_``SKID_SIG_NAME``_skidder (                                   \
-    .clk    (CLK),                                                          \
-    .rst_n  (RST_N),                                                        \
-    .in     (SIG_NAME),                                                     \
-    .out    (SKID_SIG_NAME)                                                 \
+`define SKID_DATA_SIGNAL(DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+`SKID_DATA_SIGNAL_NAMED(inst_skid_`__LINE__, DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
+
+`define SKID_NDATA_SIGNAL_NAMED(INST_NAME, DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+NDataSkidBuffer #(DTYPE, N_ELEM) INST_NAME (                                                  \
+    .clk    (CLK),                                                                            \
+    .rst_n  (RST_N),                                                                          \
+    .in     (SIG_NAME),                                                                       \
+    .out    (SKID_SIG_NAME)                                                                   \
 );
+
+`define SKID_NDATA_SIGNAL(DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+`SKID_NDATA_SIGNAL_NAMED(inst_skid_`__LINE__, DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
 
 `endif
