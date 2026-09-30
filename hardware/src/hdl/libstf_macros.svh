@@ -108,4 +108,15 @@ NDataSkidBuffer #(DTYPE, N_ELEM) INST_NAME (                                    
 `define SKID_NDATA_SIGNAL(DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
 `SKID_NDATA_SIGNAL_NAMED(inst_skid_`__LINE__, DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
 
+`define SKID_TYPED_NDATA_SIGNAL_NAMED(INST_NAME, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+TypedNDataSkidBuffer #(N_ELEM) INST_NAME (                                                    \
+    .clk    (CLK),                                                                            \
+    .rst_n  (RST_N),                                                                          \
+    .in     (SIG_NAME),                                                                       \
+    .out    (SKID_SIG_NAME)                                                                   \
+);
+
+`define SKID_TYPED_NDATA_SIGNAL(N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+`SKID_TYPED_NDATA_SIGNAL_NAMED(inst_skid_`__LINE__, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
+
 `endif
