@@ -2,6 +2,8 @@
 
 `include "libstf_macros.svh"
 
+import lynxTypes::AXI_DATA_BITS;
+
 /**
  * Converts a ndata stream to an AXI stream.
  *
@@ -24,8 +26,11 @@ module NDataToAXI #(
 localparam AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
 localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
 
+`ASSERT_ELAB(type(data_t) == type(in.data_t))
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 `ASSERT_ELAB(AXI_WIDTH == AXI_ELEMENT_WIDTH * NUM_AXI_ELEMENTS)
 `ASSERT_ELAB($bits(data_t) <= AXI_ELEMENT_WIDTH)
+`ASSERT_ELAB($bits(out.data_t) == AXI_WIDTH)
 
 ndata_i #(data_t, NUM_AXI_ELEMENTS) internal(clk, rst_n);
 
@@ -75,6 +80,10 @@ module AXIToNData #(
 
 localparam AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
 localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
+localparam AXI_WIDTH_INTERNAL = AXI_ELEMENT_WIDTH * NUM_ELEMENTS;
+
+`ASSERT_ELAB($bits(in.data_t) == AXI_WIDTH)
+`ASSERT_ELAB(type(out.data_t) == type(data_t))
 
 `ASSERT_ELAB(AXI_WIDTH == AXI_ELEMENT_WIDTH * NUM_AXI_ELEMENTS)
 `ASSERT_ELAB($bits(data_t) <= AXI_ELEMENT_WIDTH)
@@ -110,7 +119,6 @@ module AXIToData #(
     parameter type data_t,
     parameter AXI_WIDTH = 512,
     parameter DATA_WIDTH = $bits(data_t),
-    parameter NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH,
     parameter PRUNE_EMPTY_DATA = 0
 ) (
     input logic clk,
@@ -120,6 +128,11 @@ module AXIToData #(
 
     data_i.m out // #(data_t)
 );
+
+localparam NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH;
+
+`ASSERT_ELAB(type(out.data_t) == type(data_t))
+`ASSERT_ELAB(AXI_WIDTH == in.AXI4S_DATA_BITS)
 
 generate if (NUM_ELEMENTS == 1) begin
 
