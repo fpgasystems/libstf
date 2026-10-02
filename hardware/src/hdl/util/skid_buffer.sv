@@ -1,5 +1,8 @@
 `timescale 1ns / 1ps
 
+import libstf::type_t;
+import libstf::data8_t;
+
 module SkidBuffer #(
     parameter type data_t
 ) (
@@ -269,19 +272,21 @@ assign skid_out.ready = out.tready;
 endmodule
 
 module TypedNDataSkidBuffer #(
-    parameter DATABEAT_SIZE
+    parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
 
-    typed_ndata_i.s in, // #(DATABEAT_SIZE) 
-    typed_ndata_i.m out // #(DATABEAT_SIZE)
+    typed_ndata_i.s in, // #(NUM_ELEMENTS) 
+    typed_ndata_i.m out // #(NUM_ELEMENTS)
 );
 
+localparam type data_t = in.data_t;
+
 typedef struct packed {
-    data8_t[DATABEAT_SIZE - 1:0] data;
+    data_t[NUM_ELEMENTS - 1:0] data;
     type_t                     typ;
-    logic[DATABEAT_SIZE - 1:0]  keep;
+    logic[NUM_ELEMENTS - 1:0]  keep;
     logic                      last;
 } tmp_t;
 

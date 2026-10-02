@@ -11,6 +11,7 @@ ResetResync inst_reset_resync ( \
 );
 
 `define ASSERT_ELAB(COND) if (!(COND)) $error("Assertion failed.");
+`define ASSERT_ELAB_MSG(COND, MSG) if (!(COND)) $error("Assertion failed. : %s", `"MSG`");
 
 `define STF_STRINGIFY(x) $sformatf("%0s", `"x`")
 
@@ -25,6 +26,8 @@ assert property (@(posedge clk) disable iff (!rst_n) \
 else $fatal(1, "Signal %s needs to be stable while valid && !ready!", `STF_STRINGIFY(sig));
 
 `define STF_ASSERT_SIGNAL_STABLE(sig) `STF_ASSERT_STABLE(sig, valid, ready)
+
+`define WARN_IF_NOT(COND, MSG) if (!(COND)) $error("[WARNING] %s", MSG);
 
 `define DATA_ASSIGN(s, m)         \
 	assign m.data      = s.data;  \
@@ -74,5 +77,49 @@ ReadyValidSplitter #(LEFT_T, RIGHT_T) inst_ready_split_`__LINE__ ( \
 TYPE  ``NAME``_data;                    \
 logic ``NAME``_valid;                   \
 logic ``NAME``_ready;
+
+`define SKID_SIGNAL_NAMED(INST_NAME, DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+SkidBuffer #(DTYPE) INST_NAME (                                                 \
+    .clk    (CLK),                                                              \
+    .rst_n  (RST_N),                                                            \
+    .in     (SIG_NAME),                                                         \
+    .out    (SKID_SIG_NAME)                                                     \
+);
+
+`define SKID_SIGNAL(DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+`SKID_SIGNAL_NAMED(inst_skid_`__LINE__, DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
+
+`define SKID_DATA_SIGNAL_NAMED(INST_NAME, DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+DataSkidBuffer #(DTYPE) INST_NAME (                                                  \
+    .clk    (CLK),                                                                   \
+    .rst_n  (RST_N),                                                                 \
+    .in     (SIG_NAME),                                                              \
+    .out    (SKID_SIG_NAME)                                                          \
+);
+
+`define SKID_DATA_SIGNAL(DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+`SKID_DATA_SIGNAL_NAMED(inst_skid_`__LINE__, DTYPE, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
+
+`define SKID_NDATA_SIGNAL_NAMED(INST_NAME, DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+NDataSkidBuffer #(DTYPE, N_ELEM) INST_NAME (                                                  \
+    .clk    (CLK),                                                                            \
+    .rst_n  (RST_N),                                                                          \
+    .in     (SIG_NAME),                                                                       \
+    .out    (SKID_SIG_NAME)                                                                   \
+);
+
+`define SKID_NDATA_SIGNAL(DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+`SKID_NDATA_SIGNAL_NAMED(inst_skid_`__LINE__, DTYPE, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
+
+`define SKID_TYPED_NDATA_SIGNAL_NAMED(INST_NAME, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+TypedNDataSkidBuffer #(N_ELEM) INST_NAME (                                                    \
+    .clk    (CLK),                                                                            \
+    .rst_n  (RST_N),                                                                          \
+    .in     (SIG_NAME),                                                                       \
+    .out    (SKID_SIG_NAME)                                                                   \
+);
+
+`define SKID_TYPED_NDATA_SIGNAL(N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME) \
+`SKID_TYPED_NDATA_SIGNAL_NAMED(inst_skid_`__LINE__, N_ELEM, CLK, RST_N, SIG_NAME, SKID_SIG_NAME)
 
 `endif

@@ -2,6 +2,8 @@
 
 `include "libstf_macros.svh"
 
+import lynxTypes::AXI_DATA_BITS;
+
 /**
  * Converts a ndata stream to an AXI stream.
  *
@@ -24,8 +26,11 @@ module NDataToAXI #(
 localparam AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
 localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
 
+`ASSERT_ELAB(type(data_t) == type(in.data_t))
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 `ASSERT_ELAB(AXI_WIDTH == AXI_ELEMENT_WIDTH * NUM_AXI_ELEMENTS)
 `ASSERT_ELAB($bits(data_t) <= AXI_ELEMENT_WIDTH)
+`ASSERT_ELAB($bits(out.data_t) == AXI_WIDTH)
 
 ndata_i #(data_t, NUM_AXI_ELEMENTS) internal(clk, rst_n);
 
@@ -75,6 +80,10 @@ module AXIToNData #(
 
 localparam AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
 localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
+localparam AXI_WIDTH_INTERNAL = AXI_ELEMENT_WIDTH * NUM_ELEMENTS;
+
+`ASSERT_ELAB($bits(in.data_t) == AXI_WIDTH)
+`ASSERT_ELAB(type(out.data_t) == type(data_t))
 
 `ASSERT_ELAB(AXI_WIDTH == AXI_ELEMENT_WIDTH * NUM_AXI_ELEMENTS)
 `ASSERT_ELAB($bits(data_t) <= AXI_ELEMENT_WIDTH)
@@ -104,13 +113,13 @@ endmodule
 
 /**
  * Converts an AXI stream to a data stream. If the last data beat of the incoming stream is not 
- * full, this returns data beats that have a low keep.
+ * full and PRUNE_EMPTY_DATA = 0, this returns data beats that have a low keep.
  */
 module AXIToData #(
     parameter type data_t,
     parameter AXI_WIDTH = 512,
     parameter DATA_WIDTH = $bits(data_t),
-    parameter NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH
+    parameter PRUNE_EMPTY_DATA = 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -119,6 +128,11 @@ module AXIToData #(
 
     data_i.m out // #(data_t)
 );
+
+localparam NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH;
+
+`ASSERT_ELAB(type(out.data_t) == type(data_t))
+`ASSERT_ELAB(AXI_WIDTH == in.AXI4S_DATA_BITS)
 
 generate if (NUM_ELEMENTS == 1) begin
 
@@ -130,6 +144,37 @@ assign out.last  = in.tlast;
 assign out.valid = in.tvalid;
 assign out.data  = in.tdata;
 
+end else if (PRUNE_EMPTY_DATA) begin
+
+localparam int COUNTER_W = $clog2(NUM_ELEMENTS);
+localparam int AXI_BYTES = AXI_WIDTH / 2;
+logic[COUNTER_W - 1:0] counter;
+logic next_beat_valid;
+logic counter_reset;
+
+assign next_beat_valid = counter == NUM_ELEMENTS - 1 ? 0 : in.tkeep[($clog2(AXI_BYTES)-1)'(counter + 1) * DATA_WIDTH / 8];
+assign counter_reset = counter == NUM_ELEMENTS - 1 || !next_beat_valid;
+
+assign in.tready = out.ready && counter_reset;
+
+always_ff @(posedge clk) begin
+    if (rst_n == 1'b0) begin
+        counter <= '0;
+    end else begin
+        if (in.tvalid && out.ready) begin
+            if (counter_reset)
+                counter <= 0;
+            else
+                counter <= counter + 1;
+        end
+    end
+end
+
+assign out.data  = in.tdata[counter * DATA_WIDTH+:DATA_WIDTH];
+assign out.keep  = in.tkeep[counter * DATA_WIDTH / 8];
+assign out.last  = in.tlast && counter_reset;
+assign out.valid = in.tvalid;
+    
 end else begin
 
 logic[$clog2(NUM_ELEMENTS) - 1:0] counter;

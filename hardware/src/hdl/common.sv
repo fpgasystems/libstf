@@ -37,6 +37,18 @@ typedef logic[15:0] data16_t;
 typedef logic[31:0] data32_t;
 typedef logic[63:0] data64_t;
 
+typedef logic signed [7:0]  int8_t;
+typedef logic signed [15:0] int16_t;
+typedef logic signed [31:0] int32_t;
+typedef logic signed [63:0] int64_t;
+
+// Umbra style string data structure (german string)
+typedef struct packed {
+    data8_t [7:0] short_str_or_addr;
+    data8_t [3:0] prefix;
+    data8_t [3:0] length;
+} german_str_t;
+
 // Width matches the Coyote req_t.len field this size ultimately drives.
 typedef logic[LEN_BITS - 1:0] size_t;
 
@@ -45,7 +57,8 @@ typedef enum logic[2:0] {
     INT32_T,
     INT64_T,
     FLOAT_T,
-    DOUBLE_T
+    DOUBLE_T,
+    GERMAN_STR_T
 } type_t;
 
 // Aggregated StreamProfiler counters for a single stream.
@@ -87,18 +100,31 @@ endfunction
 // Constant function to return the bit width of type_t types
 function automatic int GET_TYPE_WIDTH(type_t data_type);
     case (data_type)
-        BYTE_T: begin
+        BYTE_T:
             return 8;
-        end
-        INT32_T, FLOAT_T: begin
+        INT32_T, FLOAT_T:
             return 32;
-        end
-        INT64_T, DOUBLE_T: begin
+        INT64_T, DOUBLE_T:
             return 64;
-        end
-        default: begin
+        GERMAN_STR_T:
+            return 128;
+        default:
             return 0;
-        end
+    endcase
+endfunction
+
+function automatic int GET_TYPE_BYTES(type_t data_type);
+    case (data_type)
+        BYTE_T:
+            return 1;
+        INT32_T, FLOAT_T:
+            return 4;
+        INT64_T, DOUBLE_T:
+            return 8;
+        GERMAN_STR_T:
+            return 16;
+        default:
+            return 0;
     endcase
 endfunction
 

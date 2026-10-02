@@ -41,7 +41,7 @@ typedef uint8_t stream_t; // Type that holds a stream_id
 
 typedef std::bitset<MAXIMUM_FPGA_NUM_STREAMS> stream_mask_t;
 
-enum class type_t : unsigned char { BYTE_T, INT32_T, INT64_T, FLOAT_T, DOUBLE_T, NUM_TYPES };
+enum class type_t : unsigned char { BYTE_T, INT32_T, INT64_T, FLOAT_T, DOUBLE_T, GERMAN_STR_T, NUM_TYPES };
 
 std::ostream &operator<<(std::ostream &out, const type_t &data_type);
 
@@ -57,6 +57,8 @@ constexpr size_t size_of(type_t type) {
         return 4;
     case type_t::DOUBLE_T:
         return 8;
+    case type_t::GERMAN_STR_T:
+        return 16;
     case type_t::NUM_TYPES:
         break;
     }
