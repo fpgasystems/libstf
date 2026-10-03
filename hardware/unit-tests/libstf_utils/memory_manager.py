@@ -192,7 +192,7 @@ class FPGAOutputMemoryManager:
         """
         return len(self.transfers[stream_id]) - 1
 
-    def _handle_stream_last(self, stream_id: int, last: bool) -> None:
+    def _handle_stream_last(self, stream_id: int, last: bool, transfer_size: int) -> None:
         """
         Handling depending on whether the stream send its last data
         """
@@ -212,7 +212,10 @@ class FPGAOutputMemoryManager:
             # More transfers expected: open a new transfer slot and provide the FPGA with
             # a fresh allocation for the next acquire_output_handle cycle.
             self.transfers[stream_id].append({})
-            self._add_allocation_for_stream(stream_id)
+            # An empty transfer did not use its allocation: the StreamWriter keeps writing the next
+            # transfer to it (like the software OutputBufferManager, which keeps the buffer too).
+            if transfer_size > 0:
+                self._add_allocation_for_stream(stream_id)
             return
 
         # All transfers for this stream are done. Check whether all streams are done.
@@ -250,7 +253,7 @@ class FPGAOutputMemoryManager:
             )
 
         # Handle the next step
-        self._handle_stream_last(value.stream_id(), value.last())
+        self._handle_stream_last(value.stream_id(), value.last(), value.transfer_size())
 
     #
     # Public methods
