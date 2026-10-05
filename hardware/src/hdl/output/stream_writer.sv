@@ -26,6 +26,9 @@ import libstf::*;
  *                         1: It is used up like by any other input transfer, so the next input
  *                            transfer is written to the next memory region (e.g. for software that
  *                            provides one memory region per input transfer ahead of time).
+ * **ATTENTION:** Do not use EMPTY_TRANSFER_TAKES_BUFFER=1 unless strictly necessary!
+ * It requires synchronization from the software side to also provide and consume buffers when
+ * the transfer is empty. This is not supported by software/libstf/output_buffer_manager.cpp.
  *
  * The output_data port should be connected to the AXI stream of the stream as configured via the
  * STRM parameter.

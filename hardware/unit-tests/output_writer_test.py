@@ -6,6 +6,9 @@ from libstf_utils.memory_manager import FPGAOutputMemoryManager
 
 MAX_NUMBER_STREAMS = constants.MAX_NUMBER_STREAMS
 TRANSFER_SIZE_BYTES_OVERWRITE = "TRANSFER_SIZE_BYTES_OVERWRITE"
+# A transfer of a single element with this value is turned into an empty transfer by the vFPGA top
+# (vfpga_tops/output_writer_test.sv). Keep this value in sync with the one there.
+EMPTY_TRANSFER_MAGIC = 0xDEADBEEF0BADF00D
 
 class OutputWriterTest(OutputWriterTestCase):
     """
@@ -107,6 +110,36 @@ class OutputWriterTest(OutputWriterTestCase):
 
         # Act
         self.simulate_fpga()
+
+        # Assert
+        self.assert_simulation_output()
+
+    def _set_empty_transfer(self, stream: int):
+        """
+        Sends an empty transfer on the given stream and expects an empty output transfer.
+        The test bench cannot send an empty transfer itself, so the input is a single magic element
+        that the vFPGA top turns into a beat with keep == 0 and last.
+        """
+        self.set_stream_input(stream, Stream(StreamType.UNSIGNED_INT_64, [EMPTY_TRANSFER_MAGIC]))
+        self.set_expected_output(stream, Stream(StreamType.UNSIGNED_INT_64, []))
+
+    def test_empty_and_nonempty_transfers(self):
+        # Act (custom, as all input/output happens on stream 0)
+        self.simulate_fpga_non_blocking()
+
+        self._set_empty_transfer(0)
+        
+        self.set_stream_input(0, Stream(StreamType.UNSIGNED_INT_64, list(range(0, 11))))
+        self.set_expected_output(0, Stream(StreamType.UNSIGNED_INT_64, list(range(0, 11))))
+        
+        self._set_empty_transfer(0)
+        
+        self.set_stream_input(0, Stream(StreamType.UNSIGNED_INT_64, list(range(0, 8))))
+        self.set_expected_output(0, Stream(StreamType.UNSIGNED_INT_64, list(range(0, 8))))
+        
+        self._set_empty_transfer(0)
+        
+        self.finish_fpga_simulation()
 
         # Assert
         self.assert_simulation_output()
