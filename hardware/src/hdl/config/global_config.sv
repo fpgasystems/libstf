@@ -15,7 +15,10 @@
 module GlobalConfig #(
     parameter integer SYSTEM_ID,
     parameter integer NUM_CONFIGS,
-    parameter integer ADDR_SPACE_SIZES[NUM_CONFIGS]
+    parameter integer ADDR_SPACE_SIZES[NUM_CONFIGS],
+    // Number of skid-buffer stages inserted on each read_configs port. Breaks the combinational
+    // readback broadcast/mux into short registered hops (0 = no skid buffers).
+    parameter integer READ_CONFIG_SKID_DEPTH = 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -173,16 +176,18 @@ ConfigReadRegisterFile #(
     .values(global_registers)
 );
 
-// All other read configs
-for (genvar I = 0; I < NUM_CONFIGS; I++) begin
-    assign read_configs[I].read_addr  = internal_read_configs[I + 1].read_addr;
-    assign read_configs[I].read_valid = internal_read_configs[I + 1].read_valid;
-    assign internal_read_configs[I + 1].read_ready = read_configs[I].read_ready;
+// All other read configs. Each port optionally gets READ_CONFIG_SKID_DEPTH skid-buffer stages to
+// break the readback broadcast/mux into short registered hops mainly for SLR crossings.
+for (genvar I = 0; I < NUM_CONFIGS; I++) begin : gen_read_config_skid_buffers
+    ReadConfigSkidBuffers #(
+        .DEPTH(READ_CONFIG_SKID_DEPTH)
+    ) inst_read_config_skid_buffers (
+        .clk(clk),
+        .rst_n(reset_synced),
 
-    assign internal_read_configs[I + 1].resp_data  = read_configs[I].resp_data;
-    assign internal_read_configs[I + 1].resp_error = read_configs[I].resp_error;
-    assign internal_read_configs[I + 1].resp_valid = read_configs[I].resp_valid;
-    assign read_configs[I].resp_ready = internal_read_configs[I + 1].resp_ready;
+        .in(internal_read_configs[I + 1]),
+        .out(read_configs[I])
+    );
 end
 
 // -- AXI4L handshaking logic ----------------------------------------------------------------------

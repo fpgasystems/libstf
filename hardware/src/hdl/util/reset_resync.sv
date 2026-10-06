@@ -13,7 +13,7 @@ module ResetResync (
 );
 
 // Initialize as not reset. We need two stages because the reset signal is asynchronous.
-logic[1:0] reset_buffer = '0;
+(* ASYNC_REG = "TRUE" *) logic[1:0] reset_buffer = '0;
 
 always_ff @(posedge clk) begin
     reset_buffer[0] <= reset_in;
