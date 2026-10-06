@@ -55,19 +55,19 @@ endmodule
 module NTaggedDuplicator #(
     parameter integer NUM_OUTPUTS,
     parameter type data_t,
-    parameter integer TAG_WIDTH,
+    parameter type    tag_t,
     parameter integer NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
 
-    ntagged_i.s in,              // #(data_t, TAG_WIDTH, NUM_ELEMENTS)
-    ntagged_i.m out[NUM_OUTPUTS] // #(data_t, TAG_WIDTH, NUM_ELEMENTS)
+    ntagged_i.s in,              // #(data_t, tag_t, NUM_ELEMENTS)
+    ntagged_i.m out[NUM_OUTPUTS] // #(data_t, tag_t, NUM_ELEMENTS)
 );
 
 typedef struct packed {
-    data_t                 data;
-    logic[TAG_WIDTH - 1:0] tag;
+    data_t data;
+    tag_t  tag;
 } data_tag_t;
 
 ndata_i #(data_tag_t, NUM_ELEMENTS) internal_in(clk, rst_n), internal_out[NUM_OUTPUTS](clk, rst_n);

@@ -163,13 +163,13 @@ endinterface
 
 interface tagged_i #(
     parameter type data_t,
-    parameter TAG_WIDTH
+    parameter type tag_t
 ) (
     input logic clk,
     input logic rst_n
 );
     data_t                 data;
-    logic[TAG_WIDTH - 1:0] tag;
+    tag_t                  tag;
     logic                  keep;
     logic                  last;
     logic                  valid;
@@ -212,13 +212,12 @@ endinterface
 
 interface ntagged_i #(
     parameter type data_t,
-    parameter TAG_WIDTH,
+    parameter type tag_t = data8_t,
     parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n
 );
-    typedef logic[TAG_WIDTH - 1:0] tag_t;
 
     data_t[NUM_ELEMENTS - 1:0] data;
     tag_t[NUM_ELEMENTS - 1:0]  tag;

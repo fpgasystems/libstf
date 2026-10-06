@@ -138,18 +138,18 @@ endmodule
 
 module TaggedSkidBuffer #(
     parameter type data_t,
-    parameter TAG_WIDTH
+    parameter type tag_t
 ) (
     input logic clk,
     input logic rst_n,
 
-    tagged_i.s in, // #(data_t, TAG_WIDTH)
-    tagged_i.m out // #(data_t, TAG_WIDTH)
+    tagged_i.s in, // #(data_t, tag_t)
+    tagged_i.m out // #(data_t, tag_t)
 );
 
 typedef struct packed {
-    data_t                 data;
-    logic[TAG_WIDTH - 1:0] tag;
+    data_t data;
+    tag_t  tag;
 } tmp_t;
 
 data_i #(tmp_t) data_in(clk, rst_n), data_out(clk, rst_n);
@@ -182,17 +182,15 @@ endmodule
 
 module NTaggedSkidBuffer #(
     parameter type data_t,
-    parameter TAG_WIDTH,
+    parameter type tag_t,
     parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
 
-    ntagged_i.s in, // #(data_t, TAG_WIDTH, NUM_ELEMENTS) 
-    ntagged_i.m out // #(data_t, TAG_WIDTH, NUM_ELEMENTS)
+    ntagged_i.s in, // #(data_t, tag_t, NUM_ELEMENTS)
+    ntagged_i.m out // #(data_t, tag_t, NUM_ELEMENTS)
 );
-
-typedef logic[TAG_WIDTH - 1:0] tag_t;
 
 typedef struct packed {
     data_t[NUM_ELEMENTS - 1:0] data;
