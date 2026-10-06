@@ -14,7 +14,7 @@ module Crossbar #(
     input logic clk,
     input logic rst_n,
 
-    tagged_i.s in[NUM_INPUTS],  // #(data_t, TAG_WIDTH)
+    tagged_i.s in[NUM_INPUTS],  // #(data_t, logic[TAG_WIDTH - 1:0])
     data_i.m   out[NUM_OUTPUTS] // #(data_t)
 );
 
@@ -24,10 +24,12 @@ generate
 
 `RESET_RESYNC // Reset pipelining
 
-tagged_i #(data_t, TAG_WIDTH) skid_pipe[NUM_INPUTS][NUM_SKID_STAGES + 1](clk, reset_synced);
-tagged_i #(data_t, TAG_WIDTH) duplicator_out[NUM_INPUTS][NUM_OUTPUTS](clk, reset_synced);
-tagged_i #(data_t, 1)         matched[NUM_INPUTS][NUM_OUTPUTS](clk, reset_synced);
-tagged_i #(data_t, 1)         mux_in[NUM_OUTPUTS][NUM_INPUTS](clk, reset_synced);
+typedef logic[TAG_WIDTH - 1:0] tag_t;
+
+tagged_i #(data_t, tag_t) skid_pipe[NUM_INPUTS][NUM_SKID_STAGES + 1](clk, reset_synced);
+tagged_i #(data_t, tag_t) duplicator_out[NUM_INPUTS][NUM_OUTPUTS](clk, reset_synced);
+tagged_i #(data_t, logic) matched[NUM_INPUTS][NUM_OUTPUTS](clk, reset_synced);
+tagged_i #(data_t, logic) mux_in[NUM_OUTPUTS][NUM_INPUTS](clk, reset_synced);
 
 logic[NUM_INPUTS-1:0][NUM_OUTPUTS-1:0] mux_ready_transposed;
     
@@ -44,7 +46,7 @@ end
 // SkidBuffer pipeline
 for (genvar I = 0; I < NUM_INPUTS; I++) begin
     for (genvar J = 0; J < NUM_SKID_STAGES; J++) begin
-        TaggedSkidBuffer #(data_t, TAG_WIDTH) inst_skid_buffer (.clk(clk), .rst_n(reset_synced), .in(skid_pipe[I][J]), .out(skid_pipe[I][J + 1]));
+        TaggedSkidBuffer #(data_t, tag_t) inst_skid_buffer (.clk(clk), .rst_n(reset_synced), .in(skid_pipe[I][J]), .out(skid_pipe[I][J + 1]));
     end
 end
 
@@ -84,7 +86,7 @@ for (genvar I = 0; I < NUM_INPUTS; I++) begin
             end
         end
 
-        TaggedSkidBuffer #(data_t, 1) inst_skid_buffer (clk, reset_synced, matched[I][O], mux_in[O][I]);
+        TaggedSkidBuffer #(data_t, logic) inst_skid_buffer (clk, reset_synced, matched[I][O], mux_in[O][I]);
     end
 end 
 

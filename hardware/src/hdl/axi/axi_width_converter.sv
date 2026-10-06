@@ -3,6 +3,8 @@
 `include "axi_macros.svh"
 `include "libstf_macros.svh"
 
+import lynxTypes::AXI_DATA_BITS;
+
 /**
  * Converts an AXI stream to a different width.
  *
@@ -19,7 +21,7 @@ module AXIWidthConverter (
 localparam IN_WIDTH  = in.AXI4S_DATA_BITS;
 localparam OUT_WIDTH = out.AXI4S_DATA_BITS;
 
-`ASSERT_ELAB(IN_WIDTH == OUT_WIDTH || IN_WIDTH == 512 && OUT_WIDTH == 256)
+`ASSERT_ELAB(IN_WIDTH == OUT_WIDTH || (IN_WIDTH == 512 && OUT_WIDTH == 256))
 
 logic is_upper;
 

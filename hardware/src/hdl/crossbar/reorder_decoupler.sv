@@ -14,7 +14,7 @@ module ReorderDecoupler #(
     input logic rst_n,
     
     ndata_i.s  in,               // #(data_t, NUM_ELEMENTS)
-    tagged_i.m out[NUM_ELEMENTS] // #(data_t, SERIAL_WIDTH)
+    tagged_i.m out[NUM_ELEMENTS] // #(data_t, logic[SERIAL_WIDTH - 1:0])
 );
 
 typedef logic[SERIAL_WIDTH - 1:0] serial_t;
@@ -24,7 +24,7 @@ typedef struct packed {
     serial_t serial;
 } serial_data_t;
 
-ntagged_i #(data_t, SERIAL_WIDTH, NUM_ELEMENTS) enumerator_out(clk, rst_n);
+ntagged_i #(data_t, serial_t, NUM_ELEMENTS) enumerator_out(clk, rst_n);
 
 ndata_i #(serial_data_t, NUM_ELEMENTS) decoupler_in(clk, rst_n);
 data_i  #(serial_data_t)               decoupler_out[NUM_ELEMENTS](clk, rst_n);

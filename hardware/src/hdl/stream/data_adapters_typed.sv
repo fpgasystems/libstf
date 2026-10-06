@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
 import libstf::*;
 
 /**
@@ -8,7 +9,7 @@ import libstf::*;
  * but the width of the elements in the AXI stream may differ.
  */
 module NDataToAXITyped #(
-    parameter NUM_ELEMENTS
+  parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -21,6 +22,8 @@ module NDataToAXITyped #(
 
 localparam DATA_WIDTH = 64;
 localparam AXI_WIDTH = DATA_WIDTH * NUM_ELEMENTS;
+
+`WARN_IF_NOT(AXI_WIDTH == out.AXI4S_DATA_BITS, "AXI_WIDTH does not match out.AXI4S_DATA_BITS")
 
 typedef logic[AXI_WIDTH / 8 - 1:0] keep_t;
 
@@ -137,7 +140,7 @@ endmodule
  * but the width of the elements in the AXI stream may differ.
  */
 module AXIToNDataTyped #(
-    parameter NUM_ELEMENTS
+  parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -150,6 +153,8 @@ module AXIToNDataTyped #(
 
 localparam DATA_WIDTH = 64;
 localparam AXI_WIDTH = DATA_WIDTH * NUM_ELEMENTS;
+
+`WARN_IF_NOT(AXI_WIDTH == in.AXI4S_DATA_BITS, "AXI_WIDTH does not match in.AXI4S_DATA_BITS")
 
 logic is_upper;
 logic is_32bit;
@@ -203,7 +208,7 @@ module NDataToTypedNData #(
     input logic rst_n,
 
     ready_valid_i.s in_type,     // #(type_t)
-    ndata_i in,                  // #(data8_t, DATABEAT_SIZE)
+    ndata_i.s in,                // #(data8_t, DATABEAT_SIZE)
 
     typed_ndata_i.m out          // #(DATABEAT_SIZE)
 );

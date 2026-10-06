@@ -15,19 +15,19 @@ module TaggedDuplicator #(
     input logic clk,
     input logic rst_n,
 
-    tagged_i.s in,              // #(data_t, TAG_WIDTH)
-    tagged_i.m out[NUM_STREAMS] // #(data_t, TAG_WIDTH)
+    tagged_i.s in,              // #(data_t, tag_t)
+    tagged_i.m out[NUM_STREAMS] // #(data_t, tag_t)
 );
 
 `RESET_RESYNC // Reset pipelining
 
-localparam type    data_t    = in.data_t;
-localparam integer TAG_WIDTH = in.TAG_WIDTH;
+localparam type data_t = in.data_t;
+localparam type tag_t  = type(in.tag);
 
 logic[NUM_STREAMS - 1:0] internal_ready;
 logic[NUM_STREAMS - 1:0] seen, n_seen;
 
-tagged_i #(data_t, TAG_WIDTH) internal[NUM_STREAMS][NUM_SKID_STAGES + 1](clk, reset_synced);
+tagged_i #(data_t, tag_t) internal[NUM_STREAMS][NUM_SKID_STAGES + 1](clk, reset_synced);
 
 assign in.ready = &(seen | internal_ready);
 
@@ -59,7 +59,7 @@ for (genvar I = 0; I < NUM_STREAMS; I++) begin
     assign internal[I][0].valid = in.valid && !seen[I];
 
     for (genvar J = 0; J < NUM_SKID_STAGES; J++) begin
-        TaggedSkidBuffer #(data_t, TAG_WIDTH) inst_skid_buffer (.clk(clk), .rst_n(reset_synced), .in(internal[I][J]), .out(internal[I][J + 1]));
+        TaggedSkidBuffer #(data_t, tag_t) inst_skid_buffer (.clk(clk), .rst_n(reset_synced), .in(internal[I][J]), .out(internal[I][J + 1]));
     end
 
     assign internal[I][NUM_SKID_STAGES].ready = out[I].ready;

@@ -11,6 +11,7 @@ ResetResync inst_reset_resync ( \
 );
 
 `define ASSERT_ELAB(COND) if (!(COND)) $error("Assertion failed.");
+`define ASSERT_ELAB_MSG(COND, MSG) if (!(COND)) $error("Assertion failed. : %s", `"MSG`");
 
 `define STF_STRINGIFY(x) $sformatf("%0s", `"x`")
 
@@ -25,6 +26,8 @@ assert property (@(posedge clk) disable iff (!rst_n) \
 else $fatal(1, "Signal %s needs to be stable while valid && !ready!", `STF_STRINGIFY(sig));
 
 `define STF_ASSERT_SIGNAL_STABLE(sig) `STF_ASSERT_STABLE(sig, valid, ready)
+
+`define WARN_IF_NOT(COND, MSG) if (!(COND)) $error("[WARNING] %s", MSG);
 
 `define DATA_ASSIGN(s, m)         \
 	assign m.data      = s.data;  \

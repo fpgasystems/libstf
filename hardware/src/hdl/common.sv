@@ -91,21 +91,29 @@ endfunction
 // Constant function to return the bit width of type_t types
 function automatic int GET_TYPE_WIDTH(type_t data_type);
     case (data_type)
-        BYTE_T: begin
+        BYTE_T:
             return 8;
-        end
-        INT16_T: begin
+        INT16_T:
             return 16;
-        end
-        INT32_T, FLOAT_T: begin
+        INT32_T, FLOAT_T:
             return 32;
-        end
-        INT64_T, DOUBLE_T: begin
+        INT64_T, DOUBLE_T:
             return 64;
-        end
-        default: begin
+        default:
             return 0;
-        end
+    endcase
+endfunction
+
+function automatic int GET_TYPE_BYTES(type_t data_type);
+    case (data_type)
+        BYTE_T:
+            return 1;
+        INT32_T, FLOAT_T:
+            return 4;
+        INT64_T, DOUBLE_T:
+            return 8;
+        default:
+            return 0;
     endcase
 endfunction
 

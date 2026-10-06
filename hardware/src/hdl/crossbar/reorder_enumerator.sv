@@ -13,7 +13,7 @@ module ReorderEnumerator #(
     input logic rst_n,
     
     ndata_i.s   in, // #(data_t, NUM_ELEMENTS)
-    ntagged_i.m out // #(data_t, NUM_ELEMENTS, SERIAL_WIDTH)
+    ntagged_i.m out // #(data_t, logic[SERIAL_WIDTH - 1:0], NUM_ELEMENTS)
 );
 
 localparam DATA_BITS = $clog2(NUM_ELEMENTS);

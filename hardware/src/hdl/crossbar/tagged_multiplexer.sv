@@ -17,7 +17,7 @@ module TaggedMultiplexer #(
     input logic clk,
     input logic rst_n,
 
-    tagged_i.s in[NUM_INPUTS], // #(data_t, 1)
+    tagged_i.s in[NUM_INPUTS], // #(data_t, logic)
     data_i.m   out             // #(data_t)
 );
 
