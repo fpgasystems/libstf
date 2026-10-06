@@ -26,7 +26,10 @@ module OutputWriter (
     mem_config_i.s mem_config[N_STRM_AXI],
 
     AXI4S.s  data_in[N_STRM_AXI],
-    AXI4SR.m data_out[N_STRM_AXI]
+    AXI4SR.m data_out[N_STRM_AXI],
+
+    // Counts the interrupts (notifications) sent to the host.
+    output data64_t notify_count
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -76,8 +79,21 @@ MetaIntfArbiter #(
   .intf_out(notify)
 );
 
+// -- Notify counter -------------------------------------------------------------------------------
+data64_t notify_count_reg;
+
+always_ff @(posedge clk) begin
+    if (!reset_synced) begin
+        notify_count_reg <= '0;
+    end else if (notify.valid && notify.ready) begin
+        notify_count_reg <= notify_count_reg + 1;
+    end
+end
+
+assign notify_count = notify_count_reg;
+
 // -- FPGA-initiated transfers ---------------------------------------------------------------------
-for(genvar I = 0; I < N_STRM_AXI; I++) begin
+for(genvar I = 0; I < N_STRM_AXI; I++) begin : gen_stream_writers
 `ifndef DISABLE_OUTPUT_WRITER
     // Invoke the FPGA-initiated transfers for this stream
     StreamWriter #(

@@ -67,6 +67,7 @@ typedef struct packed {
     data64_t starved_cycles;
     data64_t stalled_cycles;
     data64_t idle_cycles;
+    data64_t last_handshakes; // Number of handshakes with last set, i.e. completed streams
 } stream_profile_t;
 
 // MemConfig

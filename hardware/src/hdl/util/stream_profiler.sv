@@ -4,9 +4,10 @@ import libstf::*;
 
 /**
  * A stream profiler that starts counting when it sees the first valid data beat. It counts the
- * number of handshakes, starved cycles, stalled cycles, and idle pauses after a stream finishes
- * with a last before the next stream arrives. Asserting stop returns the profiler to the WAIT 
- * state, holding its counters until the next valid data beat re-zeroes them.
+ * number of handshakes, starved cycles, stalled cycles, idle pauses after a stream finishes
+ * with a last before the next stream arrives, and last handshakes (i.e. completed streams).
+ * Asserting stop returns the profiler to the WAIT state, holding its counters until the next
+ * valid data beat re-zeroes them.
  *
  * Idle cycles between streams are accumulated in a separate register while in the IDLE state and are
  * only added to the idle count once the next valid data beat arrives, so trailing idle cycles after
@@ -37,6 +38,7 @@ data64_t starved_reg,    n_starved_reg;
 data64_t stalled_reg,    n_stalled_reg;
 data64_t idle_reg,       n_idle_reg;
 data64_t idle_acc_reg,   n_idle_acc_reg;
+data64_t last_reg,       n_last_reg;
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
@@ -47,6 +49,7 @@ always_ff @(posedge clk) begin
         stalled_reg    <= 'X;
         idle_reg       <= 'X;
         idle_acc_reg   <= 'X;
+        last_reg       <= 'X;
     end else begin
         state <= n_state;
 
@@ -55,6 +58,7 @@ always_ff @(posedge clk) begin
         stalled_reg    <= n_stalled_reg;
         idle_reg       <= n_idle_reg;
         idle_acc_reg   <= n_idle_acc_reg;
+        last_reg       <= n_last_reg;
     end
 end
 
@@ -66,6 +70,7 @@ always_comb begin
     n_stalled_reg    = stalled_reg;
     n_idle_reg       = idle_reg;
     n_idle_acc_reg   = idle_acc_reg;
+    n_last_reg       = last_reg;
 
     case (state)
         WAIT: begin
@@ -77,9 +82,15 @@ always_comb begin
                 n_stalled_reg    = '0;
                 n_idle_reg       = '0;
                 n_idle_acc_reg   = '0;
+                n_last_reg       = '0;
 
                 if (ready) begin
                     n_handshakes_reg = 1;
+
+                    if (last) begin
+                        n_state    = IDLE;
+                        n_last_reg = 1;
+                    end
                 end else begin
                     n_stalled_reg = 1;
                 end
@@ -91,7 +102,8 @@ always_comb begin
                     n_handshakes_reg = handshakes_reg + 1;
 
                     if (last) begin
-                        n_state = IDLE;
+                        n_state    = IDLE;
+                        n_last_reg = last_reg + 1;
                     end
                 end else begin
                     n_stalled_reg = stalled_reg + 1;
@@ -111,7 +123,8 @@ always_comb begin
                     n_handshakes_reg = handshakes_reg + 1;
 
                     if (last) begin
-                        n_state = IDLE;
+                        n_state    = IDLE;
+                        n_last_reg = last_reg + 1;
                     end
                 end else begin
                     n_stalled_reg = stalled_reg + 1;
@@ -132,7 +145,8 @@ assign counters_reg = '{
     handshakes_cycles: handshakes_reg,
     starved_cycles:    starved_reg,
     stalled_cycles:    stalled_reg,
-    idle_cycles:       idle_reg
+    idle_cycles:       idle_reg,
+    last_handshakes:   last_reg
 };
 
 ShiftRegister #(.WIDTH($bits(stream_profile_t)), .LEVELS(OUT_REG_LEVELS)) inst_counters_sr (
