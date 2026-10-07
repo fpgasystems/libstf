@@ -31,8 +31,8 @@ state_t state;
 
 buffer_t preview_buffer;
 for (genvar i = 0; i < PREVIEW_SIZE; ++i) begin
-    assign preview_buffer.data[NUM_ELEMENTS + i] = in.data[i];
-    assign preview_buffer.keep[NUM_ELEMENTS + i] = in.keep[i] && in.valid;
+    assign preview_buffer.data[NUM_ELEMENTS + i] = state == ST_GLUE ? in.data[i] : '0;
+    assign preview_buffer.keep[NUM_ELEMENTS + i] = in.keep[i] && in.valid && state == ST_GLUE;
 end
 
 logic do_ingest;
@@ -82,7 +82,7 @@ always_ff @( posedge clk ) begin : WordGlue_FSM
 end
 
 assign in.ready = 
-    state == ST_WAIT_FIRST || (state == ST_GLUE && out.ready);
+    state == ST_WAIT_FIRST || out.ready;
 assign out.valid = state == ST_EMIT_LAST || (state == ST_GLUE && in.valid);
 assign out.data = preview_buffer.data;
 assign out.keep = preview_buffer.keep;

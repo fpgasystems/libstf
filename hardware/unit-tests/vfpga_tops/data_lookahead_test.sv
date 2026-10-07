@@ -97,12 +97,23 @@ NDataToAXI #(
 for (genvar i = 0; i < NUM_ELEMENTS; ++i) begin
     assign out_stream_0.data[i] = preview_out.data[i];
     assign out_stream_0.keep[i] = preview_out.keep[i];
-    assign out_stream_1.data[i] = i < PREVIEW_SIZE ? preview_out.data[NUM_ELEMENTS + i] : 0;
-    assign out_stream_1.keep[i] = i < PREVIEW_SIZE & preview_out.keep[NUM_ELEMENTS + i];
 end
-
 assign out_stream_0.last = preview_out.last;
 assign out_stream_0.valid = preview_out.valid && out_stream_1.ready;
+
+// Stream 1 contains the lookahead bytes + one additional byte denoting the keeps
+// of the lookahead bytes
+for (genvar i = 0; i < PREVIEW_SIZE; ++i) begin
+    assign out_stream_1.data[i] = preview_out.keep[NUM_ELEMENTS + i] ? preview_out.data[NUM_ELEMENTS + i] : 0;
+end
+for (genvar i = PREVIEW_SIZE + 1; i < NUM_ELEMENTS; ++i) begin
+    assign out_stream_1.data[i] = 0;
+end
+assign out_stream_1.data[PREVIEW_SIZE] = data8_t'(preview_out.keep[NUM_ELEMENTS +: PREVIEW_SIZE]);
+for (genvar i = 0; i < NUM_ELEMENTS; ++i) begin
+    assign out_stream_1.keep[i] = i <= PREVIEW_SIZE;
+end
 assign out_stream_1.last = preview_out.last;
 assign out_stream_1.valid = preview_out.valid && out_stream_0.ready;
+
 assign preview_out.ready = out_stream_0.ready && out_stream_1.ready;
