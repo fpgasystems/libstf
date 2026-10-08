@@ -1,5 +1,8 @@
 `timescale 1ns / 1ps
 
+import libstf::type_t;
+import libstf::data8_t;
+
 module SkidBuffer #(
     parameter type data_t
 ) (
@@ -135,18 +138,18 @@ endmodule
 
 module TaggedSkidBuffer #(
     parameter type data_t,
-    parameter TAG_WIDTH
+    parameter type tag_t
 ) (
     input logic clk,
     input logic rst_n,
 
-    tagged_i.s in, // #(data_t, TAG_WIDTH)
-    tagged_i.m out // #(data_t, TAG_WIDTH)
+    tagged_i.s in, // #(data_t, tag_t)
+    tagged_i.m out // #(data_t, tag_t)
 );
 
 typedef struct packed {
-    data_t                 data;
-    logic[TAG_WIDTH - 1:0] tag;
+    data_t data;
+    tag_t  tag;
 } tmp_t;
 
 data_i #(tmp_t) data_in(clk, rst_n), data_out(clk, rst_n);
@@ -179,17 +182,15 @@ endmodule
 
 module NTaggedSkidBuffer #(
     parameter type data_t,
-    parameter TAG_WIDTH,
+    parameter type tag_t,
     parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
 
-    ntagged_i.s in, // #(data_t, TAG_WIDTH, NUM_ELEMENTS) 
-    ntagged_i.m out // #(data_t, TAG_WIDTH, NUM_ELEMENTS)
+    ntagged_i.s in, // #(data_t, tag_t, NUM_ELEMENTS)
+    ntagged_i.m out // #(data_t, tag_t, NUM_ELEMENTS)
 );
-
-typedef logic[TAG_WIDTH - 1:0] tag_t;
 
 typedef struct packed {
     data_t[NUM_ELEMENTS - 1:0] data;
@@ -269,19 +270,21 @@ assign skid_out.ready = out.tready;
 endmodule
 
 module TypedNDataSkidBuffer #(
-    parameter DATABEAT_SIZE
+    parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
 
-    typed_ndata_i.s in, // #(DATABEAT_SIZE) 
-    typed_ndata_i.m out // #(DATABEAT_SIZE)
+    typed_ndata_i.s in, // #(NUM_ELEMENTS) 
+    typed_ndata_i.m out // #(NUM_ELEMENTS)
 );
 
+localparam type data_t = in.data_t;
+
 typedef struct packed {
-    data8_t[DATABEAT_SIZE - 1:0] data;
+    data_t[NUM_ELEMENTS - 1:0] data;
     type_t                     typ;
-    logic[DATABEAT_SIZE - 1:0]  keep;
+    logic[NUM_ELEMENTS - 1:0]  keep;
     logic                      last;
 } tmp_t;
 

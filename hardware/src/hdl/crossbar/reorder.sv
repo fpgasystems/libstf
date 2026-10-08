@@ -12,7 +12,7 @@ module Reorder #(
     input logic clk,
     input logic rst_n,
 
-    tagged_i.s in, // #(data_t, SERIAL_WIDTH)
+    tagged_i.s in, // #(data_t, logic[SERIAL_WIDTH - 1:0])
     data_i.m  out  // #(data_t)
 );
 

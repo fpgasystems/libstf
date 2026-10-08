@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
 import libstf::*;
 
 /**
@@ -8,7 +9,7 @@ import libstf::*;
  * but the width of the elements in the AXI stream may differ.
  */
 module NDataToAXITyped #(
-    parameter NUM_ELEMENTS
+  parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -19,8 +20,10 @@ module NDataToAXITyped #(
     AXI4S.m   out // #(AXI_WIDTH)
 );
 
-localparam DATA_WIDTH = 64;
-localparam AXI_WIDTH = DATA_WIDTH * NUM_ELEMENTS;
+localparam int DATA_WIDTH = $bits(in.data_t);
+parameter AXI_WIDTH = DATA_WIDTH * NUM_ELEMENTS;
+
+`WARN_IF_NOT(AXI_WIDTH == out.AXI4S_DATA_BITS, "AXI_WIDTH does not match out.AXI4S_DATA_BITS")
 
 typedef logic[AXI_WIDTH / 8 - 1:0] keep_t;
 
@@ -134,7 +137,7 @@ endmodule
  * but the width of the elements in the AXI stream may differ.
  */
 module AXIToNDataTyped #(
-    parameter NUM_ELEMENTS
+  parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -145,8 +148,10 @@ module AXIToNDataTyped #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam DATA_WIDTH = 64;
+localparam int DATA_WIDTH = $bits(out.data_t);
 localparam AXI_WIDTH = DATA_WIDTH * NUM_ELEMENTS;
+
+`WARN_IF_NOT(AXI_WIDTH == in.AXI4S_DATA_BITS, "AXI_WIDTH does not match in.AXI4S_DATA_BITS")
 
 logic is_upper;
 logic is_32bit;
@@ -194,16 +199,19 @@ endmodule
  * Converts an data8_t ndata stream to a typed ndata stream.
  */
 module NDataToTypedNData #(
-    parameter DATABEAT_SIZE
+  parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
 
     ready_valid_i.s in_type,     // #(type_t)
-    ndata_i in,                  // #(data8_t, DATABEAT_SIZE)
+    ndata_i.s in,                  // #(data_t, NUM_ELEMENTS)
 
-    typed_ndata_i.m out          // #(DATABEAT_SIZE)
+    typed_ndata_i.m out          // #(NUM_ELEMENTS)
 );
+
+`WARN_IF_NOT(NUM_ELEMENTS == in.NUM_ELEMENTS, "in.NUM_ELEMENTS does not match DATABEAT_SIZE")
+`WARN_IF_NOT(NUM_ELEMENTS == out.NUM_ELEMENTS, "out.NUM_ELEMENTS does not match DATABEAT_SIZE")
 
 valid_i #(type_t) keep_type(clk, rst_n);
 always_ff @(posedge clk) begin
@@ -240,7 +248,7 @@ end
 assign in_type.ready = ~keep_type.valid;
 assign in.ready = typ.valid && out.ready; // ready chaining
 
-for (genvar I = 0; I < DATABEAT_SIZE; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
     assign out.data[I] = in.data[I];
     assign out.keep[I] = in.keep[I];
 end
@@ -255,8 +263,7 @@ endmodule
  * Converts an AXI stream to a typed ndata stream.
  */
 module AXIToTypedNData #(
-    parameter DATABEAT_SIZE,
-    parameter AXI_WIDTH = DATABEAT_SIZE * 8
+    parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -267,12 +274,20 @@ module AXIToTypedNData #(
     typed_ndata_i.m out          // #(DATABEAT_SIZE)
 );
 
-ndata_i #(data8_t, DATABEAT_SIZE) inner(clk, rst_n);
+localparam type data_t = out.data_t;
+localparam int AXI_WIDTH = NUM_ELEMENTS * $bits(data_t);
+localparam int NUM_AXI_ELEMENTS = AXI_WIDTH / $bits(data_t);
+
+`WARN_IF_NOT(AXI_WIDTH == in.AXI4S_DATA_BITS, "AXIS in does not match expected output width")
+`WARN_IF_NOT(NUM_ELEMENTS == out.NUM_ELEMENTS, "out.NUM_ELEMENTS does not match NUM_ELEMENTS")
+
+ndata_i #(data_t, NUM_ELEMENTS) inner(clk, rst_n);
 
 AXIToNData #(
-    .data_t(data8_t),
-    .NUM_ELEMENTS(DATABEAT_SIZE),
-    .AXI_WIDTH(AXI_WIDTH)
+    .data_t(data_t),
+    .NUM_ELEMENTS(NUM_ELEMENTS),
+    .AXI_WIDTH(AXI_WIDTH),
+    .NUM_AXI_ELEMENTS(NUM_AXI_ELEMENTS)
 ) inst_axi_to_ndata (
     .clk(clk),
     .rst_n(rst_n),
@@ -282,7 +297,7 @@ AXIToNData #(
 );
 
 NDataToTypedNData #(
-    .DATABEAT_SIZE(DATABEAT_SIZE)
+    .NUM_ELEMENTS (NUM_ELEMENTS)
 ) inst_ndata_to_typed_ndata (
     .clk(clk),
     .rst_n(rst_n),
@@ -299,18 +314,23 @@ endmodule
  * Converts a typed ndata stream into an AXI stream.
  */
 module TypedNDataToAXI #(
-    parameter DATABEAT_SIZE,
-    parameter AXI_WIDTH = DATABEAT_SIZE * 8
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
 
-    typed_ndata_i.s in,         // #(DATABEAT_SIZE)
+    typed_ndata_i.s in,         // #(data_t, DATABEAT_SIZE)
 
     AXI4S.m out                 // #(AXI_WIDTH)
 );
 
-ndata_i #(data8_t, DATABEAT_SIZE) inner(clk, rst_n);
+localparam type data_t = in.data_t;
+localparam int AXI_WIDTH = NUM_ELEMENTS * $bits(data_t);
+
+`WARN_IF_NOT(NUM_ELEMENTS == in.NUM_ELEMENTS, "in.NUM_ELEMENTS does not match NUM_ELEMENTS")
+`WARN_IF_NOT(AXI_WIDTH == out.AXI4S_DATA_BITS, "AXIS out does not match expected input width")
+
+ndata_i #(data_t, NUM_ELEMENTS) inner (clk, rst_n);
 
 // Discard the typ field on the typed_ndata_i.
 // After that, typed_ndata_i is the same as ndata_i.
@@ -318,7 +338,7 @@ ndata_i #(data8_t, DATABEAT_SIZE) inner(clk, rst_n);
 
 NDataToAXI #(
     .data_t(data8_t),
-    .NUM_ELEMENTS(DATABEAT_SIZE),
+    .NUM_ELEMENTS(NUM_ELEMENTS),
     .AXI_WIDTH(AXI_WIDTH)
 ) inst_axi_to_ndata (
     .clk(clk),

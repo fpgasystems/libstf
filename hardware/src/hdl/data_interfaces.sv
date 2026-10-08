@@ -163,13 +163,13 @@ endinterface
 
 interface tagged_i #(
     parameter type data_t,
-    parameter TAG_WIDTH
+    parameter type tag_t
 ) (
     input logic clk,
     input logic rst_n
 );
     data_t                 data;
-    logic[TAG_WIDTH - 1:0] tag;
+    tag_t                  tag;
     logic                  keep;
     logic                  last;
     logic                  valid;
@@ -182,7 +182,7 @@ interface tagged_i #(
         last  = 1'b0;
         valid = 1'b0;
     endtask
-    
+
     task tie_off_s(); // Tie off unused master signals
         ready = 1'b0;
     endtask
@@ -212,13 +212,12 @@ endinterface
 
 interface ntagged_i #(
     parameter type data_t,
-    parameter TAG_WIDTH,
+    parameter type tag_t = data8_t,
     parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n
 );
-    typedef logic[TAG_WIDTH - 1:0] tag_t;
 
     data_t[NUM_ELEMENTS - 1:0] data;
     tag_t[NUM_ELEMENTS - 1:0]  tag;
@@ -234,7 +233,7 @@ interface ntagged_i #(
         last  = 1'b0;
         valid = 1'b0;
     endtask
-    
+
     task tie_off_s(); // Tie off unused master signals
         ready = 1'b0;
     endtask
@@ -263,14 +262,15 @@ interface ntagged_i #(
 endinterface
 
 interface typed_ndata_i #(
-    parameter DATABEAT_SIZE
+    parameter NUM_ELEMENTS,
+    parameter type data_t = data8_t
 ) (
     input logic clk,
     input logic rst_n
 );
-    data8_t[DATABEAT_SIZE - 1:0] data;
+    data_t[NUM_ELEMENTS - 1:0] data;
     type_t                       typ; // Type cannot be used as it's a keyword in SystemVerilog
-    logic[DATABEAT_SIZE - 1:0]   keep;
+    logic[NUM_ELEMENTS - 1:0]   keep;
     logic                        last;
     logic                        valid;
     logic                        ready;
@@ -282,7 +282,7 @@ interface typed_ndata_i #(
         last  = 1'b0;
         valid = 1'b0;
     endtask
-    
+
     task tie_off_s(); // Tie off unused master signals
         ready = 1'b0;
     endtask

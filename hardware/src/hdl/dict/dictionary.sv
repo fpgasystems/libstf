@@ -42,6 +42,8 @@ localparam SERIAL_WIDTH = LOG_MAX_IN_TRANSIT + LOG_NUM_ELEMENTS;
 
 typedef logic[SERIAL_WIDTH - 1:0]            full_serial_t;
 typedef logic[LOG_MAX_IN_TRANSIT - 1:0]      serial_t;
+typedef logic[LOG_NUM_BANKS - 1:0]           bank_t;
+typedef logic[LOG_NUM_ELEMENTS - 1:0]        lane_t;
 typedef logic[ID_BITS - LOG_NUM_BANKS - 1:0] bank_id_t;
 
 typedef struct packed {
@@ -63,22 +65,22 @@ ndata_i  #(value_t, NUM_BANKS) values_converted(clk, rst_n);
 
 ndata_i  #(id_t, NUM_ELEMENTS) creditor_out(clk, rst_n);
 ndata_i  #(id_t, NUM_ELEMENTS) deduplicate_out(clk, rst_n);
-tagged_i #(id_t, SERIAL_WIDTH) decoupler_out[NUM_ELEMENTS](clk, rst_n);
+tagged_i #(id_t, full_serial_t) decoupler_out[NUM_ELEMENTS](clk, rst_n);
 
 data_i #(value_t) value_decoupler_out[NUM_BANKS](clk, rst_n);
 
 valid_i #(logic[NUM_ELEMENTS:0]) coupler_mask(clk, rst_n); // NUM_ELEMENTS keep bits and 1 last bit
 duplicate_i #(NUM_ELEMENTS) deduplicate_mask(); 
 
-tagged_i #(serial_id_t, LOG_NUM_BANKS) pre_cross_in[NUM_ELEMENTS](clk, rst_n);
+tagged_i #(serial_id_t, bank_t) pre_cross_in[NUM_ELEMENTS](clk, rst_n);
 data_i   #(serial_id_t)                pre_cross_out[NUM_BANKS](clk, rst_n);
 
 data_i #(full_serial_value_t) bank_out[NUM_BANKS](clk, rst_n);
 
-tagged_i #(serial_value_t, LOG_NUM_ELEMENTS) post_cross_in[NUM_BANKS](clk, rst_n);
+tagged_i #(serial_value_t, lane_t) post_cross_in[NUM_BANKS](clk, rst_n);
 data_i   #(serial_value_t)                   post_cross_out[NUM_ELEMENTS](clk, rst_n);
 
-tagged_i #(value_t, LOG_MAX_IN_TRANSIT) reorder_in[NUM_ELEMENTS](clk, rst_n);
+tagged_i #(value_t, serial_t) reorder_in[NUM_ELEMENTS](clk, rst_n);
 data_i   #(value_t)                     reorder_out[NUM_ELEMENTS](clk, rst_n);
 
 ndata_i  #(value_t, NUM_ELEMENTS)       coupler_out(clk, rst_n);

@@ -17,7 +17,7 @@ module TaggedMultiplexer #(
     input logic clk,
     input logic rst_n,
 
-    tagged_i.s in[NUM_INPUTS], // #(data_t, TAG_WIDTH)
+    tagged_i.s in[NUM_INPUTS], // #(data_t, logic[TAG_WIDTH - 1:0])
     data_i.m   out             // #(data_t)
 );
 
@@ -29,7 +29,7 @@ localparam FORWARD = 1;
 
 // -- 1. stage: Tag matching to simplify multiplexing logic slightly -------------------------------
 logic[NUM_INPUTS - 1:0] tag_matches;
-tagged_i #(data_t, 1) matched[NUM_INPUTS](clk, rst_n), mux_in[NUM_INPUTS](clk, reset_synced);
+tagged_i #(data_t, logic) matched[NUM_INPUTS](clk, rst_n), mux_in[NUM_INPUTS](clk, reset_synced);
 
 for (genvar I = 0; I < NUM_INPUTS; I++) begin
     assign tag_matches[I] = in[I].tag == ID;
@@ -52,7 +52,7 @@ for (genvar I = 0; I < NUM_INPUTS; I++) begin
         end
     end
 
-    TaggedSkidBuffer #(data_t, 1) inst_internal_buffer (.clk(clk), .rst_n(reset_synced), .in(matched[I]), .out(mux_in[I]));
+    TaggedSkidBuffer #(data_t, logic) inst_internal_buffer (.clk(clk), .rst_n(reset_synced), .in(matched[I]), .out(mux_in[I]));
 end
 
 // -- 2. stage: Multiplex round robin --------------------------------------------------------------

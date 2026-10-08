@@ -81,7 +81,7 @@ assign stream_config[0].select_ready = 1'b1;
 // Values
 `AXIS_ASSIGN(axis_host_recv[0], axi_host_recv_0) // AXI4SR to AXI4S
 AXIToTypedNData #(
-    .DATABEAT_SIZE(DATABEAT_SIZE)
+    .NUM_ELEMENTS(DATABEAT_SIZE)
 ) inst_values_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
@@ -124,7 +124,7 @@ TypedDictionary #(
 
 // -- Output multiplexing --------------------------------------------------------------------------
 TypedNDataToAXI #(
-    .DATABEAT_SIZE(DATABEAT_SIZE)
+    .NUM_ELEMENTS(DATABEAT_SIZE)
 ) inst_data_to_axi (
     .clk(clk),
     .rst_n(rst_n),

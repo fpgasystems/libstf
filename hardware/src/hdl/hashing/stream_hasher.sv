@@ -11,7 +11,7 @@ module StreamHasher #(
     input logic rst_n,
 
     ndata_i.s   in, // #(tuple_t, NUM_TUPLES)
-    ntagged_i.m out // #(tuple_t, NUM_TUPLES, HASH_WIDTH) 
+    ntagged_i.m out // #(tuple_t, logic[HASH_WIDTH - 1:0], NUM_TUPLES)
 );
 
 localparam KEY_WIDTH = $bits(tuple_t.key);
