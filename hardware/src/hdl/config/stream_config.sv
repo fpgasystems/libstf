@@ -4,7 +4,8 @@
 `include "config_macros.svh"
 
 module StreamConfig #(
-    parameter NUM_STREAMS
+    parameter NUM_STREAMS,
+    parameter MAX_OUTSTANDING_STREAMS = 64 // Configs that can be enqueued per stream
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,8 +17,6 @@ module StreamConfig #(
 );
 
 `RESET_RESYNC // Reset pipelining
-
-localparam MAX_OUTSTANDING_STREAMS = 64;
 
 // -- Read -----------------------------------------------------------------------------------------
 logic[AXIL_DATA_BITS - 1:0] read_registers[2];

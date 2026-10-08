@@ -398,6 +398,10 @@ SimpleMemoryPool::~SimpleMemoryPool() {
 }
 
 Status SimpleMemoryPool::allocate(size_t size, size_t alignment, void **out) {
+    // The linear allocator is not thread-safe: without the lock, concurrent allocations can read the
+    // same offset and get overlapping memory
+    std::lock_guard<std::recursive_mutex> lock(allocated_buffers_mutex);
+
     if (size == 0) {
         *out = nullptr;
     } else {
@@ -411,10 +415,7 @@ Status SimpleMemoryPool::allocate(size_t size, size_t alignment, void **out) {
         bytes_allocated_ += size;
     }
 
-    {
-        std::lock_guard<std::recursive_mutex> lock(allocated_buffers_mutex);
-        allocated_buffers.emplace(*out, size);
-    }
+    allocated_buffers.emplace(*out, size);
     num_allocs_++;
 
     return Status::OK();
@@ -451,11 +452,10 @@ Status SimpleMemoryPool::reallocate(size_t old_size, size_t new_size, size_t ali
 
 void SimpleMemoryPool::free(void *ptr, size_t size, size_t alignment) {
     if (ptr) {
+        std::lock_guard<std::recursive_mutex> lock(allocated_buffers_mutex);
         bytes_allocated_ -= size;
         num_allocs_ -= 1;
         linear_allocator_.free(ptr);
-
-        std::lock_guard<std::recursive_mutex> lock(allocated_buffers_mutex);
         allocated_buffers.erase(ptr);
     }
 }

@@ -110,9 +110,27 @@ for (genvar I = 0; I < N_STRM_AXI; I++) begin
 end
 
 // -- Output writer --------------------------------------------------------------------------------
+// The test bench cannot send an empty transfer, i.e. a lone beat with keep == 0 and last.
+// Instead, a test sends a transfer of a single 64-bit element with the value EMPTY_TRANSFER_MAGIC
+// (see output_writer_test.py), which is turned into such a beat here, in place.
+// Keep the value in sync with the one in output_writer_test.py.
+localparam data64_t EMPTY_TRANSFER_MAGIC = 64'hDEAD_BEEF_0BAD_F00D;
+
+AXI4S axi_host_recv_raw[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
 AXI4S axi_host_recv[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
 for (genvar I = 0; I < N_STRM_AXI; I++) begin
-    `AXIS_ASSIGN(axis_host_recv[I], axi_host_recv[I]) // AXI4SR to AXI4S
+    `AXIS_ASSIGN(axis_host_recv[I], axi_host_recv_raw[I]) // AXI4SR to AXI4S
+
+    logic is_empty_transfer_marker;
+    assign is_empty_transfer_marker = axi_host_recv_raw[I].tlast
+        && axi_host_recv_raw[I].tkeep == 'hFF // Exactly one 64-bit element
+        && axi_host_recv_raw[I].tdata[63:0] == EMPTY_TRANSFER_MAGIC;
+
+    assign axi_host_recv[I].tdata  = axi_host_recv_raw[I].tdata;
+    assign axi_host_recv[I].tkeep  = is_empty_transfer_marker ? '0 : axi_host_recv_raw[I].tkeep;
+    assign axi_host_recv[I].tlast  = axi_host_recv_raw[I].tlast;
+    assign axi_host_recv[I].tvalid = axi_host_recv_raw[I].tvalid;
+    assign axi_host_recv_raw[I].tready = axi_host_recv[I].tready;
 end
 
 OutputWriter inst_output_writer (
