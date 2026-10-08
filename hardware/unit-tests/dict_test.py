@@ -1,10 +1,11 @@
 from itertools import repeat
 import random
 from typing import List
-from coyote_test import fpga_test_case, fpga_performance_test_case, fpga_register
+from coyote_test import fpga_performance_test_case
 from unit_test import simulation_time
 from unit_test.fpga_stream import get_bytes_for_stream_type, Stream, StreamType
-from libstf_utils.common import stream_type_to_libstf_type_t
+from libstf_utils.configured_test_case import ConfiguredTestCase
+from libstf_utils.fpga_configuration import StreamConfig, register
 
 class DictExpression:
     def __init__(
@@ -44,7 +45,7 @@ class DictTestMixin():
         super().setUp()
         self.expression: DictExpression = None
 
-    def simulate_fpga(self):
+    def configure(self):
         assert self.expression is not None, (
             "Cannot have dictionary test with empty dictionary expression!"
         )
@@ -55,10 +56,7 @@ class DictTestMixin():
             assert get_bytes_for_stream_type(stream_type) in (4, 8), (
                 "Only 32bit and 64bit columns are supported by dictionary"
             )
-            type_reg = stream_type_to_libstf_type_t(stream_type)
-
-            # 3 offset for global regs
-            self.write_register(fpga_register.vFPGARegister(3, bytearray([type_reg])))
+            self.write_type_config(stream_type)
 
         # Set the input data
         for values in self.expression.values:
@@ -70,16 +68,20 @@ class DictTestMixin():
         for results in self.expression.apply():
             self.set_expected_output(0, results)
 
+    def simulate_fpga(self):
         self.overwrite_simulation_time(simulation_time.SimulationTime.till_finished())
         return super().simulate_fpga()
 
-class DictTest(DictTestMixin, fpga_test_case.FPGATestCase):
+class DictTest(DictTestMixin, ConfiguredTestCase):
     """
     These tests test the dictionary.
     """
 
     debug_mode = True
     verbose_logging = True
+
+    def write_type_config(self, stream_type: StreamType):
+        self.config.get_config(StreamConfig).enqueue_stream_config(0, stream_type)
 
     def test_sequential_32bit_once(self):
         values = Stream(StreamType.UNSIGNED_INT_32, list(range(0, 500)))
@@ -187,6 +189,19 @@ class DictTest(DictTestMixin, fpga_test_case.FPGATestCase):
 class DictPerformanceTest(DictTestMixin, fpga_performance_test_case.FPGAPerformanceTestCase):
     debug_mode = True
     verbose_logging = True
+
+    # Register of stream 0 in the StreamConfig, which follows the 3 global registers
+    STREAM_CONFIG_REGISTER = 3
+
+    def write_type_config(self, stream_type: StreamType):
+        # Written directly to avoid the timing jitter of the configuration discovery
+        self.write_register(
+            register(self.STREAM_CONFIG_REGISTER, StreamConfig.register_value(stream_type))
+        )
+
+    def simulate_fpga(self):
+        self.configure()
+        return super().simulate_fpga()
 
     def test_sequential_64bit(self):
         NUM_VALUES = 500

@@ -24,7 +24,7 @@ class OutputWriterMixin(ConfiguredTestCase):
         super().setUp()
         self.memory_manager = FPGAOutputMemoryManager(
             self.get_io_writer(),
-            self.global_config,
+            self.config,
             all_done_callback=self.memory_manager_all_done_callback_spawner,
         )
         # Streams who's output is expected on the card stream
@@ -75,6 +75,10 @@ class OutputWriterMixin(ConfiguredTestCase):
     def simulate_fpga_non_blocking(self):
         self.overwrite_simulation_time(simulation_time.SimulationTime.till_finished())
         return super().simulate_fpga_non_blocking()
+
+    def finish_input(self, end_event):
+        # The memory manager marks all input as done once all expected transfers completed
+        pass
 
     def finish_fpga_simulation(self):
         super().finish_fpga_simulation()
