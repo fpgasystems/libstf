@@ -70,8 +70,8 @@ typedef struct packed {
 typedef data8_t select_t;
 
 typedef struct packed {
-    type_t   data_type;
     select_t select;
+    type_t   data_type;
 } stream_conf_t;
 
 // Determines whether a pipeline register should be placed on pipe `pos` (1..num_stages) when

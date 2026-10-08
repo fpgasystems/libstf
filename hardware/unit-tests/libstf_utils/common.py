@@ -1,5 +1,4 @@
 from coyote_test import constants
-from unit_test.fpga_stream import StreamType
 
 # The interrupt value has 32 bits.
 # We need 3 bits for the stream indicator and 1 bit for the last signal.
@@ -26,17 +25,3 @@ assert INTERRUPT_STREAM_ID_BITS + INTERRUPT_TRANSFER_SIZE_BITS + INTERRUPT_LAST_
     "The sum of all the bits in the interrupt value cannot be larger "
     + "than the available data size of 32 bit."
 )
-
-def stream_type_to_libstf_type_t(data_type: StreamType) -> int:
-    if data_type == StreamType.UNSIGNED_INT_8 or data_type == StreamType.SIGNED_INT_8:
-        return 0
-    elif data_type == StreamType.SIGNED_INT_32 or data_type == StreamType.UNSIGNED_INT_32:
-        return 1
-    elif data_type == StreamType.SIGNED_INT_64 or data_type == StreamType.UNSIGNED_INT_64:
-        return 2
-    elif data_type == StreamType.FLOAT_32:
-        return 3
-    elif data_type == StreamType.FLOAT_64:
-        return 4
-    else:
-        raise TypeError(f"The provided StreamType cannot be cast to libstf's type_t: {repr(data_type)}")

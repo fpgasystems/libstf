@@ -104,9 +104,9 @@ class FPGAOutputMemoryManager:
         """
         Writes the required register values to the FPGA for the given data
         """
-        mem_config = MemConfig(self.global_config, stream_id, vaddr, size_bytes, self.transfer_size)
-        for config in mem_config.to_register_configuration():
-            self.io_writer.ctrl_write(config)
+        self.global_config.get_config(MemConfig).enqueue_buffer(
+            stream_id, vaddr, size_bytes, self.transfer_size
+        )
 
     def _extract_bits_from_int32(self, value: int, start_bit: int, num_bits: int):
         """

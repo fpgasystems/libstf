@@ -1,10 +1,10 @@
 import random
-from coyote_test import fpga_test_case, fpga_register
 from unit_test.fpga_stream import get_bytes_for_stream_type, Stream, StreamType
-from libstf_utils.common import stream_type_to_libstf_type_t
+from libstf_utils.configured_test_case import ConfiguredTestCase
+from libstf_utils.fpga_configuration import StreamConfig
 from dict_test import DictExpression
 
-class TypedDictTest(fpga_test_case.FPGATestCase):
+class TypedDictTest(ConfiguredTestCase):
     """
     These tests test the typed dictionary.
     """
@@ -18,21 +18,19 @@ class TypedDictTest(fpga_test_case.FPGATestCase):
         super().setUp()
         self.expression: DictExpression = None
 
-    def simulate_fpga(self):
+    def configure(self):
         assert self.expression is not None, (
             "Cannot have dictionary test with empty dictionary expression!"
         )
 
         # Configuration
+        stream_config = self.config.get_config(StreamConfig)
         for values in self.expression.values:
             stream_type = values.stream_type()
             assert get_bytes_for_stream_type(stream_type) in (4, 8), (
                 "Only 32bit and 64bit columns are supported by dictionary"
             )
-            type_reg = stream_type_to_libstf_type_t(stream_type)
-
-            # 3 offset for global regs
-            self.write_register(fpga_register.vFPGARegister(3, bytearray([type_reg]))) 
+            stream_config.enqueue_stream_config(0, stream_type)
 
         # Set the input data
         for values in self.expression.values:
@@ -43,8 +41,6 @@ class TypedDictTest(fpga_test_case.FPGATestCase):
         # Set the expected output data
         for results in self.expression.apply():
             self.set_expected_output(0, results)
-
-        return super().simulate_fpga()
 
     def test_sequential_32bit(self):
         values = Stream(StreamType.UNSIGNED_INT_32, list(range(0, 500)))
