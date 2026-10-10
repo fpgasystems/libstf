@@ -6,6 +6,7 @@ import threading
 from coyote_test import (
     fpga_test_case,
     io_writer,
+    simulation_time,
 )
 from libstf_utils.fpga_configuration import GlobalConfig
 
@@ -17,11 +18,16 @@ class ConfiguredTestCase(fpga_test_case.FPGATestCase):
     reads. Therefore, all configuration writes, inputs, and expected outputs have to be set in
     configure(), which simulate_fpga() calls after the configuration discovery.
 
+    The configuration discovery takes a varying amount of simulation time, so the simulation runs
+    till it finished by default instead of for a fixed time.
+
     Performance tests should write the configuration registers directly instead, see the README.
     """
 
     def setUp(self):
         super().setUp()
+
+        self.overwrite_simulation_time(simulation_time.SimulationTime.till_finished())
 
         self.config = GlobalConfig(self)
 

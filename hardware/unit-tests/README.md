@@ -12,7 +12,8 @@ PYTHONPATH=../build-sim:../../coyote/sim python3 -m unittest -v dict_test
 
 Tests of designs with a `GlobalConfig` derive from `ConfiguredTestCase`. It discovers the
 configuration after the simulation starts and then calls `configure()`, where you write the
-configuration and set the inputs and expected outputs:
+configuration and set the inputs and expected outputs. Because the discovery takes a varying amount of
+simulation time, these tests run the simulation till it finished instead of for a fixed time:
 
 ```python
 class MyTest(ConfiguredTestCase):
