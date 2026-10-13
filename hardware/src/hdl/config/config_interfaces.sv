@@ -114,7 +114,7 @@ endinterface
 /**
  * Interface that bundles all memory configuration information for the OutputWriter module.
  */
-interface mem_config_i(
+interface mem_config_i (
     input logic clk,
     input logic rst_n
 );
@@ -149,5 +149,47 @@ interface mem_config_i(
     `STF_ASSERT_NOT_UNDEFINED(buffer_ready);
 
     `STF_ASSERT_NOT_UNDEFINED(flush_buffers);
+`endif
+endinterface
+
+/**
+ * Interface that configures a ReplayBuffer.
+ */
+interface replay_buffer_config_i (
+    input logic clk,
+    input logic rst_n
+);
+    vaddress_t base; // Must be aligned to AXI_DATA_BITS / 8 bytes
+    vaddress_t size; // In bytes
+    logic valid;
+
+    `READY_VALID_SIGNALS(data32_t, num_reads)
+
+    task tie_off_m();
+        valid           = 1'b0;
+        num_reads_valid = 1'b0;
+    endtask
+
+    modport m (
+        import tie_off_m,
+        output base, size, valid, num_reads_data, num_reads_valid,
+        input num_reads_ready
+    );
+
+    modport writer (
+        input base, size, valid
+    );
+
+    modport reader (
+        input base, size, valid, num_reads_data, num_reads_valid,
+        output num_reads_ready
+    );
+
+`ifndef SYNTHESIS
+    `STF_ASSERT_NOT_UNDEFINED(valid);
+
+    `STF_ASSERT_STABLE(num_reads_data, num_reads_valid, num_reads_ready);
+    `STF_ASSERT_NOT_UNDEFINED(num_reads_valid);
+    `STF_ASSERT_NOT_UNDEFINED(num_reads_ready);
 `endif
 endinterface

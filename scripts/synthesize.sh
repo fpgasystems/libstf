@@ -16,6 +16,7 @@ is left untouched) before the bitstream generation starts.
 Test cases:
   output-writer        Build the output writer test case.
   typed-dict           Build the typed dictionary test case.
+  replay-buffer        Build the replay buffer test case.
 
 Options:
   -h, --help           Show this help message and exit.
@@ -23,6 +24,7 @@ Options:
 Examples:
   synthesize.sh output-writer
   synthesize.sh typed-dict
+  synthesize.sh replay-buffer
 EOF
 }
 
@@ -32,6 +34,7 @@ while [ $# -gt 0 ]; do
         -h|--help) usage; exit 0 ;;
         output-writer|output_writer) test_case=output_writer_test ;;
         typed-dict|typed_dict) test_case=typed_dict_test ;;
+        replay-buffer|replay_buffer) test_case=replay_buffer_test ;;
         *) echo "Unknown argument: $1" >&2; echo "" >&2; usage >&2; exit 1 ;;
     esac
     shift

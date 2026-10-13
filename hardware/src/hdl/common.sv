@@ -31,6 +31,9 @@ localparam MAXIMUM_NUM_ENQUEUED_BUFFERS = 256;
 
 localparam STREAM_CONFIG_ID = 1;
 
+localparam REPLAY_BUFFER_CONFIG_ID = 2;
+localparam MAXIMUM_NUM_ENQUEUED_STREAMS = 64;
+
 // -- Typedef --------------------------------------------------------------------------------------
 typedef logic[7:0]  data8_t;
 typedef logic[15:0] data16_t;

@@ -16,6 +16,10 @@ always_comb cq_wr.tie_off_s();
 for (genvar I = 2; I < N_STRM_AXI; I++) begin
     always_comb axis_host_recv[I].tie_off_s();
 end
+for (genvar I = 0; I < N_CARD_AXI; I++) begin
+    always_comb axis_card_send[I].tie_off_m();
+    always_comb axis_card_recv[I].tie_off_s();
+end
 
 // -- Types ----------------------------------------------------------------------------------------
 typedef logic[0:0] select_t;

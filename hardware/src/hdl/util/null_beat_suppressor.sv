@@ -55,7 +55,9 @@ always_comb begin
                 n_hold_valid = in.valid && (in.keep != '0 || (hold_last && in.last));
             end
         end else begin
-            if (in.valid && is_null_last) begin
+            // A null last beat ends the held stream. If the held beat is already last, the null
+            // beat is a separate, empty stream that we must not merge into the held stream.
+            if (in.valid && is_null_last && !hold_last) begin
                 n_hold_last = 1'b1;
             end else begin
                 in.ready = 1'b0;

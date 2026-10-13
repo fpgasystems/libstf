@@ -142,4 +142,47 @@ class StreamConfig : public Config {
     stream_t num_streams_;
 };
 
+class ReplayBufferConfig : public Config {
+  public:
+    ReplayBufferConfig(std::shared_ptr<coyote::cThread> cthread, uint32_t addr_offset,
+                       uint32_t num_regs);
+
+    /**
+     * Configures the card memory ring buffer of a ReplayBuffer. This must only be done while the
+     * ReplayBuffer is idle, i.e., when all its streams were read the configured number of times.
+     * @param buffer_id The ReplayBuffer to configure
+     * @param vaddr The start of the ring buffer in card memory. Must be aligned to
+     *              MEMORY_ALIGNMENT_BYTES.
+     * @param size The size of the ring buffer in bytes. Must fit at least two transfers of the
+     *             ReplayBuffer, see transfer_size().
+     * @throws std::invalid_argument if the ring buffer does not fulfill these requirements
+     */
+    void configure_ring_buffer(uint32_t buffer_id, uint64_t vaddr, uint64_t size);
+
+    /**
+     * Sets how often the next stream of a ReplayBuffer is read. Every stream needs one value, in
+     * stream order. At most maximum_num_enqueued_streams() values can be enqueued. A stream that
+     * is read more than once has to fit into the ring buffer.
+     * @param buffer_id The ReplayBuffer to configure
+     * @param num_reads How often the next stream is read. Must be at least 1.
+     */
+    void enqueue_num_reads(uint32_t buffer_id, uint32_t num_reads);
+
+    const uint32_t num_buffers() const { return num_buffers_; }
+
+    const size_t maximum_num_enqueued_streams() const { return maximum_num_enqueued_streams_; }
+
+    /**
+     * The ReplayBuffers fill their ring buffers one transfer of this many bytes at a time.
+     */
+    const size_t transfer_size() const { return transfer_size_; }
+
+    static constexpr uint64_t ID = 2;
+
+  private:
+    uint32_t num_buffers_;
+    size_t   maximum_num_enqueued_streams_;
+    size_t   transfer_size_;
+};
+
 } // namespace libstf

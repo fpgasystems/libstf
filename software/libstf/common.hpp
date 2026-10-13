@@ -22,6 +22,9 @@ constexpr unsigned floor_log2(unsigned val) { return val ? 1 + floor_log2(val >>
 // Memory
 static constexpr uint32_t BYTES_PER_FPGA_TRANSFER      = 65536;
 static constexpr uint32_t FPGA_VADDR_BITS              = 48;
+// Memory that the FPGA accesses in whole 512-bit data beats, e.g., the ring buffer of a
+// ReplayBuffer, has to be aligned to this number of bytes
+static constexpr uint32_t MEMORY_ALIGNMENT_BYTES = 64;
 static constexpr uint32_t INTERRUPT_TRANSFER_SIZE_BITS = 28;
 static constexpr uint32_t BUFFER_SIZE_BITS =
     INTERRUPT_TRANSFER_SIZE_BITS - floor_log2(BYTES_PER_FPGA_TRANSFER);

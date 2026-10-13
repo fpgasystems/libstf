@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
+#include <string>
 
 namespace libstf {
 
@@ -132,6 +134,44 @@ void StreamConfig::enqueue_stream_config(stream_t stream_id, type_t type, uint8_
     assert(stream_id < num_streams_);
 
     write_register(ConfigRegister(stream_id, (select << 3) | static_cast<uint8_t>(type)));
+}
+
+// -------------------------------------------------------------------------------------------------
+// ReplayBufferConfig
+// -------------------------------------------------------------------------------------------------
+
+ReplayBufferConfig::ReplayBufferConfig(std::shared_ptr<coyote::cThread> cthread,
+                                       uint32_t addr_offset, uint32_t num_regs)
+    : Config(cthread, addr_offset, num_regs), num_buffers_(read_register(1).value()),
+      maximum_num_enqueued_streams_(read_register(2).value()),
+      transfer_size_(read_register(3).value()) {}
+
+void ReplayBufferConfig::configure_ring_buffer(uint32_t buffer_id, uint64_t vaddr, uint64_t size) {
+    assert(buffer_id < num_buffers_);
+
+    // A misconfigured ring buffer makes the hardware hang, so we check it in release builds too
+    if (vaddr + size > (1ULL << FPGA_VADDR_BITS)) {
+        throw std::invalid_argument("Ring buffer exceeds the vaddr space");
+    }
+    if (vaddr % MEMORY_ALIGNMENT_BYTES != 0) {
+        throw std::invalid_argument("Ring buffer must be aligned to " +
+                                    std::to_string(MEMORY_ALIGNMENT_BYTES) + " bytes");
+    }
+    if (size < 2 * transfer_size_) {
+        throw std::invalid_argument("Ring buffer must fit at least two transfers of " +
+                                    std::to_string(transfer_size_) + " bytes");
+    }
+
+    // Writing the size commits the configuration, so it has to be written last
+    write_register(ConfigRegister(3 * buffer_id, vaddr));
+    write_register(ConfigRegister(3 * buffer_id + 1, size));
+}
+
+void ReplayBufferConfig::enqueue_num_reads(uint32_t buffer_id, uint32_t num_reads) {
+    assert(buffer_id < num_buffers_);
+    assert(num_reads > 0);
+
+    write_register(ConfigRegister(3 * buffer_id + 2, num_reads));
 }
 
 } // namespace libstf

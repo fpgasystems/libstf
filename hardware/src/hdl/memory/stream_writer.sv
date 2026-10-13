@@ -6,14 +6,17 @@ import libstf::*;
 `include "axi_macros.svh"
 `include "lynx_macros.svh"
 `include "libstf_macros.svh"
+`include "config_macros.svh"
 
 /**
- * This module takes the data from input_data and transfers it to the memory regions provided by 
+ * This module takes the data from input_data and transfers it to the buffers provided by 
  * mem_config via FPGA-initiated transfers. These transfers are triggered via the sq_wr interface 
  * and acknowledged from the host via cq_wr.
- * Should the available memory region, provided via mem_config, become full or the input_data assert 
- * the last signal, an interrupt is triggered for the host. The host than can act accordingly and, 
- * e.g., allocate more memory.
+ * Should the current buffer, provided via mem_config, become full or the input_data assert 
+ * the last signal, an interrupt is triggered for the host. The host than can act accordingly and,
+ * e.g., allocate more memory. The interrupt is only triggered once all transfers to the buffer
+ * completed. However, we already continue with the next buffer in the meantime. The issued interface
+ * already signals once all transfers to a buffer were requested.
  *
  * This component allows the following configurations:
  * STRM                  = The kind of Coyote stream. One of: STRM_CARD, STRM_HOST, STRM_TCP, or STRM_RDMA
@@ -40,7 +43,11 @@ module StreamWriter #(
 
     metaIntf.m sq_wr,
     metaIntf.s cq_wr,
-    metaIntf.m notify, // This module triggers an interrupt when all transfers are done
+
+    stream_writer_notify_i .m notify, // This module triggers an interrupt when more
+                                      // memory is required or all transfers are completed
+    stream_writer_notify_i.m issued, // Signals as soon as all transfers to a buffer were requested,
+                                     // i.e., before they completed. Ignores the ready signal.
 
     mem_config_i.s mem_config,
 
@@ -51,8 +58,8 @@ module StreamWriter #(
 `RESET_RESYNC // Reset pipelining
 
 // -- Parameters -----------------------------------------------------------------------------------
-localparam RDMA_WRITE = 7;
-localparam OPCODE = IS_LOCAL ? LOCAL_WRITE : RDMA_WRITE;
+// For RDMA, Coyote parses APP_WRITE requests into packets of at most the PMTU
+localparam OPCODE = IS_LOCAL ? LOCAL_WRITE : APP_WRITE;
 // How many bits we need to address one transfer of size TRANSFER_LENGTH_BYTES
 localparam TRANSFER_ADDRESS_LEN_BITS = $clog2(TRANSFER_LENGTH_BYTES) + 1;
 localparam AXI_DATA_BYTES = (AXI_DATA_BITS / 8);
@@ -74,7 +81,7 @@ assert property (@(posedge clk) disable iff (!reset_synced)
     !input_data.tvalid || !input_data.tlast || $onehot0(input_data.tkeep + 1'b1))
 else $fatal(1, "Last keep signal (%h) must be contiguous starting from the least significant bit!", input_data.tkeep);
 
-// Allocations
+// Buffers
 assert property (@(posedge clk) disable iff (!reset_synced) 
     !buffer.valid || (buffer.data.size > 0))
 else $fatal(1, "Buffer size (%0d) must be > 0!", buffer.data.size);
@@ -100,12 +107,18 @@ AXINullBeatSuppressor inst_null_beat_suppressor (
     .out(input_data_no_nulls)
 );
 
+// After the null beat suppression, a null beat can only be the last beat of an empty stream. It only
+// enters the length FIFO (with length 0) and not the data FIFO because no transfer would ever read
+// it from there. It would otherwise end up as the first beat of the next stream.
+logic is_empty_stream;
+assign is_empty_stream = input_data_no_nulls.tvalid && input_data_no_nulls.tkeep == '0;
+
 // The input is ready if there is space in both FIFOs
-assign input_data_no_nulls.tready = data_fifo_in.tready & curr_len_ready;
-assign data_fifo_in.tdata   = input_data_no_nulls.tdata;
-assign data_fifo_in.tkeep   = input_data_no_nulls.tkeep;
-assign data_fifo_in.tvalid  = input_data_no_nulls.tvalid;
-assign data_fifo_in.tlast   = input_data_no_nulls.tlast;
+assign input_data_no_nulls.tready = (data_fifo_in.tready || is_empty_stream) & curr_len_ready;
+assign data_fifo_in.tdata  = input_data_no_nulls.tdata;
+assign data_fifo_in.tkeep  = input_data_no_nulls.tkeep;
+assign data_fifo_in.tvalid = input_data_no_nulls.tvalid && !is_empty_stream && curr_len_ready;
+assign data_fifo_in.tlast  = input_data_no_nulls.tlast;
 
 // Whether the transfer will get full this cycle
 logic is_split;
@@ -169,24 +182,26 @@ MehdiFIFO #(
 
 // -- Output logic ---------------------------------------------------------------------------------
 typedef enum logic[2:0] {
-    WAIT_FOR_BUFFER = 0,
-    REQUEST = 1,
-    TRANSFER = 2,
-    WAIT_COMPLETION = 3,
-    WAIT_NOTIFY = 4,
-    ALL_DONE = 5,
-    FLUSH_BUFFERS = 6
+    RESET = 0,
+    WAIT_FOR_BUFFER = 1,
+    REQUEST = 2,
+    TRANSFER = 3,
+    FLUSH_BUFFERS = 4
 } output_state_t;
 output_state_t output_state, n_output_state;
 
 // The vaddr we currently write to
 vaddress_t vaddr, n_vaddr;
+// The start of the current buffer
+vaddress_t buffer_vaddr, n_buffer_vaddr;
 // Note: The following two types are chosen to be vaddress_t on purpose to prevent potential 
 // overflow problems below.
-// The number of bytes allocated at vaddr
+// The number of bytes of the current buffer
 vaddress_t capacity, n_capacity;
 // How many bytes we have already written to vaddr
-vaddress_t bytes_written_to_allocation, n_bytes_written_to_allocation;
+vaddress_t bytes_written_to_buffer, n_bytes_written_to_buffer;
+// How many transfers we requested for the current buffer
+data32_t num_requests, n_num_requests;
 // Possible performance optimization: Become ready earlier such that
 // WAITING for the address takes at most 1 cycle.
 // However: Pay attention that you don't immediately read two addresses.
@@ -196,8 +211,6 @@ assign buffer.ready = output_state == WAIT_FOR_BUFFER || output_state == FLUSH_B
 localparam BEAT_BITS = $clog2(AXI_DATA_BYTES);
 localparam TRANSFER_BEAT_COUNTER_WIDTH = TRANSFER_ADDRESS_LEN_BITS - BEAT_BITS;
 logic[TRANSFER_BEAT_COUNTER_WIDTH - 1 : 0] beats_written_to_transfer, n_beats_written_to_transfer, beats_written_to_transfer_succ;
-vaddress_t num_requests, n_num_requests;
-vaddress_t num_completed_transfers, n_num_completed_transfers;
 logic has_partial_beat;
 logic current_transfer_completed;
 
@@ -212,6 +225,49 @@ logic is_completion;
 // the cq_wr. Therefore, we only validate the strm & dest. This should however never cause any problems!
 assign is_completion = cq_wr.valid && cq_wr.data.strm == STRM && cq_wr.data.dest == AXI_STRM_ID;
 
+// -- Pending notifications ------------------------------------------------------------------------
+// We do not wait for the completions of a buffer before we continue with the next one. Instead,
+// we remember the notification of every finished buffer and send it once all its transfers
+// completed. This relies on Coyote returning the completions of a stream in the order of the 
+// requests, so the oldest pending notification is always the next one that can be sent.
+typedef struct packed {
+    vaddress_t vaddr;
+    vaddress_t size;
+    logic      last;
+    data32_t   num_requests;
+} pending_notify_t;
+
+localparam integer PENDING_NOTIFY_DEPTH = 16;
+
+pending_notify_t pending_in, pending_out;
+logic pending_in_valid, pending_in_ready, pending_out_valid, pending_out_ready;
+
+MehdiFIFO #(
+    .WIDTH($bits(pending_notify_t)),
+    .DEPTH(PENDING_NOTIFY_DEPTH)
+) inst_pending_notify_fifo (
+    .i_clk(clk),
+    .i_rst_n(reset_synced),
+
+    .i_data(pending_in),
+    .i_valid(pending_in_valid),
+    .i_ready(pending_in_ready),
+
+    .o_data(pending_out),
+    .o_valid(pending_out_valid),
+    .o_ready(pending_out_ready),
+
+    .o_filling_level()
+);
+
+`ifndef SYNTHESIS
+assert property (@(posedge clk) disable iff (!reset_synced) !pending_in_valid || pending_in_ready)
+else $fatal(1, "Pending notification FIFO overflow!");
+`endif
+
+// Completions that we have not yet attributed to a sent notification
+data32_t num_completions, n_num_completions;
+
 // -- Send queue requests --------------------------------------------------------------------------
 // Sends a request over transfers with at most TRANSFER_LENGTH_BYTES
 always_comb begin
@@ -219,7 +275,7 @@ always_comb begin
 
     sq_wr.data.opcode = OPCODE;
     sq_wr.data.strm   = STRM;
-    sq_wr.data.mode   = ~IS_LOCAL;
+    sq_wr.data.mode   = RDMA_MODE_PARSE;
     sq_wr.data.rdma   = ~IS_LOCAL;
     sq_wr.data.remote = ~IS_LOCAL;
 
@@ -236,77 +292,84 @@ always_comb begin
     
     // Note: There is a special case where we need to transfer 0 bytes of data.
     // In this case, we don't need to do any request, but only invoke the interrupt.
-    sq_wr.valid = output_state == REQUEST & next_len_valid & next_len > 0;
+    // We only start a transfer if we can remember the notification of its buffer afterwards.
+    // This is the only place that adds pending notifications, so the space is still there when the 
+    // buffer is done.
+    sq_wr.valid = output_state == REQUEST & next_len_valid & next_len > 0 & pending_in_ready;
 end
 
 // -- Interrupts -----------------------------------------------------------------------------------
-logic all_transfers_completed;
-assign all_transfers_completed = num_completed_transfers == num_requests;
-
-logic last_transfer, n_last_transfer;
 always_comb begin
-    notify.data.pid   = 6'd0;
-    // The output value has 32 bits and consists of:
-    // 1. The stream id that finished the transfer
-    notify.data.value[2:0] = AXI_STRM_ID;
-    // 2. How much data as written to the vaddr (at most 2^28 bytes are supported)
-    notify.data.value[30:3] = bytes_written_to_allocation;
-    // 3. Whether this was the last transfer, i.e. all output data was written
-    notify.data.value[31] = last_transfer;
-    notify.valid = (output_state == WAIT_COMPLETION && all_transfers_completed) ||
-                   (output_state == WAIT_NOTIFY);
+    notify.vaddr = pending_out.vaddr;
+    notify.size  = pending_out.size;
+    notify.last  = pending_out.last;
+    notify.valid = pending_out_valid && num_completions >= pending_out.num_requests;
+
+    pending_out_ready = notify.valid && notify.ready;
 end
 
 // -- State machine --------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
     if (reset_synced == 1'b0) begin
-        output_state <= WAIT_FOR_BUFFER;
-    end else begin
-        bytes_written_to_allocation <= n_bytes_written_to_allocation;
-        beats_written_to_transfer   <= n_beats_written_to_transfer;
-        num_requests                <= n_num_requests;
-        num_completed_transfers     <= n_num_completed_transfers;
-        last_transfer               <= n_last_transfer;
+        num_completions <= '0;
 
-        vaddr    <= n_vaddr;
-        capacity <= n_capacity;
+        output_state <= RESET;
+    end else begin
+        bytes_written_to_buffer   <= n_bytes_written_to_buffer;
+        beats_written_to_transfer <= n_beats_written_to_transfer;
+        num_requests              <= n_num_requests;
+        num_completions           <= n_num_completions;
+
+        vaddr        <= n_vaddr;
+        buffer_vaddr <= n_buffer_vaddr;
+        capacity     <= n_capacity;
 
         output_state <= n_output_state;
     end
 end
 
+assign issued.vaddr = pending_in.vaddr;
+assign issued.size  = pending_in.size;
+assign issued.last  = pending_in.last;
+assign issued.valid = pending_in_valid;
+
 always_comb begin
     next_len_ready = 1'b0;
 
-    n_bytes_written_to_allocation = bytes_written_to_allocation;
-    n_beats_written_to_transfer   = beats_written_to_transfer;
-    n_num_requests                = num_requests;
-    n_num_completed_transfers     = num_completed_transfers;
-    n_last_transfer               = last_transfer;
+    n_bytes_written_to_buffer   = bytes_written_to_buffer;
+    n_beats_written_to_transfer = beats_written_to_transfer;
+    n_num_requests              = num_requests;
 
-    n_vaddr    = vaddr;
-    n_capacity = capacity;
+    n_vaddr        = vaddr;
+    n_buffer_vaddr = buffer_vaddr;
+    n_capacity     = capacity;
 
     n_output_state = output_state;
 
-    if (is_completion) begin
-        n_num_completed_transfers = num_completed_transfers + 1;
-    end
+    pending_in.vaddr        = buffer_vaddr;
+    pending_in.size         = bytes_written_to_buffer;
+    pending_in.last         = 1'b0;
+    pending_in.num_requests = num_requests;
+    pending_in_valid        = 1'b0;
+
+    n_num_completions = num_completions + is_completion - (pending_out_ready ? pending_out.num_requests : '0);
 
     case(output_state)
+        RESET: begin
+            n_output_state = WAIT_FOR_BUFFER;
+        end
         WAIT_FOR_BUFFER: begin
             if (buffer.valid) begin
                 // Reset the current state
-                n_bytes_written_to_allocation = '0;
-                n_num_requests                = '0;
-                n_num_completed_transfers     = '0;
-                n_last_transfer               = 1'b0;
+                n_bytes_written_to_buffer = '0;
+                n_num_requests            = '0;
 
                 // Get the memory address & capacity
-                n_vaddr    = buffer.data.vaddr;
-                n_capacity = buffer.data.size << $clog2(TRANSFER_LENGTH_BYTES);
+                n_vaddr        = buffer.data.vaddr;
+                n_buffer_vaddr = buffer.data.vaddr;
+                n_capacity     = buffer.data.size << $clog2(TRANSFER_LENGTH_BYTES);
 
-                n_output_state    = REQUEST;
+                n_output_state = REQUEST;
             end end
         REQUEST: begin
             // Requests the next transfer over next_len
@@ -316,27 +379,32 @@ always_comb begin
                 // E.g. if the input did not produce any output.
                 // In this case we don't need to send any request and can only trigger the interrupt
                 if (next_len != 0) begin
-                    if (sq_wr.ready) begin
+                    if (sq_wr.valid && sq_wr.ready) begin
                         // This is a valid request with data
-                        n_bytes_written_to_allocation = bytes_written_to_allocation + next_len;
-                        n_beats_written_to_transfer   = '0;
-                        n_num_requests                = num_requests + 1;
+                        n_bytes_written_to_buffer   = bytes_written_to_buffer + next_len;
+                        n_beats_written_to_transfer = '0;
+                        n_num_requests              = num_requests + 1;
 
                         n_vaddr = vaddr + next_len;
                         
                         n_output_state = TRANSFER;
                     end
-                end else begin
+                end else if (pending_in_ready) begin
                     next_len_ready = 1'b1;
 
                     // We cannot take the axis_data_fifo.tlast signal here because the FIFO output 
                     // will never become ready without a request to Coyote. However, the next_len 
                     // can only be zero if this was the last, empty transfer.
-                    n_last_transfer = 1'b1;
-
                     // No data, no request, or transfer. Only interrupt.
-                    n_output_state = WAIT_NOTIFY;
-                end                    
+                    pending_in.last  = 1'b1;
+                    pending_in_valid = 1'b1;
+
+                    // If no bytes were written, we can just reuse the current buffer for the next 
+                    // stream. Otherwise, we fetch the next buffer.
+                    if (bytes_written_to_buffer != 0) begin
+                        n_output_state = WAIT_FOR_BUFFER;
+                    end
+                end
             end end 
         TRANSFER: begin
             if (axis_data_fifo.tvalid && internal_data.tready) begin
@@ -344,41 +412,22 @@ always_comb begin
                 if (current_transfer_completed) begin
                     next_len_ready = 1'b1;
 
-                    if (axis_data_fifo.tlast || capacity < bytes_written_to_allocation + TRANSFER_LENGTH_BYTES) begin
+                    if (axis_data_fifo.tlast || capacity < bytes_written_to_buffer + TRANSFER_LENGTH_BYTES) begin
                         // If
                         //  1. We have reached the end of the data, OR
-                        //  2. The size of the current memory allocation does not fit an additional transfer
-                        // We need to
-                        //  1. Wait for completion
-                        //  2. Trigger a interrupt (which will give us new memory, if more is needed)
-                        n_last_transfer = axis_data_fifo.tlast;
-                        n_output_state  = WAIT_COMPLETION;
+                        //  2. The size of the current buffer does not fit an additional transfer
+                        // We trigger an interrupt once all transfers completed (which will give us 
+                        // new memory, if more is needed) and continue with the next buffer.
+                        pending_in.last  = axis_data_fifo.tlast;
+                        pending_in_valid = 1'b1;
+
+                        n_output_state = WAIT_FOR_BUFFER;
                     end else begin
                         // Perform next transfer!
                         n_output_state = REQUEST;
                     end
                 end else begin
                     n_beats_written_to_transfer = beats_written_to_transfer_succ;
-                end
-            end end
-        WAIT_COMPLETION: begin
-            if (all_transfers_completed) begin
-                if (notify.ready) begin
-                    n_output_state = WAIT_FOR_BUFFER;
-                end else begin
-                    n_output_state = WAIT_NOTIFY;
-                end
-            end end
-        WAIT_NOTIFY: begin
-            if (notify.ready) begin
-                // If no bytes were written, we can just reuse the current buffer for the next 
-                // stream so we null the last_transfer signal and jump to the REQUEST state.
-                // Otherwise, we fetch the next buffer in in the WAIT_ADDR state.
-                if (bytes_written_to_allocation == 0) begin
-                    n_last_transfer = 1'b0;
-                    n_output_state  = REQUEST;
-                end else begin
-                    n_output_state = WAIT_FOR_BUFFER;
                 end
             end end
         FLUSH_BUFFERS: begin

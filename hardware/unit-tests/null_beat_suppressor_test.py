@@ -35,7 +35,9 @@ class NullBeatSuppressorTest(fpga_test_case.FPGATestCase):
             # Set the expected output data, i.e., the input without the all zero beats
             beats = [input[i:i + VALUES_PER_BEAT] for i in range(0, len(input), VALUES_PER_BEAT)]
             result = [v for b in beats if any(b) for v in b]
-            self.set_expected_output(0, Stream(StreamType.UNSIGNED_INT_64, result))
+            # The host does not receive anything for empty streams
+            if result:
+                self.set_expected_output(0, Stream(StreamType.UNSIGNED_INT_64, result))
 
         return super().simulate_fpga()
 
@@ -91,6 +93,22 @@ class NullBeatSuppressorTest(fpga_test_case.FPGATestCase):
             null_beat() + beat(3),
             beat(4) + null_beat() + null_beat()
         ]
+
+        # Act
+        self.simulate_fpga()
+
+        # Assert
+        self.assert_simulation_output()
+
+    def test_empty_streams(self):
+        """
+        An empty stream must not be merged into the stream before it, even when the output is not
+        ready while the empty stream arrives.
+        """
+        # Arrange
+        self.inputs = []
+        for i in range(1, 11):
+            self.inputs += [beat(i), null_beat(), beat(i) + beat(i), null_beat(), null_beat()]
 
         # Act
         self.simulate_fpga()

@@ -3,7 +3,7 @@
 from coyote_test import constants, fpga_register, fpga_test_case
 from typing import Dict, List, Optional, Type, TypeVar
 from unit_test.fpga_stream import StreamType
-from libstf_utils.common import INTERRUPT_TRANSFER_SIZE_BITS
+from libstf_utils.common import INTERRUPT_TRANSFER_SIZE_BITS, MEMORY_ALIGNMENT_BYTES
 import math
 import threading
 
@@ -206,6 +206,49 @@ class StreamConfig(Config):
         assert stream_id < self.num_streams
 
         self.write_register(stream_id, StreamConfig.register_value(data_type, select))
+
+
+class ReplayBufferConfig(Config):
+    """
+    Configures the ReplayBuffers, i.e., their card memory ring buffers and how often each stream
+    is read.
+    """
+
+    ID = 2
+
+    def __init__(self, registers: RegisterAccess, addr_offset: int, num_regs: int):
+        super().__init__(registers, addr_offset, num_regs)
+        self.num_buffers = self.read_register(1)
+        self.maximum_num_enqueued_streams = self.read_register(2)
+        self.transfer_size = self.read_register(3)
+
+    def configure_ring_buffer(self, buffer_id: int, vaddr: int, size: int):
+        """
+        Sets the card memory ring buffer of the given ReplayBuffer to size bytes starting at vaddr.
+        This must only be done while the ReplayBuffer is idle.
+        """
+        assert buffer_id < self.num_buffers
+        assert vaddr + size <= pow(2, constants.VADDR_BITS), "Ring buffer exceeds the vaddr space"
+        assert vaddr % MEMORY_ALIGNMENT_BYTES == 0, (
+            f"Ring buffer must be aligned to {MEMORY_ALIGNMENT_BYTES} bytes"
+        )
+        assert size >= 2 * self.transfer_size, (
+            f"Ring buffer must fit at least two transfers of {self.transfer_size} bytes"
+        )
+
+        # Writing the size commits the configuration, so it has to be written last
+        self.write_register(3 * buffer_id, vaddr)
+        self.write_register(3 * buffer_id + 1, size)
+
+    def enqueue_num_reads(self, buffer_id: int, num_reads: int):
+        """
+        Sets how often the next stream of the given ReplayBuffer is read. Every stream needs one
+        value, in stream order. At most maximum_num_enqueued_streams values can be enqueued.
+        """
+        assert buffer_id < self.num_buffers
+        assert 0 < num_reads < pow(2, 32)
+
+        self.write_register(3 * buffer_id + 2, num_reads)
 
 
 class GenericConfig(Config):

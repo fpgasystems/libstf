@@ -95,6 +95,10 @@ assign notify_count = notify_count_reg;
 // -- FPGA-initiated transfers ---------------------------------------------------------------------
 for(genvar I = 0; I < N_STRM_AXI; I++) begin : gen_stream_writers
 `ifndef DISABLE_OUTPUT_WRITER
+    stream_writer_notify_i stream_notify (.clk(clk), .rst_n(reset_synced));
+    stream_writer_notify_i stream_issued (.clk(clk), .rst_n(reset_synced));
+    always_comb stream_issued.tie_off_s(); // Unused
+
     // Invoke the FPGA-initiated transfers for this stream
     StreamWriter #(
         .AXI_STRM_ID(I),
@@ -105,12 +109,20 @@ for(genvar I = 0; I < N_STRM_AXI; I++) begin : gen_stream_writers
 
         .sq_wr(sq_wr_strm[I]),
         .cq_wr(cq_wr_strm[I]),
-        .notify(notify_strm[I]),
+        .notify(stream_notify),
+        .issued(stream_issued),
 
         .mem_config(mem_config[I]),
 
         .input_data(data_in[I]),
         .output_data(data_out[I])
+    );
+
+    NotifyMetaIntfAdapter #(
+        .AXI_STRM_ID(I)
+    ) inst_notify_adapter (
+        .in(stream_notify),
+        .out(notify_strm[I])
     );
 `else
     // Tie of the interfaces we don't need

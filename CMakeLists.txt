@@ -21,3 +21,4 @@ add_subdirectory(software)
 # Examples
 add_subdirectory(examples/01_output_buffer_manager)
 add_subdirectory(examples/02_typed_dictionary)
+add_subdirectory(examples/03_replay_buffer)

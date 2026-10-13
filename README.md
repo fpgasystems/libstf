@@ -18,7 +18,8 @@ main functionality libSTF offers is:
 - Crossbar (hardware/src/hdl/crossbar)
 - Dictionary (hardware/src/hdl/dict)
 - Stream normalization (hardware/src/hdl/normalization)
-- Hardware-side stream writer to write arbitrary-length streams to host memory and software-side buffer manager (hardware/src/hdl/output)
+- Hardware-side stream writer and reader to write arbitrary-length streams to and read them from host or card memory, and software-side buffer manager (hardware/src/hdl/memory)
+- Replay buffer that stores streams in a ring buffer in card memory and replays each of them a configurable number of times (hardware/src/hdl/replay_buffer)
 - Typed data interfaces (ndata_i, data_i, ntagged_i, ...), adapters to AXI4S interfaces, and other stream routing helpers (hardware/src/data_interfaces.sv and hardware/src/hdl/stream)
 
 It also features the corresponding software-side components to use the hardware. This repository is 

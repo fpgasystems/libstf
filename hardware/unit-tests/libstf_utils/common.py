@@ -1,5 +1,9 @@
 from coyote_test import constants
 
+# Memory that the FPGA accesses in whole 512-bit data beats, e.g., the ring buffer of a ReplayBuffer,
+# has to be aligned to this number of bytes
+MEMORY_ALIGNMENT_BYTES = 64
+
 # The interrupt value has 32 bits.
 # We need 3 bits for the stream indicator and 1 bit for the last signal.
 # This leaves 28 bits for the maximum output size per allocation.
