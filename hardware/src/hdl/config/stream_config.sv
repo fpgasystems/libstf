@@ -3,9 +3,11 @@
 `include "libstf_macros.svh"
 `include "config_macros.svh"
 
+import libstf::*;
+
 module StreamConfig #(
     parameter NUM_STREAMS,
-    parameter MAX_OUTSTANDING_STREAMS = 64 // Configs that can be enqueued per stream
+    parameter MAX_OUTSTANDING_STREAMS = MAXIMUM_NUM_ENQUEUED_STREAMS // Configs that can be enqueued per stream
 ) (
     input logic clk,
     input logic rst_n,

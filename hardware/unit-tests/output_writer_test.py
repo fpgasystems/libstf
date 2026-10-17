@@ -6,9 +6,10 @@ from libstf_utils.memory_manager import FPGAOutputMemoryManager
 
 MAX_NUMBER_STREAMS = constants.MAX_NUMBER_STREAMS
 TRANSFER_SIZE_BYTES_OVERWRITE = "TRANSFER_SIZE_BYTES_OVERWRITE"
-# A transfer of a single element with this value is turned into an empty transfer by the vFPGA top
+EMPTY_STREAM_TAKES_BUFFER = "OUTPUT_WRITER_EMPTY_STREAM_TAKES_BUFFER"
+# A stream of a single element with this value is turned into an empty stream by the vFPGA top
 # (vfpga_tops/output_writer_test.sv). Keep this value in sync with the one there.
-EMPTY_TRANSFER_MAGIC = 0xDEADBEEF0BADF00D
+EMPTY_STREAM_MAGIC = 0xDEADBEEF0BADF00D
 
 class OutputWriterTest(OutputWriterTestCase):
     """
@@ -108,35 +109,45 @@ class OutputWriterTest(OutputWriterTestCase):
         # Assert
         self.assert_simulation_output()
 
-    def _set_empty_transfer(self, stream: int):
+    def _set_empty_stream(self, stream: int):
         """
-        Sends an empty transfer on the given stream and expects an empty output transfer.
-        The test bench cannot send an empty transfer itself, so the input is a single magic element
+        Sends an empty stream on the given stream and expects an empty output stream.
+        The test bench cannot send an empty stream itself, so the input is a single magic element
         that the vFPGA top turns into a beat with keep == 0 and last.
         """
-        self.set_stream_input(stream, Stream(StreamType.UNSIGNED_INT_64, [EMPTY_TRANSFER_MAGIC]))
+        self.set_stream_input(stream, Stream(StreamType.UNSIGNED_INT_64, [EMPTY_STREAM_MAGIC]))
         self.set_expected_output(stream, Stream(StreamType.UNSIGNED_INT_64, []))
 
-    def test_empty_and_nonempty_transfers(self):
+    def _simulate_empty_and_nonempty_streams(self):
         # Act (custom, as all input/output happens on stream 0)
         self.simulate_fpga_non_blocking()
 
-        self._set_empty_transfer(0)
+        self._set_empty_stream(0)
         
         self.set_stream_input(0, Stream(StreamType.UNSIGNED_INT_64, list(range(0, 11))))
         self.set_expected_output(0, Stream(StreamType.UNSIGNED_INT_64, list(range(0, 11))))
         
-        self._set_empty_transfer(0)
+        self._set_empty_stream(0)
         
         self.set_stream_input(0, Stream(StreamType.UNSIGNED_INT_64, list(range(0, 8))))
         self.set_expected_output(0, Stream(StreamType.UNSIGNED_INT_64, list(range(0, 8))))
         
-        self._set_empty_transfer(0)
+        self._set_empty_stream(0)
         
         self.finish_fpga_simulation()
 
         # Assert
         self.assert_simulation_output()
+
+    def test_empty_and_nonempty_streams(self):
+        self._simulate_empty_and_nonempty_streams()
+
+    def test_empty_and_nonempty_streams_take_buffer(self):
+        # Arrange
+        self.memory_manager.empty_stream_takes_buffer = True
+        self.set_system_verilog_defines({EMPTY_STREAM_TAKES_BUFFER: "1"})
+
+        self._simulate_empty_and_nonempty_streams()
 
     def test_with_half_data_beat_at_the_end(self):
         # Arrange

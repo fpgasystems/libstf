@@ -271,11 +271,10 @@ Status HugePageMemoryPool::reallocate(size_t old_size, size_t new_size, size_t a
                       "HugePageMemoryPool could not Reallocate as requested!");
     }
 
-    auto n_new_bytes = (new_size - old_size);
-    if (n_new_bytes >= 0) {
-        total_bytes_allocated_ += n_new_bytes;
+    if (new_size > old_size) {
+        total_bytes_allocated_ += new_size - old_size;
     }
-    bytes_allocated_ += n_new_bytes;
+    bytes_allocated_ += new_size - old_size;
 
     return Status::OK();
 }
@@ -438,13 +437,9 @@ Status SimpleMemoryPool::reallocate(size_t old_size, size_t new_size, size_t ali
     if (*ptr) {
         std::memcpy(new_ptr, *ptr, std::min(old_size, new_size));
         free(*ptr, old_size, alignment);
-    }
 
-    auto n_new_bytes = (new_size - old_size);
-    if (n_new_bytes >= 0) {
-        total_bytes_allocated_ += n_new_bytes;
+        total_bytes_allocated_ -= std::min(old_size, new_size);
     }
-    bytes_allocated_ += n_new_bytes;
 
     *ptr = new_ptr;
     return Status::OK();

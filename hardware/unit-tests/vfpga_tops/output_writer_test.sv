@@ -114,30 +114,38 @@ for (genvar I = 0; I < N_STRM_AXI; I++) begin
 end
 
 // -- Output writer --------------------------------------------------------------------------------
-// The test bench cannot send an empty transfer, i.e. a lone beat with keep == 0 and last.
-// Instead, a test sends a transfer of a single 64-bit element with the value EMPTY_TRANSFER_MAGIC
+// The testbench cannot send an empty stream, i.e. a lone beat with keep == 0 and last.
+// Instead, a test sends a stream of a single 64-bit element with the value EMPTY_STREAM_MAGIC
 // (see output_writer_test.py), which is turned into such a beat here, in place.
 // Keep the value in sync with the one in output_writer_test.py.
-localparam data64_t EMPTY_TRANSFER_MAGIC = 64'hDEAD_BEEF_0BAD_F00D;
+localparam data64_t EMPTY_STREAM_MAGIC = 64'hDEAD_BEEF_0BAD_F00D;
+
+`ifdef OUTPUT_WRITER_EMPTY_STREAM_TAKES_BUFFER
+localparam EMPTY_STREAM_TAKES_BUFFER = 1;
+`else
+localparam EMPTY_STREAM_TAKES_BUFFER = 0;
+`endif
 
 AXI4S axi_host_recv_raw[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
 AXI4S axi_host_recv[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
 for (genvar I = 0; I < N_STRM_AXI; I++) begin
     `AXIS_ASSIGN(axis_host_recv[I], axi_host_recv_raw[I]) // AXI4SR to AXI4S
 
-    logic is_empty_transfer_marker;
-    assign is_empty_transfer_marker = axi_host_recv_raw[I].tlast
+    logic is_empty_stream_marker;
+    assign is_empty_stream_marker = axi_host_recv_raw[I].tlast
         && axi_host_recv_raw[I].tkeep == 'hFF // Exactly one 64-bit element
-        && axi_host_recv_raw[I].tdata[63:0] == EMPTY_TRANSFER_MAGIC;
+        && axi_host_recv_raw[I].tdata[63:0] == EMPTY_STREAM_MAGIC;
 
     assign axi_host_recv[I].tdata  = axi_host_recv_raw[I].tdata;
-    assign axi_host_recv[I].tkeep  = is_empty_transfer_marker ? '0 : axi_host_recv_raw[I].tkeep;
+    assign axi_host_recv[I].tkeep  = is_empty_stream_marker ? '0 : axi_host_recv_raw[I].tkeep;
     assign axi_host_recv[I].tlast  = axi_host_recv_raw[I].tlast;
     assign axi_host_recv[I].tvalid = axi_host_recv_raw[I].tvalid;
     assign axi_host_recv_raw[I].tready = axi_host_recv[I].tready;
 end
 
-OutputWriter inst_output_writer (
+OutputWriter #(
+    .EMPTY_STREAM_TAKES_BUFFER(EMPTY_STREAM_TAKES_BUFFER)
+) inst_output_writer (
     .clk(aclk),
     .rst_n(rst_n),
 
