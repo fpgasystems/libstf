@@ -8,6 +8,7 @@
  * for multiple DataSinks.
  */
 module DataSink #(
+    parameter type    data_t,
     parameter integer ID,
     parameter integer EN_SKID_BUFFER = 1
 ) (
@@ -20,8 +21,9 @@ module DataSink #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam type    data_t       = in.data_t;
 localparam integer NUM_ELEMENTS = in.NUM_ELEMENTS;
+
+`ASSERT_ELAB($bits(in.data) == NUM_ELEMENTS * $bits(data_t))
 
 // If we don't pull this into an internal register we have to assign valid to ready which is bad
 logic enable_sink;

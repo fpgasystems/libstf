@@ -1,10 +1,14 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * Returns the value corresponding to the read_addr to resp_data. If the read_addr is out of bounds,
  * it returns an error.
  */
-module ConfigReadRegisterFile #(
+module ConfigReadRegisterFile
+    import lynxTypes::*;
+#(
     parameter integer NUM_REGS
 ) (
     input logic clk,

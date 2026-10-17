@@ -1,8 +1,5 @@
 `timescale 1ns / 1ps
 
-import lynxTypes::*;
-import libstf::*;
-
 `include "axi_macros.svh"
 `include "lynx_macros.svh"
 `include "libstf_macros.svh"
@@ -32,7 +29,10 @@ import libstf::*;
  * E.g. the keep signal should be all 1s, except for data beats that contain a last signal.
  * In other words: Writing data that is not all 1s and not last will result in UNEXPECTED behavior.
  */
-module StreamWriter #(
+module StreamWriter
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter STRM = STRM_HOST,
     parameter AXI_STRM_ID = 0,
     parameter IS_LOCAL = 1,

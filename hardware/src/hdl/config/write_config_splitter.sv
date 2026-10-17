@@ -7,7 +7,9 @@
  * address space bounds. I also substracts the corresponding address space bound from the address it 
  * passes on. The address space has to start at 0.
  */
-module WriteConfigSplitter #(
+module WriteConfigSplitter
+    import lynxTypes::*;
+#(
     parameter integer NUM_CONFIGS,
     parameter integer ADDR_SPACE_BOUNDS[NUM_CONFIGS + 1],
     parameter integer REG_LEVELS = 1

@@ -3,8 +3,6 @@
 `include "axi_macros.svh"
 `include "libstf_macros.svh"
 
-import lynxTypes::AXI_DATA_BITS;
-
 /**
  * Converts an AXI stream to a different width.
  *

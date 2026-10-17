@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 module Duplicate #(
     parameter type data_t, 
     parameter NUM_ELEMENTS,

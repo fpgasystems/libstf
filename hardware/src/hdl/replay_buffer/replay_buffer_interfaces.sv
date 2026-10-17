@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
 `include "libstf_macros.svh"
 
 /*
@@ -17,7 +15,9 @@ import libstf::*;
  * reads multiple times but has not completely received yet. So the reader cannot release any
  * memory before the writer writes the rest of the stream.
  */
-interface replay_buffer_link_i (
+interface replay_buffer_link_i
+    import libstf::*;
+(
     input logic clk,
     input logic rst_n
 );

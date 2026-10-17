@@ -10,14 +10,14 @@
  */
 module DataEnumerator #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter SERIAL_WIDTH
+    parameter type serial_t,
+    parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
 
     ndata_i.s   in, // #(data_t, NUM_ELEMENTS)
-    ntagged_i.m out // #(data_t, logic[SERIAL_WIDTH - 1:0], NUM_ELEMENTS)
+    ntagged_i.m out // #(data_t, serial_t, NUM_ELEMENTS)
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -29,7 +29,7 @@ else $fatal(1, "Incoming keep signal (%h) most be contiguous starting from the l
 
 localparam ELEMENT_BITS = $clog2(NUM_ELEMENTS);
 
-typedef logic[SERIAL_WIDTH - 1:0] serial_t;
+`ASSERT_ELAB($bits(out.tag) == NUM_ELEMENTS * $bits(serial_t))
 
 serial_t serial_count;
 

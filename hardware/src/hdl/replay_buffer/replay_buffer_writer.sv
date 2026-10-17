@@ -1,8 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-import lynxTypes::*;
-
 `include "axi_macros.svh"
 `include "libstf_macros.svh"
 
@@ -25,7 +22,10 @@ import lynxTypes::*;
  *
  * The out port must be wired to axis_card_send[AXI_STRM_ID].
  */
-module ReplayBufferWriter #(
+module ReplayBufferWriter
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter AXI_STRM_ID = 0,
     parameter TRANSFER_SIZE = TRANSFER_SIZE_BYTES
 ) (

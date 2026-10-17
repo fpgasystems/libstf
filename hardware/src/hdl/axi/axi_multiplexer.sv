@@ -1,8 +1,9 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
-module AXIMultiplexer #(
+module AXIMultiplexer
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter NUM_STREAMS
 ) (
     input logic clk,

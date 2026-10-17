@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
 `include "libstf_macros.svh"
 
-interface write_config_i (
+interface write_config_i
+    import lynxTypes::*;
+(
     input logic clk,
     input logic rst_n
 );
@@ -31,7 +31,9 @@ interface write_config_i (
 `endif
 endinterface
 
-interface read_config_i (
+interface read_config_i
+    import lynxTypes::*;
+(
     input logic clk,
     input logic rst_n
 );
@@ -83,12 +85,19 @@ endinterface
 /**
  * Interface that bundles all stream configuration information.
  */
-interface stream_config_i (
+interface stream_config_i
+    import libstf::*;
+(
     input logic clk,
     input logic rst_n
 );
-    `READY_VALID_SIGNALS(select_t, select)
-    `READY_VALID_SIGNALS(type_t,   data_type)
+    select_t select_data;
+    logic    select_valid;
+    logic    select_ready;
+
+    type_t data_type_data;
+    logic  data_type_valid;
+    logic  data_type_ready;
 
     modport m (
         output select_data, select_valid, data_type_data, data_type_valid,
@@ -114,11 +123,15 @@ endinterface
 /**
  * Interface that bundles all memory configuration information for the OutputWriter module.
  */
-interface mem_config_i (
+interface mem_config_i
+    import libstf::*;
+(
     input logic clk,
     input logic rst_n
 );
-    `READY_VALID_SIGNALS(buffer_t, buffer)
+    buffer_t buffer_data;
+    logic    buffer_valid;
+    logic    buffer_ready;
 
     logic flush_buffers;
     logic empty_stream_consumes_buffer;
@@ -158,7 +171,9 @@ endinterface
 /**
  * Interface that configures a ReplayBuffer.
  */
-interface replay_buffer_config_i (
+interface replay_buffer_config_i
+    import libstf::*;
+(
     input logic clk,
     input logic rst_n
 );
@@ -166,7 +181,9 @@ interface replay_buffer_config_i (
     vaddress_t size; // In bytes
     logic valid;
 
-    `READY_VALID_SIGNALS(data32_t, num_reads)
+    data32_t num_reads_data;
+    logic    num_reads_valid;
+    logic    num_reads_ready;
 
     task tie_off_m();
         valid           = 1'b0;

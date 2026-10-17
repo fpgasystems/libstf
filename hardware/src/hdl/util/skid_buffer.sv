@@ -1,8 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::type_t;
-import libstf::data8_t;
-
 module SkidBuffer #(
     parameter type data_t
 ) (
@@ -230,7 +227,9 @@ assign skid_out.ready = out.ready;
 
 endmodule
 
-module AXISkidBuffer #(
+module AXISkidBuffer
+    import lynxTypes::*;
+#(
     parameter AXI4S_DATA_BITS = AXI_DATA_BITS
 ) (
     input logic clk,
@@ -272,7 +271,9 @@ assign skid_out.ready = out.tready;
 
 endmodule
 
-module TypedNDataSkidBuffer #(
+module TypedNDataSkidBuffer
+    import libstf::*;
+#(
     parameter DATABEAT_SIZE
 ) (
     input logic clk,

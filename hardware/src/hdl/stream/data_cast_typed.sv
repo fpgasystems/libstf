@@ -2,8 +2,6 @@
 
 `include "libstf_macros.svh"
 
-import libstf::*;
-
 /**
  * Casts the elements of a typed ndata stream to the type configured per transfer via `out_type`.
  *
@@ -15,7 +13,9 @@ import libstf::*;
  * Narrowing keeps the low bytes of every element (truncation), which is correct for signed and
  * unsigned values as long as they fit the narrower type.
  */
-module TypedNDataCast #(
+module TypedNDataCast
+    import libstf::*;
+#(
     parameter DATABEAT_SIZE
 ) (
     input logic clk,

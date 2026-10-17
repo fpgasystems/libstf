@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import lynxTypes::*;
-
 module StreamHasher #(
     parameter type tuple_t,
     parameter NUM_TUPLES,

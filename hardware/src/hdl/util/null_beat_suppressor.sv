@@ -76,7 +76,10 @@ assign out.valid = hold_valid && (hold_last || (in.valid && is_last_or_not_null)
 
 endmodule
 
-module AXINullBeatSuppressor #(
+module AXINullBeatSuppressor
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter AXI4S_DATA_BITS = AXI_DATA_BITS
 ) (
     input logic clk,

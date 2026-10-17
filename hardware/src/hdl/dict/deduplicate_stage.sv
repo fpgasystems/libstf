@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 module DeduplicateStage #(
     parameter int unsigned ID,
     parameter type data_t, 

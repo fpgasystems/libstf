@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
 `include "libstf_macros.svh"
 `include "config_macros.svh"
 
@@ -15,7 +13,10 @@ import libstf::*;
  *             has to be written first.
  *   3 * I + 2 Enqueues how often the next stream is read. Every stream needs one value >= 1.
  */
-module ReplayBufferConfig #(
+module ReplayBufferConfig
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter NUM_BUFFERS,
     parameter TRANSFER_SIZE = TRANSFER_SIZE_BYTES // Must match the ReplayBuffers
 ) (

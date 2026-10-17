@@ -1,13 +1,14 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
+`include "libstf_macros.svh"
 
-parameter type typed_dictionary_data_t = data32_t;
-parameter int TYPED_DICTIONARY_DATA_SIZE = $bits(typed_dictionary_data_t) / 8;
-
-module TypedDictionary #(
+module TypedDictionary
+    import libstf::*;
+#(
     parameter type id_t,
     parameter DATABEAT_SIZE,
+    localparam type typed_dictionary_data_t = data32_t,
+    localparam int TYPED_DICTIONARY_DATA_SIZE = $bits(typed_dictionary_data_t) / 8,
     parameter NUM_ELEMENTS = DATABEAT_SIZE / TYPED_DICTIONARY_DATA_SIZE,
     parameter NUM_BANKS = 16
 ) (

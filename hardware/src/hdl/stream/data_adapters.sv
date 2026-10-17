@@ -2,14 +2,14 @@
 
 `include "libstf_macros.svh"
 
-import lynxTypes::AXI_DATA_BITS;
-
 /**
  * Converts a ndata stream to an AXI stream.
  *
  * Hint: Currently supports same number of input and output elements and doubling the stream width.
  */
-module NDataToAXI #(
+module NDataToAXI
+    import lynxTypes::*;
+#(
     parameter type data_t,
     parameter NUM_ELEMENTS,
     parameter AXI_WIDTH = AXI_DATA_BITS,
@@ -64,7 +64,9 @@ endmodule
  *
  * Hint: Currently supports same number of input and output elements and halving the stream width.
  */
-module AXIToNData #(
+module AXIToNData
+    import lynxTypes::*;
+#(
     parameter type data_t,
     parameter NUM_ELEMENTS,
     parameter AXI_WIDTH = AXI_DATA_BITS,

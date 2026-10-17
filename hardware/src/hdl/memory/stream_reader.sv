@@ -1,8 +1,5 @@
 `timescale 1ns / 1ps
 
-import lynxTypes::*;
-import libstf::*;
-
 `include "axi_macros.svh"
 `include "lynx_macros.svh"
 `include "libstf_macros.svh"
@@ -25,7 +22,10 @@ import libstf::*;
  * The input_data port should be connected to the AXI stream of the stream as configured via the
  * STRM parameter, e.g., axis_card_recv[AXI_STRM_ID] for card memory.
  */
-module StreamReader #(
+module StreamReader
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter STRM = STRM_HOST,
     parameter AXI_STRM_ID = 0,
     parameter IS_LOCAL = 1,

@@ -155,8 +155,7 @@ NDataSkidBuffer #(id_t, NUM_ELEMENTS) inst_decoupler_skid_buffer (
 
 ReorderDecoupler #(
     .data_t(id_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS),
-    .SERIAL_WIDTH(SERIAL_WIDTH)
+    .NUM_ELEMENTS(NUM_ELEMENTS)
 ) inst_id_decoupler (
     .clk(clk),
     .rst_n(reset_synced),

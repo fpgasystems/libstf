@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import lynxTypes::*;
-
 module ConstantShifter #(
     parameter SHIFT_INDEX,
     parameter type data_t,

@@ -8,13 +8,12 @@ module Crossbar #(
     parameter NUM_OUTPUTS,
     parameter LAST_HANDLING   = 1, // Handling of the last signal by the Multiplexer
     parameter FILTER_KEEP     = 1, // If the Multiplexer filters by keep signal
-    parameter NUM_SKID_STAGES = 4,
-    parameter TAG_WIDTH       = $clog2(NUM_OUTPUTS)
+    parameter NUM_SKID_STAGES = 4
 ) (
     input logic clk,
     input logic rst_n,
 
-    tagged_i.s in[NUM_INPUTS],  // #(data_t, logic[TAG_WIDTH - 1:0])
+    tagged_i.s in[NUM_INPUTS],  // #(data_t, tag_t)
     data_i.m   out[NUM_OUTPUTS] // #(data_t)
 );
 
@@ -24,7 +23,10 @@ generate
 
 `RESET_RESYNC // Reset pipelining
 
-typedef logic[TAG_WIDTH - 1:0] tag_t;
+localparam type tag_t = type(in[0].tag);
+
+// The tag selects the output
+`ASSERT_ELAB($bits(tag_t) >= $clog2(NUM_OUTPUTS))
 
 tagged_i #(data_t, tag_t) skid_pipe[NUM_INPUTS][NUM_SKID_STAGES + 1](clk, reset_synced);
 tagged_i #(data_t, tag_t) duplicator_out[NUM_INPUTS][NUM_OUTPUTS](clk, reset_synced);

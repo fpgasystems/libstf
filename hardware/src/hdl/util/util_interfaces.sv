@@ -1,6 +1,7 @@
-import libstf::*;
 
-interface stream_profile_i;
+interface stream_profile_i
+    import libstf::*;
+;
     stream_profile_t counters;
     logic            stop;
 

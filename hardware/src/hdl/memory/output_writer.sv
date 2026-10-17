@@ -1,8 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-import lynxTypes::*;
-
 `include "axi_macros.svh"
 `include "libstf_macros.svh"
 
@@ -15,7 +12,10 @@ import lynxTypes::*;
  * E.g. the keep signal should be all 1s, except for data beats that contain a last signal.
  * In other words: Writing data that is not all 1s and not last will result in UNEXPECTED behavior.
  */
-module OutputWriter (
+module OutputWriter
+    import lynxTypes::*;
+    import libstf::*;
+(
     input logic clk,
     input logic rst_n,
 

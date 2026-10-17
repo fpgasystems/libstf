@@ -21,7 +21,7 @@ module TaggedDuplicator #(
 
 `RESET_RESYNC // Reset pipelining
 
-localparam type data_t = in.data_t;
+localparam type data_t = type(in.data);
 localparam type tag_t  = type(in.tag);
 
 logic[NUM_STREAMS - 1:0] internal_ready;

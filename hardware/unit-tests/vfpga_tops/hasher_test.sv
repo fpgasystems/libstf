@@ -1,7 +1,8 @@
-import libstf::*;
 import lynxTypes::*;
+import libstf::*;
 
 `include "axi_macros.svh"
+`include "libstf_macros.svh"
 
 parameter type data_t = data32_t;
 parameter NUM_ELEMENTS = 16;

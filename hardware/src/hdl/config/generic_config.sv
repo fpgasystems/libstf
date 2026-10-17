@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
 `include "libstf_macros.svh"
 
 /**
@@ -10,7 +8,10 @@ import libstf::*;
  * any major component. We use this, for example, in the output buffer manager example to expose 
  * performance counters that we don't need in the MemConfig otherwise.
  */
-module GenericConfig #(
+module GenericConfig
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter NUM_READ_REGISTERS,
     parameter NUM_WRITE_REGISTERS
 ) (

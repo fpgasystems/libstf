@@ -22,6 +22,9 @@ std::ostream &operator<<(std::ostream &out, const type_t &data_type) {
     case type_t::INT16_T:
         out << "type_t::INT16_T";
         break;
+    case type_t::INT128_T:
+        out << "type_t::INT128_T";
+        break;
     case type_t::NUM_TYPES:
         out << "type_t::NUM_TYPES";
         break;

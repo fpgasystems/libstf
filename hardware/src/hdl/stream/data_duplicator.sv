@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * The NDataDuplicator creates NUM_OUTPUTS output streams based on one input stream. The ready 
  * signal of the input is driven when all output ready signals are high.

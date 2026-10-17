@@ -1,4 +1,3 @@
-import libstf::*;
 
 `include "libstf_macros.svh"
 
@@ -168,12 +167,12 @@ interface tagged_i #(
     input logic clk,
     input logic rst_n
 );
-    data_t                 data;
-    tag_t                  tag;
-    logic                  keep;
-    logic                  last;
-    logic                  valid;
-    logic                  ready;
+    data_t data;
+    tag_t  tag;
+    logic  keep;
+    logic  last;
+    logic  valid;
+    logic  ready;
 
     task tie_off_m(); // Tie off unused slave signals
         data  = '0;
@@ -212,7 +211,7 @@ endinterface
 
 interface ntagged_i #(
     parameter type data_t,
-    parameter type tag_t = data8_t,
+    parameter type tag_t,
     parameter NUM_ELEMENTS
 ) (
     input logic clk,
@@ -261,7 +260,9 @@ interface ntagged_i #(
 
 endinterface
 
-interface typed_ndata_i #(
+interface typed_ndata_i
+    import libstf::*;
+#(
     parameter DATABEAT_SIZE
 ) (
     input logic clk,
@@ -281,7 +282,7 @@ interface typed_ndata_i #(
         last  = 1'b0;
         valid = 1'b0;
     endtask
-    
+
     task tie_off_s(); // Tie off unused master signals
         ready = 1'b0;
     endtask

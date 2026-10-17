@@ -12,7 +12,9 @@
  * On the axi_ctrl input, it receives configuration messages and forwards them to the corresponding 
  * configuration based on the address spaces.
  */
-module GlobalConfig #(
+module GlobalConfig
+    import lynxTypes::*;
+#(
     parameter integer SYSTEM_ID,
     parameter integer NUM_CONFIGS,
     parameter integer ADDR_SPACE_SIZES[NUM_CONFIGS],

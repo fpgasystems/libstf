@@ -1,3 +1,8 @@
+import lynxTypes::*;
+import libstf::*;
+
+`include "axi_macros.svh"
+
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb sq_rd.tie_off_m();
 always_comb cq_rd.tie_off_s();

@@ -1,14 +1,14 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
 `include "libstf_macros.svh"
 
 /**
  * Inserts DEPTH register (skid-buffer) stages into a read_config_i link, on both the request
  * channel and the response channel.
  */
-module ReadConfigSkidBuffers #(
+module ReadConfigSkidBuffers
+    import lynxTypes::*;
+#(
     parameter integer DEPTH = 1
 ) (
     input logic clk,

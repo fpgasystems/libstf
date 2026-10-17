@@ -1,13 +1,13 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-import lynxTypes::*;
-
 /**
  * Demultiplexes one input AXI stream into a set of output AXI streams based on a select 
  * configuration.
  */
-module AXIDemultiplexer #(
+module AXIDemultiplexer
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter NUM_STREAMS
 ) (
     input logic clk,

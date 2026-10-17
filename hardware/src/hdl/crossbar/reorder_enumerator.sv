@@ -1,23 +1,27 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * The ReorderEnumerator assigns each element in an ndata input stream a serial number in the tag 
  * field of the ntagged output stream for later reordering with the Reorder module.
  */
 module ReorderEnumerator #(
-    parameter type data_t, 
-    parameter NUM_ELEMENTS,
-    parameter SERIAL_WIDTH
+    parameter type data_t,
+    parameter type serial_t,
+    parameter NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
     
     ndata_i.s   in, // #(data_t, NUM_ELEMENTS)
-    ntagged_i.m out // #(data_t, logic[SERIAL_WIDTH - 1:0], NUM_ELEMENTS)
+    ntagged_i.m out // #(data_t, serial_t, NUM_ELEMENTS)
 );
 
+`ASSERT_ELAB($bits(out.tag) == NUM_ELEMENTS * $bits(serial_t))
+
 localparam DATA_BITS = $clog2(NUM_ELEMENTS);
-localparam SERIAL_BEAT_BITS = SERIAL_WIDTH - DATA_BITS;
+localparam SERIAL_BEAT_BITS = $bits(serial_t) - DATA_BITS;
 
 typedef logic[SERIAL_BEAT_BITS - 1:0] beat_serial_t;
 

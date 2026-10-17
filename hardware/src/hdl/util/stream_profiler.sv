@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
 /**
  * A stream profiler that starts counting when it sees the first valid data beat. It counts the
  * number of handshakes, starved cycles, stalled cycles, idle pauses after a stream finishes
@@ -13,7 +11,9 @@ import libstf::*;
  * only added to the idle count once the next valid data beat arrives, so trailing idle cycles after
  * the final stream (with no subsequent stream) are not counted.
  */
-module StreamProfiler #(
+module StreamProfiler
+    import libstf::*;
+#(
     parameter int OUT_REG_LEVELS = 1
 ) (
     input logic clk,

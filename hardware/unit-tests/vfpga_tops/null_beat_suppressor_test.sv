@@ -1,4 +1,3 @@
-import libstf::*;
 import lynxTypes::*;
 
 `include "axi_macros.svh"

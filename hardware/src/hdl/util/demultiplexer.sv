@@ -82,7 +82,9 @@ endmodule
 // The de muxing in this module is done based on the data.dest field in the input
 // metaIntf. In other words, the output interfaces will get data, based on the
 // id of the dest value of the input interface.
-module CQDemultiplexer #(
+module CQDemultiplexer
+    import lynxTypes::*;
+#(
     parameter integer N_STREAMS = 2
 ) (
     input logic         clk,

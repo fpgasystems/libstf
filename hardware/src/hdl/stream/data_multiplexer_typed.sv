@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
 
-module TypedNDataMultiplexer #(
+module TypedNDataMultiplexer
+    import libstf::*;
+#(
     parameter DATABEAT_SIZE,
     parameter NUM_STREAMS
 ) (

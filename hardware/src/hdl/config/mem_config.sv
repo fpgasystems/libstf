@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
 `include "config_macros.svh"
 `include "libstf_macros.svh"
 
@@ -16,7 +14,10 @@ import libstf::*;
  *
  * The address space of this config has to fit max(NUM_STREAMS + 1, 4) registers.
  */
-module MemConfig #(
+module MemConfig
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter NUM_STREAMS,
     parameter EMPTY_STREAM_CONSUMES_BUFFER = 0
 ) (

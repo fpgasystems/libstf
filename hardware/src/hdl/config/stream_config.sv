@@ -3,9 +3,10 @@
 `include "libstf_macros.svh"
 `include "config_macros.svh"
 
-import libstf::*;
-
-module StreamConfig #(
+module StreamConfig
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter NUM_STREAMS,
     parameter MAX_OUTSTANDING_STREAMS = MAXIMUM_NUM_ENQUEUED_STREAMS // Configs that can be enqueued per stream
 ) (
@@ -44,7 +45,7 @@ for (genvar I = 0; I < NUM_STREAMS; I++) begin
 
     ConfigWriteFIFO #(I, MAX_OUTSTANDING_STREAMS, stream_conf_t) inst_write_fifo (clk, reset_synced, write_config, conf_reg);
 
-    `READY_SPLIT(select_t, type_t, conf_reg, select, data_type)
+    ReadyValidSplitter #(select_t, type_t) inst_conf_split (clk, reset_synced, conf_reg, select, data_type);
 
     `CONFIG_INTF_TO_SIGNALS(select,    out[I].select)
     `CONFIG_INTF_TO_SIGNALS(data_type, out[I].data_type)

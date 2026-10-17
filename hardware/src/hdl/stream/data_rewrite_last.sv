@@ -1,8 +1,5 @@
 `timescale 1ns / 1ps
 
-import lynxTypes::*;
-import libstf::*;
-
 /**
  * Shared state machine for the *RewriteLast modules. It tracks a running count of values and, on the
  * beat where that count reaches the number configured through `num_elements`, asserts `force_last`.
@@ -13,7 +10,9 @@ import libstf::*;
  * number of values carried by the current beat (`in_num_elements`) and wire up their respective
  * data/keep/typ passthrough; everything else lives here.
  */
-module RewriteLastCore #(
+module RewriteLastCore
+    import libstf::*;
+#(
     parameter type size_t = data32_t,
     parameter ELEMENT_BITS = 8, // wide enough to hold in_num_elements
     // When set, the forced-last beat is allowed to carry more values than remain; the wrapper masks
@@ -100,7 +99,10 @@ endmodule
  * where a running count of typed values reaches the number configured through `num_elements`. After
  * emitting that last beat, it waits for the next `num_elements` configuration.
  */
-module TypedRewriteLast #(
+module TypedRewriteLast
+    import lynxTypes::*;
+    import libstf::*;
+#(
     parameter type size_t = data32_t,
     parameter DATABEAT_SIZE = AXI_DATA_BITS / 8
 ) (
@@ -180,7 +182,9 @@ endmodule
  * Untyped analogue of TypedRewriteLast: each keep bit is exactly one element, so the per-beat value
  * count is just $countones(keep).
  */
-module DataRewriteLast #(
+module DataRewriteLast
+    import libstf::*;
+#(
     parameter type data_t,
     parameter NUM_ELEMENTS,
     parameter type size_t = data32_t,

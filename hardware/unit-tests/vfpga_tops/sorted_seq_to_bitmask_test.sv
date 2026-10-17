@@ -1,4 +1,8 @@
+import lynxTypes::*;
 import libstf::*;
+
+`include "axi_macros.svh"
+`include "libstf_macros.svh"
 
 parameter NUM_ELEMENTS = 8;
 

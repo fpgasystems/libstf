@@ -21,7 +21,7 @@ module Coupler #(
     ndata_i.m out               // #(data_t, NUM_ELEMENTS)
 );
 
-localparam type data_t = out.data_t;
+localparam type data_t = type(in[0].data);
 
 typedef struct packed {
     logic[NUM_ELEMENTS - 1:0] keep;

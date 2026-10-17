@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
-
 `include "libstf_macros.svh"
 
 /*
@@ -9,7 +7,9 @@ import libstf::*;
  * the buffer is full or a stream ended. vaddr is the start of the buffer, size the number of bytes
  * written to it, and last whether the stream ended.
  */
-interface stream_writer_notify_i (
+interface stream_writer_notify_i
+    import libstf::*;
+(
     input logic clk,
     input logic rst_n
 );
@@ -52,7 +52,9 @@ endinterface
 /*
  * Provides the buffers the StreamReader reads, see the StreamReader.
  */
-interface mem_read_config_i (
+interface mem_read_config_i
+    import libstf::*;
+(
     input logic clk,
     input logic rst_n
 );

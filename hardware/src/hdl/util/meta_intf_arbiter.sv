@@ -1,7 +1,5 @@
 `timescale 1ns / 1ps
 
-import lynxTypes::*;
-
 `include "libstf_macros.svh"
 
 // This module performs a round-robin based arbitration for metaIntf interfaces. The STYPE for the
@@ -13,7 +11,9 @@ import lynxTypes::*;
 // in every cycle and no starvation is encountered. Moreover, fair resource sharing is ensured due
 // to the round-robin implementation. Each interface has to wait at most N_INTERFACES - 1 cycles
 // between outputs. 
-module MetaIntfArbiter #(
+module MetaIntfArbiter
+    import lynxTypes::*;
+#(
     parameter N_INTERFACES = N_STRM_AXI,
     parameter type STYPE = logic[63:0]
 ) (

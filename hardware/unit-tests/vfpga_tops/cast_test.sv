@@ -1,8 +1,9 @@
-import libstf::*;
 import lynxTypes::*;
+import libstf::*;
 
 `include "axi_macros.svh"
 `include "libstf_macros.svh"
+`include "config_macros.svh"
 
 parameter DATABEAT_SIZE = AXI_DATA_BITS / 8;
 

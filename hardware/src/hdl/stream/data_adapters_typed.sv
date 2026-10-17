@@ -1,14 +1,15 @@
 `timescale 1ns / 1ps
 
 `include "libstf_macros.svh"
-import libstf::*;
 
 /**
  * Converts a NUM_ELEMENTS ndata stream containing 32bit or 64bit elements to a 64 * NUM_ELEMENTS 
  * AXI stream. Use this in cases where you want to have a fixed number of elements in the stream,
  * but the width of the elements in the AXI stream may differ.
  */
-module NDataToAXITyped #(
+module NDataToAXITyped
+    import libstf::*;
+#(
   parameter int NUM_ELEMENTS
 ) (
     input logic clk,
@@ -20,10 +21,11 @@ module NDataToAXITyped #(
     AXI4S.m   out // #(AXI_WIDTH)
 );
 
-localparam DATA_WIDTH = 64;
-localparam AXI_WIDTH = DATA_WIDTH * NUM_ELEMENTS;
+localparam int DATA_WIDTH = 64;
+localparam int AXI_WIDTH  = DATA_WIDTH * NUM_ELEMENTS;
 
-`WARN_IF_NOT(AXI_WIDTH == out.AXI4S_DATA_BITS, "AXI_WIDTH does not match out.AXI4S_DATA_BITS")
+`ASSERT_ELAB($bits(in.data_t) == DATA_WIDTH)
+`ASSERT_ELAB(AXI_WIDTH == out.AXI4S_DATA_BITS)
 
 typedef logic[AXI_WIDTH / 8 - 1:0] keep_t;
 
@@ -139,7 +141,9 @@ endmodule
  * ndata stream. Use this in cases where you want to have a fixed number of elements in the stream,
  * but the width of the elements in the AXI stream may differ.
  */
-module AXIToNDataTyped #(
+module AXIToNDataTyped
+    import libstf::*;
+#(
   parameter int NUM_ELEMENTS
 ) (
     input logic clk,
@@ -151,10 +155,11 @@ module AXIToNDataTyped #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam DATA_WIDTH = 64;
-localparam AXI_WIDTH = DATA_WIDTH * NUM_ELEMENTS;
+localparam int DATA_WIDTH = 64;
+localparam int AXI_WIDTH  = DATA_WIDTH * NUM_ELEMENTS;
 
-`WARN_IF_NOT(AXI_WIDTH == in.AXI4S_DATA_BITS, "AXI_WIDTH does not match in.AXI4S_DATA_BITS")
+`ASSERT_ELAB($bits(out.data_t) == DATA_WIDTH)
+`ASSERT_ELAB(AXI_WIDTH == in.AXI4S_DATA_BITS)
 
 logic is_upper;
 logic is_32bit;
@@ -201,7 +206,9 @@ endmodule
 /**
  * Converts an data8_t ndata stream to a typed ndata stream.
  */
-module NDataToTypedNData #(
+module NDataToTypedNData
+    import libstf::*;
+#(
     parameter DATABEAT_SIZE
 ) (
     input logic clk,
@@ -212,6 +219,9 @@ module NDataToTypedNData #(
 
     typed_ndata_i.m out          // #(DATABEAT_SIZE)
 );
+
+`ASSERT_ELAB(DATABEAT_SIZE == in.NUM_ELEMENTS)
+`ASSERT_ELAB(DATABEAT_SIZE == out.DATABEAT_SIZE)
 
 valid_i #(type_t) keep_type(clk, rst_n);
 always_ff @(posedge clk) begin
@@ -263,7 +273,9 @@ endmodule
 /**
  * Converts an AXI stream to a typed ndata stream.
  */
-module AXIToTypedNData #(
+module AXIToTypedNData
+    import libstf::*;
+#(
     parameter DATABEAT_SIZE,
     parameter AXI_WIDTH = DATABEAT_SIZE * 8
 ) (
@@ -307,7 +319,9 @@ endmodule
 /**
  * Converts a typed ndata stream into an AXI stream.
  */
-module TypedNDataToAXI #(
+module TypedNDataToAXI
+    import libstf::*;
+#(
     parameter DATABEAT_SIZE,
     parameter AXI_WIDTH = DATABEAT_SIZE * 8
 ) (
@@ -318,6 +332,8 @@ module TypedNDataToAXI #(
 
     AXI4S.m out                 // #(AXI_WIDTH)
 );
+
+`ASSERT_ELAB(DATABEAT_SIZE == in.DATABEAT_SIZE)
 
 ndata_i #(data8_t, DATABEAT_SIZE) inner(clk, rst_n);
 

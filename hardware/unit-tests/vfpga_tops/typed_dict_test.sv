@@ -1,7 +1,8 @@
-import libstf::*;
 import lynxTypes::*;
+import libstf::*;
 
 `include "axi_macros.svh"
+`include "config_macros.svh"
 
 parameter NUM_IDS = 16;
 parameter DATABEAT_SIZE = 64;

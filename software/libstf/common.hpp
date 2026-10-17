@@ -52,6 +52,7 @@ enum class type_t : unsigned char {
     FLOAT_T,
     DOUBLE_T,
     INT16_T,
+    INT128_T,
     NUM_TYPES
 };
 
@@ -71,6 +72,8 @@ constexpr size_t size_of(type_t type) {
         return 8;
     case type_t::INT16_T:
         return 2;
+    case type_t::INT128_T:
+        return 16;
     case type_t::NUM_TYPES:
         break;
     }
@@ -95,6 +98,8 @@ auto dispatch_type(libstf::type_t type, Func &&func, Args &&...args) {
         return func.template operator()<double>(std::forward<Args>(args)...);
     case libstf::type_t::INT16_T:
         return func.template operator()<int16_t>(std::forward<Args>(args)...);
+    case libstf::type_t::INT128_T:
+        throw std::invalid_argument("INT128_T cannot be dispatched to a value type");
     case type_t::NUM_TYPES:
         break;
     }

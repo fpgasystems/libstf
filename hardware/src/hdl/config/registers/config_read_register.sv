@@ -1,9 +1,13 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * This module implements a read register for a plain signal.
  */
-module ConfigReadRegister #(
+module ConfigReadRegister
+    import lynxTypes::*;
+#(
     parameter integer ADDR,
     parameter type value_t
 ) (

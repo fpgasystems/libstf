@@ -6,7 +6,9 @@
  * count starts. If the is_last signal is high as it starts counting, it will return 1 as the number 
  * of cycles. It also counts the idle cycles when it is currently counting but handshake is not high.
  */
-module PerformanceCounter (
+module PerformanceCounter
+    import libstf::*;
+(
     input logic clk,
     input logic rst_n,
 

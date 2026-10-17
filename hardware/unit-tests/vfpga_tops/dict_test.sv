@@ -1,7 +1,8 @@
-import libstf::*;
 import lynxTypes::*;
+import libstf::*;
 
 `include "axi_macros.svh"
+`include "config_macros.svh"
 
 parameter NUM_ELEMENTS = 8;
 
@@ -75,7 +76,7 @@ ready_valid_i #(type_t) in_data_type(clk, rst_n);
 ready_valid_i #(type_t) out_data_type(clk, rst_n);
 
 `CONFIG_SIGNALS_TO_INTF(stream_config[0].data_type, data_type)
-`READY_DUPLICATE(2, data_type, {in_data_type, out_data_type})
+ReadyValidDuplicator #(2) inst_data_type_duplicate (clk, rst_n, data_type, {in_data_type, out_data_type});
 
 assign stream_config[0].select_ready = 1'b1;
 
