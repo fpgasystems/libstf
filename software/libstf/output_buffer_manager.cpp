@@ -217,7 +217,7 @@ void OutputBufferManager::move_current_buffer_to_handle(stream_t stream_id, uint
 
     // Only move the buffer if there was actual output. No output can happen if all output was
     // already sent or there simply was no output. In these cases, an interrupt is still raised for
-    // each output stream.
+    // each output stream. Depending on the hardware configuration, the buffer is used up anyway.
     if (bytes_written > 0) {
         // Resize the allocation to fit the actual size written by the FPGA, if not all memory was
         // used.
@@ -235,6 +235,11 @@ void OutputBufferManager::move_current_buffer_to_handle(stream_t stream_id, uint
 
         // Transfer to handle
         active_handle->push_buffer(stream_id, active_buffer);
+        enqueued_buffers[stream_id].pop();
+    } else if (mem_config->empty_stream_consumes_buffer()) {
+        // The hardware moved on to the next buffer without writing to this one
+        memory_pool->free(active_buffer.ptr, active_buffer.capacity,
+                          HugePageMemoryPool::DEFAULT_ALIGNMENT);
         enqueued_buffers[stream_id].pop();
     }
 

@@ -6,7 +6,7 @@ from libstf_utils.memory_manager import FPGAOutputMemoryManager
 
 MAX_NUMBER_STREAMS = constants.MAX_NUMBER_STREAMS
 TRANSFER_SIZE_BYTES_OVERWRITE = "TRANSFER_SIZE_BYTES_OVERWRITE"
-EMPTY_STREAM_TAKES_BUFFER = "OUTPUT_WRITER_EMPTY_STREAM_TAKES_BUFFER"
+EMPTY_STREAM_CONSUMES_BUFFER = "OUTPUT_WRITER_EMPTY_STREAM_CONSUMES_BUFFER"
 # A stream of a single element with this value is turned into an empty stream by the vFPGA top
 # (vfpga_tops/output_writer_test.sv). Keep this value in sync with the one there.
 EMPTY_STREAM_MAGIC = 0xDEADBEEF0BADF00D
@@ -46,9 +46,7 @@ class OutputWriterTest(OutputWriterTestCase):
             allocation_size, 
             transfer_size
         )
-        self.set_system_verilog_defines(
-            {TRANSFER_SIZE_BYTES_OVERWRITE: str(transfer_size)}
-        )
+        self._custom_defines[TRANSFER_SIZE_BYTES_OVERWRITE] = str(transfer_size)
 
     def test_with_one_data_beat_per_transfer(self):
         # Arrange
@@ -142,10 +140,9 @@ class OutputWriterTest(OutputWriterTestCase):
     def test_empty_and_nonempty_streams(self):
         self._simulate_empty_and_nonempty_streams()
 
-    def test_empty_and_nonempty_streams_take_buffer(self):
-        # Arrange
-        self.memory_manager.empty_stream_takes_buffer = True
-        self.set_system_verilog_defines({EMPTY_STREAM_TAKES_BUFFER: "1"})
+    def test_empty_and_nonempty_streams_consume_buffer(self):
+        # Arrange (the memory manager reads the setting from the MemConfig)
+        self._custom_defines[EMPTY_STREAM_CONSUMES_BUFFER] = "1"
 
         self._simulate_empty_and_nonempty_streams()
 

@@ -121,10 +121,12 @@ interface mem_config_i (
     `READY_VALID_SIGNALS(buffer_t, buffer)
 
     logic flush_buffers;
+    logic empty_stream_consumes_buffer;
 
     task tie_off_m();
-        buffer_valid  = 1'b0;
-        flush_buffers = 1'b0;
+        buffer_valid                 = 1'b0;
+        flush_buffers                = 1'b0;
+        empty_stream_consumes_buffer = 1'b0;
     endtask
 
     task tie_off_s();
@@ -133,14 +135,14 @@ interface mem_config_i (
 
     modport m (
         import tie_off_m,
-        output buffer_data, buffer_valid, flush_buffers,
+        output buffer_data, buffer_valid, flush_buffers, empty_stream_consumes_buffer,
         input buffer_ready
     );
 
     modport s (
         import tie_off_s,
         output buffer_ready,
-        input buffer_data, buffer_valid, flush_buffers
+        input buffer_data, buffer_valid, flush_buffers, empty_stream_consumes_buffer
     );
 
 `ifndef SYNTHESIS
@@ -149,6 +151,7 @@ interface mem_config_i (
     `STF_ASSERT_NOT_UNDEFINED(buffer_ready);
 
     `STF_ASSERT_NOT_UNDEFINED(flush_buffers);
+    `STF_ASSERT_NOT_UNDEFINED(empty_stream_consumes_buffer);
 `endif
 endinterface
 

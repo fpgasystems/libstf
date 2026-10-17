@@ -41,8 +41,7 @@ class FPGAOutputMemoryManager:
         global_config: GlobalConfig,
         allocation_size = DEFAULT_BYTES_PER_FPGA_TRANSFER,
         transfer_size = DEFAULT_BYTES_PER_FPGA_TRANSFER,
-        all_done_callback : Callable[[None], None] = None,
-        empty_stream_takes_buffer = False
+        all_done_callback : Callable[[None], None] = None
     ):
         """
         Creates a new FPGAOutputMemoryManager that manages the memory for FPGA output streams.
@@ -59,8 +58,6 @@ class FPGAOutputMemoryManager:
             triggered from the io_writer output thread. Therefore, blocking in this function
             will block any progress on reading the IO output.
             Moreover, if defined, this function is responsible for marking all output as done.
-        empty_stream_takes_buffer = Whether the StreamWriter uses up a buffer for an empty stream,
-            see its EMPTY_STREAM_TAKES_BUFFER parameter.
         """
         assert isinstance(io_writer_inst, io_writer.SimulationIOWriter)
         assert allocation_size > 0, (
@@ -81,7 +78,6 @@ class FPGAOutputMemoryManager:
         self.transfer_size = transfer_size
 
         self.all_done_callback = all_done_callback
-        self.empty_stream_takes_buffer = empty_stream_takes_buffer
         self.logger = logging.getLogger("MemoryManager")
 
         # RLocks allow multi-entry of the same thread
@@ -216,10 +212,10 @@ class FPGAOutputMemoryManager:
             # More transfers expected: open a new transfer slot and provide the FPGA with
             # a fresh allocation for the next acquire_output_handle cycle.
             self.transfers[stream_id].append({})
-            # An empty stream does not use up its allocation unless the StreamWriter is configured
-            # that way: the StreamWriter keeps writing the next stream to it (like the software
-            # OutputBufferManager, which keeps the buffer too).
-            if transfer_size > 0 or self.empty_stream_takes_buffer:
+            empty_stream_consumes_buffer = (
+                self.global_config.get_config(MemConfig).empty_stream_consumes_buffer
+            )
+            if transfer_size > 0 or empty_stream_consumes_buffer:
                 self._add_allocation_for_stream(stream_id)
             return
 

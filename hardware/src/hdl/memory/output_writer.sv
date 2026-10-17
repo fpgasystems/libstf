@@ -14,12 +14,8 @@ import lynxTypes::*;
  * This component assumes normalized streams.
  * E.g. the keep signal should be all 1s, except for data beats that contain a last signal.
  * In other words: Writing data that is not all 1s and not last will result in UNEXPECTED behavior.
- *
- * EMPTY_STREAM_TAKES_BUFFER: see StreamWriter.
  */
-module OutputWriter #(
-    parameter EMPTY_STREAM_TAKES_BUFFER = 0
-) (
+module OutputWriter (
     input logic clk,
     input logic rst_n,
 
@@ -106,8 +102,7 @@ for(genvar I = 0; I < N_STRM_AXI; I++) begin : gen_stream_writers
     // Invoke the FPGA-initiated transfers for this stream
     StreamWriter #(
         .AXI_STRM_ID(I),
-        .TRANSFER_LENGTH_BYTES(TRANSFER_SIZE_BYTES),
-        .EMPTY_STREAM_TAKES_BUFFER(EMPTY_STREAM_TAKES_BUFFER)
+        .TRANSFER_LENGTH_BYTES(TRANSFER_SIZE_BYTES)
     ) inst_stream_writer (
         .clk(clk),
         .rst_n(reset_synced),

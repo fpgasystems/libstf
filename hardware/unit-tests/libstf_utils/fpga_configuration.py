@@ -164,6 +164,7 @@ class MemConfig(Config):
         super().__init__(registers, addr_offset, num_regs)
         self.num_streams = self.read_register(1)
         self.maximum_num_enqueued_buffers = self.read_register(2)
+        self.empty_stream_consumes_buffer = self.read_register(3) == 1
 
     def enqueue_buffer(self, stream_id: int, vaddr: int, size: int, bytes_per_fpga_transfer: int):
         """

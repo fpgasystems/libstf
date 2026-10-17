@@ -102,7 +102,8 @@ bool GlobalConfig::has_config(uint64_t config_id) {
 MemConfig::MemConfig(std::shared_ptr<coyote::cThread> cthread, uint32_t addr_offset,
                      uint32_t num_regs)
     : Config(cthread, addr_offset, num_regs), num_streams_(read_register(1).value()),
-      maximum_num_enqueued_buffers_(read_register(2).value()) {}
+      maximum_num_enqueued_buffers_(read_register(2).value()),
+      empty_stream_consumes_buffer_(read_register(3).value() == 1) {}
 
 void MemConfig::enqueue_buffer(stream_t stream_id, Buffer &buffer) {
     assert(stream_id < num_streams_);

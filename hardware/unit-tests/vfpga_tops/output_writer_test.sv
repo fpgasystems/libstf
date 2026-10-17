@@ -15,6 +15,12 @@ assign clk   = aclk;
 assign rst_n = aresetn;
 
 // -- Configuration --------------------------------------------------------------------------------
+`ifdef OUTPUT_WRITER_EMPTY_STREAM_CONSUMES_BUFFER
+localparam EMPTY_STREAM_CONSUMES_BUFFER = 1;
+`else
+localparam EMPTY_STREAM_CONSUMES_BUFFER = 0;
+`endif
+
 write_config_i write_configs[2](clk, rst_n);
 read_config_i  read_configs [2](clk, rst_n);
 
@@ -34,7 +40,8 @@ GlobalConfig #(
 
 mem_config_i mem_config[N_STRM_AXI](clk, rst_n);
 MemConfig #(
-    .NUM_STREAMS(N_STRM_AXI)
+    .NUM_STREAMS(N_STRM_AXI),
+    .EMPTY_STREAM_CONSUMES_BUFFER(EMPTY_STREAM_CONSUMES_BUFFER)
 ) inst_mem_config (
     .clk(clk),
     .rst_n(rst_n),
@@ -120,19 +127,25 @@ end
 // Keep the value in sync with the one in output_writer_test.py.
 localparam data64_t EMPTY_STREAM_MAGIC = 64'hDEAD_BEEF_0BAD_F00D;
 
-`ifdef OUTPUT_WRITER_EMPTY_STREAM_TAKES_BUFFER
-localparam EMPTY_STREAM_TAKES_BUFFER = 1;
-`else
-localparam EMPTY_STREAM_TAKES_BUFFER = 0;
-`endif
-
 AXI4S axi_host_recv_raw[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
 AXI4S axi_host_recv[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
 for (genvar I = 0; I < N_STRM_AXI; I++) begin
     `AXIS_ASSIGN(axis_host_recv[I], axi_host_recv_raw[I]) // AXI4SR to AXI4S
 
+    // Only a stream that consists of a single beat can be the marker. Otherwise, the last element
+    // of a longer stream could happen to have the magic value.
+    logic is_first_beat;
+    always_ff @(posedge clk) begin
+        if (!rst_n) begin
+            is_first_beat <= 1'b1;
+        end else if (axi_host_recv_raw[I].tvalid && axi_host_recv_raw[I].tready) begin
+            is_first_beat <= axi_host_recv_raw[I].tlast;
+        end
+    end
+
     logic is_empty_stream_marker;
-    assign is_empty_stream_marker = axi_host_recv_raw[I].tlast
+    assign is_empty_stream_marker = is_first_beat
+        && axi_host_recv_raw[I].tlast
         && axi_host_recv_raw[I].tkeep == 'hFF // Exactly one 64-bit element
         && axi_host_recv_raw[I].tdata[63:0] == EMPTY_STREAM_MAGIC;
 
@@ -143,9 +156,7 @@ for (genvar I = 0; I < N_STRM_AXI; I++) begin
     assign axi_host_recv_raw[I].tready = axi_host_recv[I].tready;
 end
 
-OutputWriter #(
-    .EMPTY_STREAM_TAKES_BUFFER(EMPTY_STREAM_TAKES_BUFFER)
-) inst_output_writer (
+OutputWriter inst_output_writer (
     .clk(aclk),
     .rst_n(rst_n),
 

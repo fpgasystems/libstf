@@ -121,11 +121,14 @@ class MemConfig : public Config {
 
     const size_t maximum_num_enqueued_buffers() const { return maximum_num_enqueued_buffers_; }
 
+    const bool empty_stream_consumes_buffer() const { return empty_stream_consumes_buffer_; }
+
     static constexpr uint64_t ID = 0;
 
   private:
     stream_t num_streams_;
     size_t   maximum_num_enqueued_buffers_;
+    bool     empty_stream_consumes_buffer_;
 };
 
 class StreamConfig : public Config {
