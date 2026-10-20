@@ -1,16 +1,14 @@
-import random
 from typing import List
 from coyote_test import fpga_test_case
 from unit_test.fpga_stream import Stream, StreamType
-from libstf_utils.hashing import murmur32
 from math import ceil
 
 class LookaheadTest(fpga_test_case.FPGATestCase):
     """
-    These tests test the Lookahead.
+    These tests test the NDataLookahead.
     """
 
-    alternative_vfpga_top_file = "vfpga_tops/data_lookahead_test.sv"
+    alternative_vfpga_top_file = "vfpga_tops/lookahead_test.sv"
 
     debug_mode = True
     verbose_logging = True
@@ -47,6 +45,7 @@ class LookaheadTest(fpga_test_case.FPGATestCase):
         return super().simulate_fpga()
 
     def test_basic(self):
+        # Arrange
         TEST_SIZE = 512
         self.input = [i % 256 for i in range(TEST_SIZE)]
 
@@ -57,6 +56,7 @@ class LookaheadTest(fpga_test_case.FPGATestCase):
         self.assert_simulation_output()
 
     def test_single_beat(self):
+        # Arrange
         TEST_SIZE = 64
         self.input = [i % 256 for i in range(TEST_SIZE)]
 
@@ -67,6 +67,7 @@ class LookaheadTest(fpga_test_case.FPGATestCase):
         self.assert_simulation_output()
 
     def test_back_to_back_streams(self):
+        # Arrange
         self.streams = [
             [i % 256 for i in range(200)],
             [(i * 7) % 256 for i in range(300)],
@@ -79,6 +80,7 @@ class LookaheadTest(fpga_test_case.FPGATestCase):
         self.assert_simulation_output()
 
     def test_single_full_beat_after_last(self):
+        # Arrange
         # The second stream is a single beat, so it is also the last beat of its stream. The third one
         # catches a duplicated or stuck beat, which would otherwise only show after the simulation ends.
         self.streams = [
@@ -94,6 +96,7 @@ class LookaheadTest(fpga_test_case.FPGATestCase):
         self.assert_simulation_output()
 
     def test_single_partial_beat_after_last(self):
+        # Arrange
         self.streams = [
             [i % 256 for i in range(100)],
             [(i * 3) % 256 for i in range(10)],
@@ -107,6 +110,7 @@ class LookaheadTest(fpga_test_case.FPGATestCase):
         self.assert_simulation_output()
 
     def test_many_short_streams(self):
+        # Arrange
         # Single beat streams in between, and 65 to 67 bytes, where the last beat holds at most as many
         # bytes as the lookahead
         lengths = [1, 65, 14, 66, 64, 67, 79, 1, 92, 130, 200, 64]

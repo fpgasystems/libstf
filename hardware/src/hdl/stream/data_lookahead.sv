@@ -1,11 +1,17 @@
 `timescale 1ns / 1ps
 
-import libstf::*;
+`include "libstf_macros.svh"
 
 /**
- * Module for looking ahead
+ * The NDataLookahead lets downstream logic read beyond the boundary of a beat. Every output beat
+ * contains the elements of the input beat followed by the first PREVIEW_SIZE elements of the next
+ * input beat. The preview never crosses a stream boundary: on the last beat of a stream, the keep
+ * of the preview elements is 0, even if the next stream is already waiting.
+ *
+ * Each beat is held until its successor arrives, so this adds one beat of latency at full
+ * throughput.
  */
-module Lookahead #(
+module NDataLookahead #(
     parameter type data_t,
     parameter int NUM_ELEMENTS,
     parameter int PREVIEW_SIZE = 3
@@ -13,79 +19,58 @@ module Lookahead #(
     input logic clk,
     input logic rst_n,
 
-    ndata_i.s in,       // #(data_t, NUM_ELEMENTS)
-    ndata_i.m out       // #(data_t, 2 * NUM_ELEMENTS)
+    ndata_i.s in, // #(data_t, NUM_ELEMENTS)
+    ndata_i.m out // #(data_t, NUM_ELEMENTS + PREVIEW_SIZE)
 );
 
-typedef struct packed {
-    data_t [NUM_ELEMENTS+PREVIEW_SIZE-1:0] data;
-    logic [NUM_ELEMENTS+PREVIEW_SIZE-1:0] keep;
-} buffer_t;
+`ASSERT_ELAB(PREVIEW_SIZE >= 1 && PREVIEW_SIZE <= NUM_ELEMENTS)
 
-typedef enum logic [1:0] {
-    ST_WAIT_FIRST,
-    ST_GLUE,
-    ST_EMIT_LAST
+typedef enum logic[1:0] {
+    WAIT_FIRST, // Waiting for the first beat of a stream
+    GLUE,       // Holding a beat until the next beat of the same stream arrives
+    EMIT_LAST   // Holding the last beat of a stream, which has no preview
 } state_t;
-state_t state;
 
-buffer_t preview_buffer;
-for (genvar i = 0; i < PREVIEW_SIZE; ++i) begin
-    assign preview_buffer.data[NUM_ELEMENTS + i] = state == ST_GLUE ? in.data[i] : '0;
-    assign preview_buffer.keep[NUM_ELEMENTS + i] = in.keep[i] && in.valid && state == ST_GLUE;
-end
+state_t                    state, n_state;
+data_t[NUM_ELEMENTS - 1:0] data,  n_data;
+logic [NUM_ELEMENTS - 1:0] keep,  n_keep;
 
-logic do_ingest;
-assign do_ingest =
-    (state == ST_WAIT_FIRST) ||
-    (((state == ST_GLUE && in.valid) || state == ST_EMIT_LAST) && out.ready);
-
-task update_preview();
-    for ( int i = 0; i < NUM_ELEMENTS; ++i ) begin
-        preview_buffer.data[i] <= in.data[i];
-        preview_buffer.keep[i] <= in.keep[i];
-    end
-endtask
-
-always_ff @( posedge clk ) begin : WordGlue_FSM
-    if ( !rst_n ) begin
-        state <= ST_WAIT_FIRST;
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        state <= WAIT_FIRST;
     end else begin
-        case ( state )
-            ST_WAIT_FIRST: begin
-                if ( in.valid ) begin
-                    state <= in.last ? ST_EMIT_LAST : ST_GLUE;
-                end
-            end
-            ST_GLUE: begin
-                if ( in.valid && out.ready ) begin
-                    state <= in.last ? ST_EMIT_LAST : ST_GLUE;
-                end
-            end
-            ST_EMIT_LAST: begin
-                if ( out.ready ) begin
-                    if ( in.valid && in.last ) begin
-                        state <= ST_EMIT_LAST;
-                    end else if ( in.valid ) begin
-                        state <= ST_GLUE;
-                    end else begin
-                        state <= ST_WAIT_FIRST;
-                    end
-                end
-            end
-        endcase;
-
-        if (do_ingest) begin
-            update_preview();
-        end
+        state <= n_state;
+        data  <= n_data;
+        keep  <= n_keep;
     end
 end
 
-assign in.ready = 
-    state == ST_WAIT_FIRST || out.ready;
-assign out.valid = state == ST_EMIT_LAST || (state == ST_GLUE && in.valid);
-assign out.data = preview_buffer.data;
-assign out.keep = preview_buffer.keep;
-assign out.last = state == ST_EMIT_LAST;
+always_comb begin
+    n_state = state;
+    n_data  = data;
+    n_keep  = keep;
+
+    if (in.valid && in.ready) begin
+        n_state = in.last ? EMIT_LAST : GLUE;
+        n_data  = in.data;
+        n_keep  = in.keep;
+    end else if (state == EMIT_LAST && out.ready) begin
+        n_state = WAIT_FIRST;
+    end
+end
+
+assign in.ready = state == WAIT_FIRST || out.ready;
+
+assign out.data[NUM_ELEMENTS - 1:0] = data;
+assign out.keep[NUM_ELEMENTS - 1:0] = keep;
+
+// The waiting input beat only belongs to the same stream in GLUE
+for (genvar I = 0; I < PREVIEW_SIZE; I++) begin
+    assign out.data[NUM_ELEMENTS + I] = state == GLUE ? in.data[I] : '0;
+    assign out.keep[NUM_ELEMENTS + I] = state == GLUE && in.valid && in.keep[I];
+end
+
+assign out.last  = state == EMIT_LAST;
+assign out.valid = state == EMIT_LAST || (state == GLUE && in.valid);
 
 endmodule
