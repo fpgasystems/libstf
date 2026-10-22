@@ -22,7 +22,7 @@ ndata_i     #(data_t, NUM_ELEMENTS) data(clk, rst_n), n_data(clk, rst_n);
 
 MehdiFIFO #(
     .DEPTH(MAX_IN_TRANSIT),
-    .WIDTH($bits(curr_mask.duplicates) + $bits(curr_mask.origins))
+    .WIDTH(NUM_ELEMENTS + NUM_ELEMENTS * $clog2(NUM_ELEMENTS))
 ) inst_mask_fifo (
     .i_clk(clk),
     .i_rst_n(rst_n),
