@@ -7,6 +7,7 @@
  */
 module ReorderDecoupler #(
     parameter type data_t, 
+    parameter type serial_t, // the tag type of the outputs
     parameter NUM_ELEMENTS
 ) (
     input logic clk,
@@ -15,8 +16,6 @@ module ReorderDecoupler #(
     ndata_i.s  in,               // #(data_t, NUM_ELEMENTS)
     tagged_i.m out[NUM_ELEMENTS] // #(data_t, serial_t)
 );
-
-localparam type serial_t = type(out[0].tag);
 
 typedef struct packed {
     data_t   data;

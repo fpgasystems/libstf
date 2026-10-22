@@ -8,6 +8,7 @@
  * data beat.
  */
 module Coupler #(
+    parameter type data_t, // the data type of the inputs
     parameter NUM_ELEMENTS,
     parameter MAX_IN_TRANSIT,
     parameter EN_SKID_BUFFER = 1
@@ -20,8 +21,6 @@ module Coupler #(
     data_i.s  in[NUM_ELEMENTS], // #(data_t)
     ndata_i.m out               // #(data_t, NUM_ELEMENTS)
 );
-
-localparam type data_t = type(in[0].data);
 
 typedef struct packed {
     logic[NUM_ELEMENTS - 1:0] keep;

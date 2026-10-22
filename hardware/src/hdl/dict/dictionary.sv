@@ -163,6 +163,7 @@ NDataSkidBuffer #(id_t, NUM_ELEMENTS) inst_decoupler_skid_buffer (
 
 ReorderDecoupler #(
     .data_t(id_t),
+    .serial_t(full_serial_t),
     .NUM_ELEMENTS(NUM_ELEMENTS)
 ) inst_id_decoupler (
     .clk(clk),
@@ -185,6 +186,7 @@ end
 
 Crossbar #(
     .data_t(serial_id_t),
+    .tag_t(bank_t),
     .NUM_INPUTS(NUM_ELEMENTS),
     .NUM_OUTPUTS(NUM_BANKS),
     .LAST_HANDLING(0) // WAIT_ALL
@@ -225,6 +227,7 @@ end
 // 3. Crossbar after the banks to shuffle the tuples to their original lanes
 Crossbar #(
   .data_t(serial_value_t),
+  .tag_t(lane_t),
   .NUM_INPUTS(NUM_BANKS),
   .NUM_OUTPUTS(NUM_ELEMENTS),
   .LAST_HANDLING(1), // FORWARD
@@ -259,6 +262,7 @@ for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
 end
 
 Coupler #(
+    .data_t(value_t),
     .NUM_ELEMENTS(NUM_ELEMENTS),
     .MAX_IN_TRANSIT(MAX_IN_TRANSIT)
 ) inst_coupler (
