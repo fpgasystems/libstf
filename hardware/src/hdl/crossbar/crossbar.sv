@@ -4,6 +4,7 @@
 
 module Crossbar #(
     parameter type data_t,
+    parameter type tag_t,  // the tag type of the inputs
     parameter NUM_INPUTS,
     parameter NUM_OUTPUTS,
     parameter LAST_HANDLING   = 1, // Handling of the last signal by the Multiplexer
@@ -22,8 +23,6 @@ module Crossbar #(
 generate
 
 `RESET_RESYNC // Reset pipelining
-
-localparam type tag_t = type(in[0].tag);
 
 // The tag selects the output
 `ASSERT_ELAB($bits(tag_t) >= $clog2(NUM_OUTPUTS))
