@@ -1,9 +1,7 @@
 `timescale 1ns / 1ps
 
 module MultiInsertFIFOAXI #(
-    parameter DEPTH,
-    parameter DATA_WIDTH,
-    parameter FACTOR
+    parameter int DEPTH
 ) (
     input logic clk,
     input logic rst_n,
@@ -14,8 +12,11 @@ module MultiInsertFIFOAXI #(
     output logic[$clog2(DEPTH):0] filling_level
 );
 
-localparam FIFO_WIDTH = DATA_WIDTH + DATA_WIDTH / 8 + 1;
-localparam TOTAL_WIDTH = FIFO_WIDTH * FACTOR;
+localparam int DATA_WIDTH = o_data.AXI4S_DATA_BITS;
+localparam int FACTOR     = i_data.AXI4S_DATA_BITS / DATA_WIDTH;
+
+localparam int FIFO_WIDTH = DATA_WIDTH + DATA_WIDTH / 8 + 1;
+localparam int TOTAL_WIDTH = FIFO_WIDTH * FACTOR;
 
 logic[TOTAL_WIDTH - 1:0] data_flattened;
 

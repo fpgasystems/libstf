@@ -8,9 +8,10 @@
  * data beat.
  */
 module Coupler #(
-    parameter NUM_ELEMENTS,
-    parameter MAX_IN_TRANSIT,
-    parameter EN_SKID_BUFFER = 1
+    parameter type data_t,
+    parameter int NUM_ELEMENTS,
+    parameter int MAX_IN_TRANSIT,
+    parameter int EN_SKID_BUFFER = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -20,8 +21,6 @@ module Coupler #(
     data_i.s  in[NUM_ELEMENTS], // #(data_t)
     ndata_i.m out               // #(data_t, NUM_ELEMENTS)
 );
-
-localparam type data_t = type(in[0].data);
 
 typedef struct packed {
     logic[NUM_ELEMENTS - 1:0] keep;
@@ -78,7 +77,7 @@ assign internal.last  = curr_mask.data.last;
 assign internal.valid = data_beat_complete;
 
 generate if (EN_SKID_BUFFER) begin
-    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(internal), .out(out));
+    NDataSkidBuffer #(data_t) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(internal), .out(out));
 end else begin
     `DATA_ASSIGN(internal, out)
 end endgenerate

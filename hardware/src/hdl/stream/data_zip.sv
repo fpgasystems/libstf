@@ -12,8 +12,7 @@
  */
 module NDataZip #(
     parameter type left_t,
-    parameter type right_t,
-    parameter NUM_ELEMENTS
+    parameter type right_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -23,6 +22,8 @@ module NDataZip #(
 
     ndata_i.m out // #((left_t, right_t), NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = out.NUM_ELEMENTS;
 
 typedef struct packed {
     left_t left;

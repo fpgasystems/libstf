@@ -21,8 +21,8 @@ module NDataWidthConverter #(
     ndata_i.m out // #(data_t, OUT_WIDTH)
 );
 
-localparam IN_WIDTH  = in.NUM_ELEMENTS;
-localparam OUT_WIDTH = out.NUM_ELEMENTS;
+localparam int IN_WIDTH  = in.NUM_ELEMENTS;
+localparam int OUT_WIDTH = out.NUM_ELEMENTS;
 
 `ASSERT_ELAB((IN_WIDTH & (IN_WIDTH - 1)) == 0)   // IN_WIDTH is power of 2
 `ASSERT_ELAB((OUT_WIDTH & (OUT_WIDTH - 1)) == 0) // OUT_WIDTH is power of 2
@@ -30,8 +30,8 @@ localparam OUT_WIDTH = out.NUM_ELEMENTS;
 generate if (IN_WIDTH == OUT_WIDTH) begin
     `DATA_ASSIGN(in, out)
 end else if (IN_WIDTH < OUT_WIDTH) begin
-    localparam NUM_SLOTS          = OUT_WIDTH / IN_WIDTH;
-    localparam SLOT_COUNTER_WIDTH = $clog2(NUM_SLOTS);
+    localparam int NUM_SLOTS          = OUT_WIDTH / IN_WIDTH;
+    localparam int SLOT_COUNTER_WIDTH = $clog2(NUM_SLOTS);
 
     logic[SLOT_COUNTER_WIDTH - 1:0] slot_idx, n_slot_idx;
 
@@ -98,8 +98,8 @@ end else if (IN_WIDTH < OUT_WIDTH) begin
     assign out.last  = last;
     assign out.valid = valid;
 end else begin // OUT_WIDTH < IN_WIDTH
-    localparam NUM_SLOTS          = IN_WIDTH / OUT_WIDTH;
-    localparam SLOT_COUNTER_WIDTH = $clog2(NUM_SLOTS);
+    localparam int NUM_SLOTS          = IN_WIDTH / OUT_WIDTH;
+    localparam int SLOT_COUNTER_WIDTH = $clog2(NUM_SLOTS);
 
     data_t[IN_WIDTH - 1:0] data;
     logic [IN_WIDTH - 1:0] keep;

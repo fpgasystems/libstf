@@ -2,8 +2,7 @@
  * This module gets rid of data beats with keep == '0.
  */
 module NullBeatSuppressor #(
-    parameter type data_t,
-    parameter NUM_ELEMENTS
+    parameter type data_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -11,6 +10,8 @@ module NullBeatSuppressor #(
     ndata_i.s in,  // #(data_t, NUM_ELEMENTS)
     ndata_i.m out  // #(data_t, NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
 data_t[NUM_ELEMENTS - 1:0] hold_data,  n_hold_data;
 logic[NUM_ELEMENTS - 1:0]  hold_keep,  n_hold_keep;
@@ -77,11 +78,8 @@ assign out.valid = hold_valid && (hold_last || (in.valid && is_last_or_not_null)
 endmodule
 
 module AXINullBeatSuppressor
-    import lynxTypes::*;
     import libstf::*;
-#(
-    parameter AXI4S_DATA_BITS = AXI_DATA_BITS
-) (
+(
     input logic clk,
     input logic rst_n,
 
@@ -89,7 +87,9 @@ module AXINullBeatSuppressor
     AXI4S.m out // #(AXI4S_DATA_BITS) 
 );
 
-localparam NUM_ELEMENTS = AXI4S_DATA_BITS / 8;
+localparam int AXI4S_DATA_BITS = in.AXI4S_DATA_BITS;
+
+localparam int NUM_ELEMENTS = AXI4S_DATA_BITS / 8;
 
 ndata_i #(data8_t, NUM_ELEMENTS) ndata_in(clk, rst_n), ndata_out(clk, rst_n);
 
@@ -100,8 +100,7 @@ assign ndata_in.valid = in.tvalid;
 assign in.tready      = ndata_in.ready;
 
 NullBeatSuppressor #(
-    .data_t(data8_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(data8_t)
 ) inst_null_beat_suppressor (
     .clk(clk),
     .rst_n(rst_n),

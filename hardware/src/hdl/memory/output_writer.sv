@@ -93,7 +93,7 @@ end
 assign notify_count = notify_count_reg;
 
 // -- FPGA-initiated transfers ---------------------------------------------------------------------
-localparam integer NUM_SKID_STAGES = 2;
+localparam int NUM_SKID_STAGES = 2;
 
 for(genvar I = 0; I < N_STRM_AXI; I++) begin : gen_stream_writers
 `ifndef DISABLE_OUTPUT_WRITER

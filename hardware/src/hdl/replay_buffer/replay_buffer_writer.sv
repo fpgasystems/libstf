@@ -26,8 +26,8 @@ module ReplayBufferWriter
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter AXI_STRM_ID = 0,
-    parameter TRANSFER_SIZE = TRANSFER_SIZE_BYTES
+    parameter int AXI_STRM_ID = 0,
+    parameter int TRANSFER_SIZE = TRANSFER_SIZE_BYTES
 ) (
     input logic clk,
     input logic rst_n,
@@ -46,7 +46,7 @@ module ReplayBufferWriter
 `RESET_RESYNC // Reset pipelining
 
 // -- Parameters -----------------------------------------------------------------------------------
-localparam AXI_DATA_BYTES = AXI_DATA_BITS / 8;
+localparam int AXI_DATA_BYTES = AXI_DATA_BITS / 8;
 localparam vaddress_t TRANSFER_BYTES = TRANSFER_SIZE;
 
 stream_writer_notify_i issued (.clk(clk), .rst_n(reset_synced));
@@ -219,7 +219,7 @@ end
 // If the reader holds a stream it reads multiple times, it can only release memory once we wrote the
 // rest of that stream. So if the ring buffer is too full for the next transfer of the stream, and
 // no written transfer is on its way to the reader anymore, nothing can make progress.
-localparam integer DEADLOCK_CYCLES = 1024;
+localparam int DEADLOCK_CYCLES = 1024;
 
 int unsigned stalled_cycles;
 

@@ -4,8 +4,8 @@ import libstf::*;
 `include "axi_macros.svh"
 `include "config_macros.svh"
 
-parameter NUM_IDS = 16;
-parameter DATABEAT_SIZE = 64;
+parameter int NUM_IDS = 16;
+parameter int DATABEAT_SIZE = 64;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb notify.tie_off_m();
@@ -85,9 +85,7 @@ assign stream_config[0].select_ready = 1'b1;
 // -- Input multiplexing ---------------------------------------------------------------------------
 // Values
 `AXIS_ASSIGN(axis_host_recv[0], axi_host_recv_0) // AXI4SR to AXI4S
-AXIToTypedNData #(
-    .DATABEAT_SIZE(DATABEAT_SIZE)
-) inst_values_axi_to_data (
+AXIToTypedNData inst_values_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
 
@@ -100,10 +98,8 @@ AXIToTypedNData #(
 // Indices
 `AXIS_ASSIGN(axis_host_recv[1], axi_host_recv_1) // AXI4SR to AXI4S
 AXIToNData #(
-    .AXI_WIDTH(AXI_DATA_BITS),
-    .NUM_AXI_ELEMENTS(16),
-    .data_t(dict_id_t),
-    .NUM_ELEMENTS(NUM_IDS)
+    .AXI_ELEMENT_WIDTH(32),
+    .data_t(dict_id_t)
 ) inst_dict_id_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
@@ -114,9 +110,7 @@ AXIToNData #(
 
 // -- Materialization ------------------------------------------------------------------------------
 TypedDictionary #(
-    .id_t(dict_id_t),
-    .NUM_ELEMENTS(NUM_IDS),
-    .DATABEAT_SIZE(DATABEAT_SIZE)
+    .id_t(dict_id_t)
 ) inst_dict (
     .clk(clk),
     .rst_n(rst_n),
@@ -128,9 +122,7 @@ TypedDictionary #(
 );
 
 // -- Output multiplexing --------------------------------------------------------------------------
-TypedNDataToAXI #(
-    .DATABEAT_SIZE(DATABEAT_SIZE)
-) inst_data_to_axi (
+TypedNDataToAXI inst_data_to_axi (
     .clk(clk),
     .rst_n(rst_n),
 

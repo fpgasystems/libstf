@@ -1,9 +1,9 @@
 `timescale 1ns / 1ps
 
 module ConfigWriteFIFO #(
-    parameter integer ADDR,
-    parameter integer DEPTH,
-    parameter type    data_t
+    parameter int ADDR,
+    parameter int DEPTH,
+    parameter type data_t
 ) (
     input logic clk,
     input logic rst_n,

@@ -7,7 +7,8 @@
  */
 module ReorderDecoupler #(
     parameter type data_t, 
-    parameter NUM_ELEMENTS
+    parameter type serial_t,
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,7 +17,6 @@ module ReorderDecoupler #(
     tagged_i.m out[NUM_ELEMENTS] // #(data_t, serial_t)
 );
 
-localparam type serial_t = type(out[0].tag);
 
 typedef struct packed {
     data_t   data;
@@ -30,8 +30,7 @@ data_i  #(serial_data_t)               decoupler_out[NUM_ELEMENTS](clk, rst_n);
 
 ReorderEnumerator #(
     .data_t(data_t),
-    .serial_t(serial_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .serial_t(serial_t)
 ) inst_enumerator (
     .clk(clk),
     .rst_n(rst_n),

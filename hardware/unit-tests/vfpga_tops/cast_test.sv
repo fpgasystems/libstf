@@ -5,7 +5,7 @@ import libstf::*;
 `include "libstf_macros.svh"
 `include "config_macros.svh"
 
-parameter DATABEAT_SIZE = AXI_DATA_BITS / 8;
+parameter int DATABEAT_SIZE = AXI_DATA_BITS / 8;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb notify.tie_off_m();
@@ -75,9 +75,7 @@ ready_valid_i #(type_t) in_type(clk, rst_n);
 `CONFIG_SIGNALS_TO_INTF(stream_config[1].data_type, in_type)
 
 typed_ndata_i #(DATABEAT_SIZE) in_data(clk, rst_n);
-AXIToTypedNData #(
-    .DATABEAT_SIZE(DATABEAT_SIZE)
-) inst_axi_to_data (
+AXIToTypedNData inst_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
 
@@ -89,9 +87,7 @@ AXIToTypedNData #(
 
 // -- Cast -----------------------------------------------------------------------------------------
 typed_ndata_i #(DATABEAT_SIZE) out_data(clk, rst_n);
-TypedNDataCast #(
-    .DATABEAT_SIZE(DATABEAT_SIZE)
-) inst_cast (
+TypedNDataCast inst_cast (
     .clk(clk),
     .rst_n(rst_n),
 
@@ -103,9 +99,7 @@ TypedNDataCast #(
 
 // -- Output ---------------------------------------------------------------------------------------
 AXI4S axi_host_send(.aclk(clk), .aresetn(rst_n));
-TypedNDataToAXI #(
-    .DATABEAT_SIZE(DATABEAT_SIZE)
-) inst_data_to_axi (
+TypedNDataToAXI inst_data_to_axi (
     .clk(clk),
     .rst_n(rst_n),
 

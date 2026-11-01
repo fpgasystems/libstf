@@ -3,8 +3,8 @@ import lynxTypes::*;
 
 `include "axi_macros.svh"
 
-parameter NUM_ELEMENTS = 512 / 8;
-parameter PREVIEW_SIZE = 3;
+parameter int NUM_ELEMENTS = 512 / 8;
+parameter int PREVIEW_SIZE = 3;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb axi_ctrl.tie_off_s();
@@ -43,8 +43,7 @@ AXI4S #(.AXI4S_DATA_BITS(512)) axis_host_send_1(.aclk(clk), .aresetn(rst_n));
 `AXIS_ASSIGN(axis_host_recv[0], axis_host_recv_0)
 
 AXIToNData #(
-    .data_t(data8_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(data8_t)
 ) inst_axi_to_ndata (
     .clk(clk),
     .rst_n(rst_n),
@@ -56,7 +55,6 @@ AXIToNData #(
 // -- Lookahead ------------------------------------------------------------------------------------
 NDataLookahead #(
     .data_t(data8_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS),
     .PREVIEW_SIZE(PREVIEW_SIZE)
 ) inst_lookahead (
     .clk(clk),
@@ -95,8 +93,7 @@ assign out_stream_1.valid = lookahead_out.valid && out_stream_0.ready;
 assign lookahead_out.ready = out_stream_0.ready && out_stream_1.ready;
 
 NDataToAXI #(
-    .data_t(data8_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(data8_t)
 ) inst_ndata_to_axi_original_view (
     .clk(clk),
     .rst_n(rst_n),
@@ -107,7 +104,6 @@ NDataToAXI #(
 
 DataNormalizer #(
     .data_t(data8_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS),
     .ENABLE_COMPACTOR(1),
     .COMPACTOR_REGISTER_LEVELS(1),
     .BARREL_SHIFTER_REGISTER_LEVELS(1)
@@ -120,8 +116,7 @@ DataNormalizer #(
 );
 
 NDataToAXI #(
-    .data_t(data8_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(data8_t)
 ) inst_ndata_to_axi_extended_view (
     .clk(clk),
     .rst_n(rst_n),

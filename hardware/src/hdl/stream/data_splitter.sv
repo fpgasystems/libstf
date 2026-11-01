@@ -5,8 +5,7 @@
  */
 module DataSplitter #(
     parameter type left_data_t,
-    parameter type right_data_t,
-    parameter NUM_ELEMENTS
+    parameter type right_data_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,6 +15,8 @@ module DataSplitter #(
     ndata_i.m left_out, // #(left_data_t, NUM_ELEMENTS)
     ndata_i.m right_out // #(right_data_t, NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
 typedef struct packed {
     left_data_t  left;

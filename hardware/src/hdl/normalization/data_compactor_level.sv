@@ -1,11 +1,13 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 module DataCompactorLevel #(
-    parameter ID,
+    parameter int ID,
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter REGISTER = 0,
-    parameter COUNTER_WIDTH = $clog2(NUM_ELEMENTS)
+    parameter int NUM_ELEMENTS,
+    parameter int REGISTER = 0,
+    parameter int COUNTER_WIDTH = $clog2(NUM_ELEMENTS)
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,6 +18,9 @@ module DataCompactorLevel #(
     ndata_i.m out, // #(data_t, NUM_ELEMENTS)
     output logic[COUNTER_WIDTH - 1:0] counter_out
 );
+
+// NUM_ELEMENTS is a parameter because it sizes a port
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 data_t[NUM_ELEMENTS - 1:0] next_data;
 logic[NUM_ELEMENTS - 1:0]  next_keep;

@@ -9,8 +9,10 @@
  * has acknowledged the element with a ready.
  */
 module TaggedDuplicator #(
-    parameter integer NUM_STREAMS,
-    parameter integer NUM_SKID_STAGES = 1
+    parameter type data_t,
+    parameter type tag_t,
+    parameter int NUM_STREAMS,
+    parameter int NUM_SKID_STAGES = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -21,8 +23,6 @@ module TaggedDuplicator #(
 
 `RESET_RESYNC // Reset pipelining
 
-localparam type data_t = type(in.data);
-localparam type tag_t  = type(in.tag);
 
 logic[NUM_STREAMS - 1:0] internal_ready;
 logic[NUM_STREAMS - 1:0] seen, n_seen;

@@ -4,8 +4,7 @@
 
 module DeduplicateStage #(
     parameter int unsigned ID,
-    parameter type data_t, 
-    parameter NUM_ELEMENTS,
+    parameter type data_t,
     parameter int unsigned START_IDX_INCL,
     parameter int unsigned END_IDX_EXCL
 ) (
@@ -18,6 +17,8 @@ module DeduplicateStage #(
     ndata_i.m     out,     // #(data_t, NUM_ELEMENTS)
     duplicate_i.m out_mask // #(NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
 `ASSERT_ELAB(START_IDX_INCL < END_IDX_EXCL)
 

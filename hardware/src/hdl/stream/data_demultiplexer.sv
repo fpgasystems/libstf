@@ -7,7 +7,7 @@
  * configuration.
  */
 module DataDemultiplexer #(
-    parameter NUM_STREAMS
+    parameter int NUM_STREAMS
 ) (
     input logic clk,
     input logic rst_n,
@@ -75,8 +75,7 @@ endmodule
 module TypedNDataDemultiplexer
     import libstf::*;
 #(
-    parameter DATABEAT_SIZE,
-    parameter NUM_STREAMS
+    parameter int NUM_STREAMS
 ) (
     input logic clk,
     input logic rst_n,
@@ -86,6 +85,8 @@ module TypedNDataDemultiplexer
     typed_ndata_i.s in,              // #(DATABEAT_SIZE)
     typed_ndata_i.m out[NUM_STREAMS] // #(DATABEAT_SIZE)
 );
+
+localparam int DATABEAT_SIZE = in.DATABEAT_SIZE;
 
 ndata_i #(data8_t, DATABEAT_SIZE) untyped_in(clk, rst_n);
 ndata_i #(data8_t, DATABEAT_SIZE) untyped_out[NUM_STREAMS](clk, rst_n);

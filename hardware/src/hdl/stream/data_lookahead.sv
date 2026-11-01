@@ -13,7 +13,6 @@
  */
 module NDataLookahead #(
     parameter type data_t,
-    parameter int NUM_ELEMENTS,
     parameter int PREVIEW_SIZE = 3
 ) (
     input logic clk,
@@ -22,6 +21,8 @@ module NDataLookahead #(
     ndata_i.s in, // #(data_t, NUM_ELEMENTS)
     ndata_i.m out // #(data_t, NUM_ELEMENTS + PREVIEW_SIZE)
 );
+
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
 `ASSERT_ELAB(PREVIEW_SIZE >= 1 && PREVIEW_SIZE <= NUM_ELEMENTS)
 

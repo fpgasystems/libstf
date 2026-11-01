@@ -3,8 +3,7 @@
 `include "libstf_macros.svh"
 
 module SortedSeqToBitmask #(
-    parameter type data_t,
-    parameter NUM_ELEMENTS
+    parameter type data_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -13,10 +12,12 @@ module SortedSeqToBitmask #(
     data_i.m  out // #(logic[NUM_ELEMENTS - 1:0])
 );
 
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
+
 `RESET_RESYNC // Reset pipelining
 
-localparam DATA_WIDTH = $bits(data_t);
-localparam RIDX_WIDTH = $clog2(NUM_ELEMENTS) + 1;
+localparam int DATA_WIDTH = $bits(data_t);
+localparam int RIDX_WIDTH = $clog2(NUM_ELEMENTS) + 1;
 
 typedef logic[NUM_ELEMENTS - 1:0] mask_t;
 typedef logic[RIDX_WIDTH - 1:0]   rid_t;

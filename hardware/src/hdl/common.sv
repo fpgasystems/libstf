@@ -11,28 +11,28 @@ import lynxTypes::LEN_BITS;
 // allocated for the output by the host should be a multiple of this size. The overwrite value is
 // only used on tests to trigger specific conditions.
 `ifdef TRANSFER_SIZE_BYTES_OVERWRITE
-    localparam integer TRANSFER_SIZE_BYTES = `TRANSFER_SIZE_BYTES_OVERWRITE;
+    localparam int TRANSFER_SIZE_BYTES = `TRANSFER_SIZE_BYTES_OVERWRITE;
 `else
     // This value is chosen as it is the smallest transfer size to get peak PCIe throughput in the 
     // perf_fpga example. See: 
     //      https://github.com/fpgasystems/Coyote/tree/master/examples/07_perf_fpga
-    localparam integer TRANSFER_SIZE_BYTES = 65536;
+    localparam int TRANSFER_SIZE_BYTES = 65536;
 `endif
 
 // The maximum buffer size for the `OutputWriter` (2**28 - 1 = 256 MiB - 1 Byte). This limitation
 // comes from the 32 bits we have available for interrupt values.
-localparam integer MAXIMUM_BUFFER_SIZE = 28;
-localparam integer BUFFER_SIZE_BITS = 28 - $clog2(TRANSFER_SIZE_BYTES);
+localparam int MAXIMUM_BUFFER_SIZE = 28;
+localparam int BUFFER_SIZE_BITS = 28 - $clog2(TRANSFER_SIZE_BYTES);
 
-localparam GENERIC_CONFIG_ID = -1;
+localparam int GENERIC_CONFIG_ID = -1;
 
-localparam MEM_CONFIG_ID = 0;
-localparam MAXIMUM_NUM_ENQUEUED_BUFFERS = 256;
+localparam int MEM_CONFIG_ID = 0;
+localparam int MAXIMUM_NUM_ENQUEUED_BUFFERS = 256;
 
-localparam STREAM_CONFIG_ID = 1;
+localparam int STREAM_CONFIG_ID = 1;
 
-localparam REPLAY_BUFFER_CONFIG_ID = 2;
-localparam MAXIMUM_NUM_ENQUEUED_STREAMS = 64;
+localparam int REPLAY_BUFFER_CONFIG_ID = 2;
+localparam int MAXIMUM_NUM_ENQUEUED_STREAMS = 64;
 
 // -- Typedef --------------------------------------------------------------------------------------
 typedef logic[7:0]  data8_t;

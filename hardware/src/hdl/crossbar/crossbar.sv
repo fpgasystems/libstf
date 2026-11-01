@@ -4,11 +4,12 @@
 
 module Crossbar #(
     parameter type data_t,
-    parameter NUM_INPUTS,
-    parameter NUM_OUTPUTS,
-    parameter LAST_HANDLING   = 1, // Handling of the last signal by the Multiplexer
-    parameter FILTER_KEEP     = 1, // If the Multiplexer filters by keep signal
-    parameter NUM_SKID_STAGES = 4
+    parameter type tag_t,
+    parameter int NUM_INPUTS,
+    parameter int NUM_OUTPUTS,
+    parameter int LAST_HANDLING   = 1, // Handling of the last signal by the Multiplexer
+    parameter int FILTER_KEEP     = 1, // If the Multiplexer filters by keep signal
+    parameter int NUM_SKID_STAGES = 4
 ) (
     input logic clk,
     input logic rst_n,
@@ -23,7 +24,6 @@ generate
 
 `RESET_RESYNC // Reset pipelining
 
-localparam type tag_t = type(in[0].tag);
 
 // The tag selects the output
 `ASSERT_ELAB($bits(tag_t) >= $clog2(NUM_OUTPUTS))
@@ -56,6 +56,8 @@ end
 for (genvar I = 0; I < NUM_INPUTS; I++) begin
     // The copies are buffered after the tag matching below, so the duplicator has no skid buffers
     TaggedDuplicator #(
+        .data_t(data_t),
+        .tag_t(tag_t),
         .NUM_STREAMS(NUM_OUTPUTS),
         .NUM_SKID_STAGES(0)
     ) inst_duplicator (

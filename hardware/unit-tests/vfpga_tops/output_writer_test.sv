@@ -21,9 +21,9 @@ assign rst_n = aresetn;
 
 // -- Configuration --------------------------------------------------------------------------------
 `ifdef OUTPUT_WRITER_EMPTY_STREAM_CONSUMES_BUFFER
-localparam EMPTY_STREAM_CONSUMES_BUFFER = 1;
+localparam int EMPTY_STREAM_CONSUMES_BUFFER = 1;
 `else
-localparam EMPTY_STREAM_CONSUMES_BUFFER = 0;
+localparam int EMPTY_STREAM_CONSUMES_BUFFER = 0;
 `endif
 
 write_config_i write_configs[2](clk, rst_n);

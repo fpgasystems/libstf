@@ -1,8 +1,7 @@
 `timescale 1ns / 1ps
 
 module FIFOAXI #(
-    parameter DEPTH,
-    parameter DATA_WIDTH = 512
+    parameter int DEPTH
 ) (
     input logic clk,
     input logic rst_n,
@@ -13,7 +12,9 @@ module FIFOAXI #(
     output logic[$clog2(DEPTH):0] filling_level
 );
 
-localparam FIFO_WIDTH = DATA_WIDTH + DATA_WIDTH / 8 + 1;
+localparam int DATA_WIDTH = o_data.AXI4S_DATA_BITS;
+
+localparam int FIFO_WIDTH = DATA_WIDTH + DATA_WIDTH / 8 + 1;
 
 MehdiFIFO #(DEPTH, FIFO_WIDTH, "ultra") inst_fifo (
     .i_clk(clk),

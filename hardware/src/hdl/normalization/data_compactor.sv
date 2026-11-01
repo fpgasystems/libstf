@@ -4,8 +4,7 @@
 
 module DataCompactor #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter REGISTER_LEVELS = 1
+    parameter int REGISTER_LEVELS = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -14,10 +13,12 @@ module DataCompactor #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam NUM_STAGES = NUM_ELEMENTS;
-localparam NUM_PIPES  = NUM_STAGES + 1;
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
-localparam COUNTER_WIDTH = $clog2(NUM_ELEMENTS);
+localparam int NUM_STAGES = NUM_ELEMENTS;
+localparam int NUM_PIPES  = NUM_STAGES + 1;
+
+localparam int COUNTER_WIDTH = $clog2(NUM_ELEMENTS);
 
 ndata_i #(data_t, NUM_ELEMENTS) pipes[NUM_PIPES](clk, rst_n);
 logic[COUNTER_WIDTH - 1:0]      counter_pipes[NUM_PIPES];
