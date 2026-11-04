@@ -14,7 +14,8 @@ module StreamHasher #(
     ntagged_i.m out // #(tuple_t, logic[HASH_WIDTH - 1:0], NUM_TUPLES)
 );
 
-localparam int KEY_WIDTH = $bits(tuple_t.key);
+tuple_t key_probe;
+localparam int KEY_WIDTH = $bits(key_probe.key);
 localparam int NUM_PIPE_STAGES = 6;
 localparam int INTERNAL_HASH_WIDTH = HASH_WIDTH > 32 ? 64 : 32;
 

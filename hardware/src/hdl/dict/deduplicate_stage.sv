@@ -67,7 +67,7 @@ always_comb begin
             n_mask.duplicates = in_mask.duplicates;
             n_mask.origins    = in_mask.origins;
 
-            for (int unsigned i = START_IDX_INCL; i < END_IDX_EXCL; i++) begin
+            for (int unsigned i = START_IDX_INCL; i < END_IDX_EXCL && i < NUM_ELEMENTS; i++) begin
                 for (int unsigned j = 0; j < i; j++) begin
                     // j is always less than i
                     if (in.data[i] == in.data[j]) begin
