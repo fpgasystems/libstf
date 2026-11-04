@@ -72,11 +72,10 @@ StreamConfig #(
 );
 
 ready_valid_i #(type_t) data_type(clk, rst_n);
-ready_valid_i #(type_t) in_data_type(clk, rst_n);
-ready_valid_i #(type_t) out_data_type(clk, rst_n);
+ready_valid_i #(type_t) dup_out[2](clk, rst_n);
 
 `CONFIG_SIGNALS_TO_INTF(stream_config[0].data_type, data_type)
-ReadyValidDuplicator #(2) inst_data_type_duplicate (clk, rst_n, data_type, {in_data_type, out_data_type});
+ReadyValidDuplicator #(2) inst_data_type_duplicate (clk, rst_n, data_type, dup_out);
 
 assign stream_config[0].select_ready = 1'b1;
 
@@ -87,7 +86,7 @@ AXIToNDataTyped inst_values_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
 
-    .in_type(in_data_type),
+    .in_type(dup_out[0]),
 
     .in(axi_host_recv_0),
     .out(dict_values)
@@ -125,7 +124,7 @@ NDataToAXITyped inst_data_to_axi (
     .clk(clk),
     .rst_n(rst_n),
 
-    .out_type(out_data_type),
+    .out_type(dup_out[1]),
 
     .in(dict_out),
     .out(axi_out[0])

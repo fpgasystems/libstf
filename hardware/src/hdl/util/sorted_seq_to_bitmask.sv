@@ -39,7 +39,7 @@ logic  n_out_valid;
 
 always_comb begin
     for (int i = 0; i < NUM_ELEMENTS; i++) begin
-        data_t diff = in.data[i] - current_id;
+        automatic data_t diff = in.data[i] - current_id;
         relative_ids[i] = {|diff[DATA_WIDTH - 1: RIDX_WIDTH - 1], diff[RIDX_WIDTH - 2:0]};
     end
 end
