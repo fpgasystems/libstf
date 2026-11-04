@@ -112,7 +112,7 @@ end
 assign notify_count = notify_count_reg;
 
 // -- FPGA-initiated transfers ---------------------------------------------------------------------
-localparam integer NUM_SKID_STAGES = 2;
+localparam int NUM_SKID_STAGES = 2;
 
 for (genvar S = 0; S < NUM_STREAMS; S++) begin : gen_streams
     localparam int FIRST = first_port(S);

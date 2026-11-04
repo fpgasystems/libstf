@@ -12,8 +12,8 @@ module GenericConfig
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter NUM_READ_REGISTERS,
-    parameter NUM_WRITE_REGISTERS
+    parameter int NUM_READ_REGISTERS,
+    parameter int NUM_WRITE_REGISTERS
 ) (
     input logic clk,
     input logic rst_n,

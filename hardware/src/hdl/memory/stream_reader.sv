@@ -26,11 +26,11 @@ module StreamReader
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter STRM = STRM_HOST,
-    parameter AXI_STRM_ID = 0,
-    parameter IS_LOCAL = 1,
-    parameter TRANSFER_LENGTH_BYTES = 4096,
-    parameter MAX_OUTSTANDING_TRANSFERS = 16
+    parameter int STRM = STRM_HOST,
+    parameter int AXI_STRM_ID = 0,
+    parameter int IS_LOCAL = 1,
+    parameter int TRANSFER_LENGTH_BYTES = 4096,
+    parameter int MAX_OUTSTANDING_TRANSFERS = 16
 ) (
     input logic clk,
     input logic rst_n,
@@ -48,6 +48,9 @@ module StreamReader
 `RESET_RESYNC // Reset pipelining
 
 // -- Parameters -----------------------------------------------------------------------------------
+// These localparams are untyped on purpose. Typing them makes the Vivado source scan fail in designs
+// that do not use this module ([filemgmt 56-315]). Vivado then disables files that the design needs.
+
 // For RDMA, Coyote parses RDMA_READ requests into read requests of at most the PMTU
 localparam OPCODE = IS_LOCAL ? LOCAL_READ : RDMA_READ;
 // How many bits we need to address one transfer of size TRANSFER_LENGTH_BYTES

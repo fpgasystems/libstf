@@ -19,8 +19,7 @@
 module Dictionary #(
     parameter type value_t,
     parameter type id_t,
-    parameter NUM_ELEMENTS,
-    parameter NUM_BANKS = 16,
+    parameter int NUM_BANKS = 16,
     // Number of values the dictionary can hold, a multiple of NUM_BANKS. Every bank holds
     // NUM_VALUES / NUM_BANKS of them, so a bank depth that fills whole RAM cells does not need the
     // next power of two.
@@ -35,15 +34,17 @@ module Dictionary #(
     ndata_i.m out // #(value_t, NUM_ELEMENTS)
 );
 
+localparam int NUM_ELEMENTS = in_ids.NUM_ELEMENTS;
+
 `RESET_RESYNC // Reset pipelining
 
-localparam ID_BITS = $bits(id_t);
-localparam MAX_IN_TRANSIT = 64;
-localparam LOG_NUM_ELEMENTS = $clog2(NUM_ELEMENTS);
-localparam LOG_NUM_BANKS = $clog2(NUM_BANKS);
-localparam LOG_MAX_IN_TRANSIT = $clog2(MAX_IN_TRANSIT);
-localparam SERIAL_WIDTH = LOG_MAX_IN_TRANSIT + LOG_NUM_ELEMENTS;
-localparam BANK_DEPTH = NUM_VALUES / NUM_BANKS;
+localparam int ID_BITS = $bits(id_t);
+localparam int MAX_IN_TRANSIT = 64;
+localparam int LOG_NUM_ELEMENTS = $clog2(NUM_ELEMENTS);
+localparam int LOG_NUM_BANKS = $clog2(NUM_BANKS);
+localparam int LOG_MAX_IN_TRANSIT = $clog2(MAX_IN_TRANSIT);
+localparam int SERIAL_WIDTH = LOG_MAX_IN_TRANSIT + LOG_NUM_ELEMENTS;
+localparam int BANK_DEPTH = NUM_VALUES / NUM_BANKS;
 
 `ASSERT_ELAB(NUM_VALUES % NUM_BANKS == 0)
 `ASSERT_ELAB(NUM_VALUES <= longint'(2) ** ID_BITS)
@@ -142,8 +143,7 @@ Creditor #(
 );
 
 Deduplicate #(
-    .data_t(id_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(id_t)
 ) inst_deduplicate (
     .clk(clk),
     .rst_n(reset_synced),
@@ -153,7 +153,7 @@ Deduplicate #(
     .out(deduplicate_out)
 );
 
-NDataSkidBuffer #(id_t, NUM_ELEMENTS) inst_decoupler_skid_buffer (
+NDataSkidBuffer #(id_t) inst_decoupler_skid_buffer (
     .clk(clk),
     .rst_n(reset_synced),
 
@@ -251,6 +251,7 @@ for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
 
     Reorder #(
         .data_t(value_t),
+        .serial_t(serial_t),
         .DEPTH(MAX_IN_TRANSIT)
     ) inst_reorder (
         .clk(clk),
@@ -277,7 +278,6 @@ Coupler #(
 
 Duplicate #(
     .data_t(value_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS),
     .MAX_IN_TRANSIT(MAX_IN_TRANSIT+64)
 ) inst_duplicate (
     .clk(clk),

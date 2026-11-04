@@ -14,11 +14,11 @@ module RewriteLastCore
     import libstf::*;
 #(
     parameter type size_t = data32_t,
-    parameter ELEMENT_BITS = 8, // wide enough to hold in_num_elements
+    parameter int ELEMENT_BITS = 8, // wide enough to hold in_num_elements
     // When set, the forced-last beat is allowed to carry more values than remain; the wrapper masks
     // that beat's keep down to `remaining_elements` to strip the surplus. Used for reads whose length
     // was rounded up to a beat multiple. Default 0 keeps the strict no-overshoot invariant.
-    parameter ALLOW_OVERSHOOT = 0
+    parameter int ALLOW_OVERSHOOT = 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -100,11 +100,9 @@ endmodule
  * emitting that last beat, it waits for the next `num_elements` configuration.
  */
 module TypedRewriteLast
-    import lynxTypes::*;
     import libstf::*;
 #(
-    parameter type size_t = data32_t,
-    parameter DATABEAT_SIZE = AXI_DATA_BITS / 8
+    parameter type size_t = data32_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -115,8 +113,10 @@ module TypedRewriteLast
     typed_ndata_i.m out // #(DATABEAT_SIZE)
 );
 
+localparam int DATABEAT_SIZE = in.DATABEAT_SIZE;
+
 // This is on purpose 1 bit wider to account for the case where keep is 0xf..f
-localparam ELEMENT_BITS = $clog2(DATABEAT_SIZE) + 1;
+localparam int ELEMENT_BITS = $clog2(DATABEAT_SIZE) + 1;
 logic [ELEMENT_BITS - 1:0] in_num_bytes, in_num_elements;
 assign in_num_bytes = $countones(in.keep);
 
@@ -186,12 +186,11 @@ module DataRewriteLast
     import libstf::*;
 #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
     parameter type size_t = data32_t,
     // When set, the forced-last beat's keep is masked down to the number of elements that actually
     // remained, stripping any trailing padding (e.g. a read whose length was rounded up to a beat
     // multiple). Default 0 leaves keep untouched and keeps the strict no-overshoot invariant.
-    parameter STRIP_TRAILING = 0
+    parameter int STRIP_TRAILING = 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -202,8 +201,10 @@ module DataRewriteLast
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
+
 // This is on purpose 1 bit wider to account for the case where keep is all ones.
-localparam ELEMENT_BITS = $clog2(NUM_ELEMENTS) + 1;
+localparam int ELEMENT_BITS = $clog2(NUM_ELEMENTS) + 1;
 logic [ELEMENT_BITS - 1:0] in_num_elements;
 assign in_num_elements = $countones(in.keep);
 

@@ -8,8 +8,7 @@
  * beat so that every emitted data beat (except the last) is fully packed.
  */
 module DataBeatMerge #(
-    parameter type data_t,
-    parameter NUM_ELEMENTS
+    parameter type data_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -17,6 +16,8 @@ module DataBeatMerge #(
     ndata_i.s in, // #(data_t, NUM_ELEMENTS)
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
 ndata_i #(data_t, NUM_ELEMENTS) register(clk, rst_n);
 

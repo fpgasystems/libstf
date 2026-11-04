@@ -4,7 +4,7 @@ import libstf::*;
 `include "axi_macros.svh"
 `include "libstf_macros.svh"
 
-parameter NUM_ELEMENTS = 8;
+parameter int NUM_ELEMENTS = 8;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb axi_ctrl.tie_off_s();
@@ -43,10 +43,8 @@ AXI4S bitmask_collected(.aclk(clk), .aresetn(rst_n));
 
 `AXIS_ASSIGN(axis_host_recv[0], axi_host_recv_0) // AXI4SR to AXI4S
 AXIToNData #(
-    .AXI_WIDTH(AXI_DATA_BITS),
-    .NUM_AXI_ELEMENTS(16),
-    .data_t(data32_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .AXI_ELEMENT_WIDTH(32),
+    .data_t(data32_t)
 ) inst_axi_to_ndata (
     .clk(clk),
     .rst_n(rst_n),
@@ -56,8 +54,7 @@ AXIToNData #(
 );
 
 SortedSeqToBitmask #(
-    .data_t(data32_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(data32_t)
 ) inst_seq_to_bitmask (
     .clk(clk),
     .rst_n(rst_n),
@@ -68,9 +65,7 @@ SortedSeqToBitmask #(
 `DATA_ASSIGN(bitmask, bitmask_ndata)
 NDataToAXI #(
     .data_t(mask_t),
-    .NUM_ELEMENTS(1),
-    .AXI_WIDTH(AXI_DATA_BITS),
-    .NUM_AXI_ELEMENTS(64)
+    .AXI_ELEMENT_WIDTH(8)
 ) inst_ndata_to_axi (
     .clk(clk),
     .rst_n(rst_n),

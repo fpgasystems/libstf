@@ -4,7 +4,7 @@ module AXIMultiplexer
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter NUM_STREAMS
+    parameter int NUM_STREAMS
 ) (
     input logic clk,
     input logic rst_n,
@@ -28,7 +28,6 @@ end
 
 DataMultiplexer #(
     .data_t(data8_t),
-    .NUM_ELEMENTS(AXI_DATA_BITS / 8),
     .NUM_STREAMS(NUM_STREAMS)
 ) inst_mux (
     .clk(clk),

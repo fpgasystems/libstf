@@ -1,9 +1,9 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 module StreamHasher #(
-    parameter type tuple_t,
-    parameter NUM_TUPLES,
-    parameter HASH_WIDTH
+    parameter type tuple_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -12,9 +12,15 @@ module StreamHasher #(
     ntagged_i.m out // #(tuple_t, logic[HASH_WIDTH - 1:0], NUM_TUPLES)
 );
 
-localparam KEY_WIDTH = $bits(tuple_t.key);
-localparam NUM_PIPE_STAGES = 6;
-localparam INTERNAL_HASH_WIDTH = HASH_WIDTH > 32 ? 64 : 32;
+localparam int NUM_TUPLES = in.NUM_ELEMENTS;
+localparam int HASH_WIDTH = $bits(out.tag) / NUM_TUPLES;
+
+localparam int KEY_WIDTH = $bits(tuple_t.key);
+localparam int NUM_PIPE_STAGES = 6;
+localparam int INTERNAL_HASH_WIDTH = HASH_WIDTH > 32 ? 64 : 32;
+
+`ASSERT_ELAB(out.NUM_ELEMENTS == NUM_TUPLES)
+`ASSERT_ELAB(HASH_WIDTH > 0 && HASH_WIDTH <= 64)
 
 logic[INTERNAL_HASH_WIDTH - 1:0] internal_hashes[NUM_TUPLES];
 

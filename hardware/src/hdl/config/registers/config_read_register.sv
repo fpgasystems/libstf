@@ -8,7 +8,7 @@
 module ConfigReadRegister
     import lynxTypes::*;
 #(
-    parameter integer ADDR,
+    parameter int ADDR,
     parameter type value_t
 ) (
     input logic clk,

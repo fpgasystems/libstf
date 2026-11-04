@@ -4,10 +4,9 @@
 
 module DataNormalizer #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter ENABLE_COMPACTOR = 0,
-    parameter COMPACTOR_REGISTER_LEVELS = 1,
-    parameter BARREL_SHIFTER_REGISTER_LEVELS = 1
+    parameter int ENABLE_COMPACTOR = 0,
+    parameter int COMPACTOR_REGISTER_LEVELS = 1,
+    parameter int BARREL_SHIFTER_REGISTER_LEVELS = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,13 +15,17 @@ module DataNormalizer #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
+
+`ASSERT_ELAB(ENABLE_COMPACTOR == 0 || ENABLE_COMPACTOR == 1)
+
 logic[$clog2(NUM_ELEMENTS) - 1:0] offset;
 
 ndata_i #(data_t, NUM_ELEMENTS) compactor_out(clk, rst_n);
 ndata_i #(data_t, NUM_ELEMENTS) shifter_out(clk, rst_n);
 
 generate if (ENABLE_COMPACTOR) begin
-    DataCompactor #(.data_t(data_t), .NUM_ELEMENTS(NUM_ELEMENTS), .REGISTER_LEVELS(COMPACTOR_REGISTER_LEVELS)) inst_compactor (
+    DataCompactor #(.data_t(data_t),  .REGISTER_LEVELS(COMPACTOR_REGISTER_LEVELS)) inst_compactor (
         .clk(clk),
         .rst_n(rst_n),
 
@@ -56,7 +59,7 @@ BarrelShifter #(.data_t(data_t), .NUM_ELEMENTS(NUM_ELEMENTS), .REGISTER_LEVELS(B
     .out(shifter_out)
 );
 
-DataBeatMerge #(.data_t(data_t), .NUM_ELEMENTS(NUM_ELEMENTS)) inst_merge (
+DataBeatMerge #(.data_t(data_t)) inst_merge (
     .clk(clk),
     .rst_n(rst_n),
 

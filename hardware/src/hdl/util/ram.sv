@@ -32,13 +32,13 @@
  *                       address bits select the slot within the line.
  */
 module RAM #(
-    parameter DATA_WIDTH,
-    parameter ADDR_WIDTH,
-    parameter DEPTH = 2 ** ADDR_WIDTH,
-    parameter STYLE = "block", // block or ultra
-    parameter READ_AFTER_WRITE = 0,
-    parameter READ_DURING_WRITE = 0,
-    parameter PACK = 0
+    parameter int DATA_WIDTH,
+    parameter int ADDR_WIDTH,
+    parameter int DEPTH = 2 ** ADDR_WIDTH,
+    parameter STYLE = "block", // block or ultra; untyped because synthesis rejects string attributes
+    parameter int READ_AFTER_WRITE = 0,
+    parameter int READ_DURING_WRITE = 0,
+    parameter int PACK = 0
 ) (
     input logic clk,
 
@@ -53,21 +53,21 @@ module RAM #(
 `ASSERT_ELAB(STYLE == "block" || STYLE == "ultra")
 `ASSERT_ELAB(DEPTH > 0 && DEPTH <= 2 ** ADDR_WIDTH)
 
-localparam LINE_WIDTH = STYLE == "ultra" ? 72 : 36;
-localparam CELL_DEPTH = STYLE == "ultra" ? 4096 : 1024;
+localparam int LINE_WIDTH = STYLE == "ultra" ? 72 : 36;
+localparam int CELL_DEPTH = STYLE == "ultra" ? 4096 : 1024;
 
 // Packing only pays off when more than one word fits in a line AND the RAM is
 // deep enough to span more than a single cell. If it fits in one cell the cell
 // is already fully allocated, so packing would only add slot-select logic.
-localparam DEEPER_THAN_CELL = DEPTH > CELL_DEPTH;
+localparam int DEEPER_THAN_CELL = DEPTH > CELL_DEPTH;
 
 // Number of words packed per line, clamped to a power of two so the slot index
 // is a clean slice of the address. Packing is skipped when only one word fits.
-localparam WORDS_PER_LINE  = !PACK || !DEEPER_THAN_CELL || LINE_WIDTH < DATA_WIDTH ? 1 : 2 ** $clog2(LINE_WIDTH / DATA_WIDTH);
-localparam SLOT_BITS       = $clog2(WORDS_PER_LINE);
-localparam LINE_ADDR_WIDTH = ADDR_WIDTH - SLOT_BITS;
-localparam LINE_DATA_WIDTH = WORDS_PER_LINE * DATA_WIDTH;
-localparam NUM_LINES       = (DEPTH + WORDS_PER_LINE - 1) / WORDS_PER_LINE;
+localparam int WORDS_PER_LINE  = !PACK || !DEEPER_THAN_CELL || LINE_WIDTH < DATA_WIDTH ? 1 : 2 ** $clog2(LINE_WIDTH / DATA_WIDTH);
+localparam int SLOT_BITS       = $clog2(WORDS_PER_LINE);
+localparam int LINE_ADDR_WIDTH = ADDR_WIDTH - SLOT_BITS;
+localparam int LINE_DATA_WIDTH = WORDS_PER_LINE * DATA_WIDTH;
+localparam int NUM_LINES       = (DEPTH + WORDS_PER_LINE - 1) / WORDS_PER_LINE;
 
 // Packing must leave at least one address bit for the line index.
 `ASSERT_ELAB(ADDR_WIDTH > SLOT_BITS)
@@ -142,13 +142,13 @@ end
 endmodule
 
 module ReadyRAM #(
-    parameter DATA_WIDTH,
-    parameter ADDR_WIDTH,
-    parameter DEPTH = 2 ** ADDR_WIDTH,
-    parameter STYLE = "block", // block or ultra
-    parameter READ_AFTER_WRITE = 0,
-    parameter READ_DURING_WRITE = 0,
-    parameter PACK = 0
+    parameter int DATA_WIDTH,
+    parameter int ADDR_WIDTH,
+    parameter int DEPTH = 2 ** ADDR_WIDTH,
+    parameter STYLE = "block", // block or ultra; untyped because synthesis rejects string attributes
+    parameter int READ_AFTER_WRITE = 0,
+    parameter int READ_DURING_WRITE = 0,
+    parameter int PACK = 0
 ) (
     input logic clk,
 

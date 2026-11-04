@@ -2,8 +2,7 @@
 
 module DataMultiplexer #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter NUM_STREAMS
+    parameter int NUM_STREAMS
 ) (
     input logic clk,
     input logic rst_n,
@@ -13,6 +12,8 @@ module DataMultiplexer #(
     ndata_i.s in[NUM_STREAMS], // #(data_t, NUM_ELEMENTS)
     ndata_i.m out              // #(data_t, NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = out.NUM_ELEMENTS;
 
 typedef data_t[NUM_ELEMENTS - 1:0] ndata_t;
 typedef logic[NUM_ELEMENTS - 1:0]  nkeep_t;

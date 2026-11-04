@@ -2,7 +2,7 @@
 
 // TODO: Replace this interface with a tagged data stream
 interface duplicate_i #(
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 );
     typedef logic [$clog2(NUM_ELEMENTS)-1:0] origin_t;
 
@@ -20,8 +20,7 @@ interface duplicate_i #(
 endinterface
 
 module Deduplicate #(
-    parameter type data_t, 
-    parameter NUM_ELEMENTS
+    parameter type data_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -31,6 +30,8 @@ module Deduplicate #(
     duplicate_i.m mask,  // #(logic[NUM_ELEMENTS + NUM_ELEMENTS * $clog2(NUM_VALUES) - 1:0])
     ndata_i.m out        // #(data_t, NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
 localparam int unsigned N_STAGES = 4;
 
@@ -67,7 +68,6 @@ generate
         DeduplicateStage #(
             .ID(i - 1),
             .data_t(data_t),
-            .NUM_ELEMENTS(NUM_ELEMENTS),
             .START_IDX_INCL(IDX_BOUNDARIES[i-1]),
             .END_IDX_EXCL(IDX_BOUNDARIES[i])
         ) inst_dedup_stage (

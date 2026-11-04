@@ -7,13 +7,9 @@
  *
  * Hint: Currently supports same number of input and output elements and doubling the stream width.
  */
-module NDataToAXI
-    import lynxTypes::*;
-#(
+module NDataToAXI #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter AXI_WIDTH = AXI_DATA_BITS,
-    parameter NUM_AXI_ELEMENTS = AXI_WIDTH / $bits(data_t)
+    parameter int AXI_ELEMENT_WIDTH = $bits(data_t) // Width of one element in the AXI stream
 ) (
     input logic clk,
     input logic rst_n,
@@ -23,14 +19,15 @@ module NDataToAXI
     AXI4S.m out // #(AXI_WIDTH)
 );
 
-localparam AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
-localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
+localparam int NUM_ELEMENTS     = in.NUM_ELEMENTS;
+localparam int AXI_WIDTH        = out.AXI4S_DATA_BITS;
+localparam int NUM_AXI_ELEMENTS = AXI_WIDTH / AXI_ELEMENT_WIDTH;
+localparam int AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
 
 `ASSERT_ELAB(type(data_t) == type(in.data_t))
-`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 `ASSERT_ELAB(AXI_WIDTH == AXI_ELEMENT_WIDTH * NUM_AXI_ELEMENTS)
 `ASSERT_ELAB($bits(data_t) <= AXI_ELEMENT_WIDTH)
-`ASSERT_ELAB($bits(out.data_t) == AXI_WIDTH)
+`ASSERT_ELAB(NUM_AXI_ELEMENTS >= NUM_ELEMENTS)
 
 ndata_i #(data_t, NUM_AXI_ELEMENTS) internal(clk, rst_n);
 
@@ -64,13 +61,9 @@ endmodule
  *
  * Hint: Currently supports same number of input and output elements and halving the stream width.
  */
-module AXIToNData
-    import lynxTypes::*;
-#(
+module AXIToNData #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter AXI_WIDTH = AXI_DATA_BITS,
-    parameter NUM_AXI_ELEMENTS = AXI_WIDTH / $bits(data_t)
+    parameter int AXI_ELEMENT_WIDTH = $bits(data_t) // Width of one element in the AXI stream
 ) (
     input logic clk,
     input logic rst_n,
@@ -80,10 +73,11 @@ module AXIToNData
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
-localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
+localparam int NUM_ELEMENTS     = out.NUM_ELEMENTS;
+localparam int AXI_WIDTH        = in.AXI4S_DATA_BITS;
+localparam int NUM_AXI_ELEMENTS = AXI_WIDTH / AXI_ELEMENT_WIDTH;
+localparam int AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
 
-`ASSERT_ELAB($bits(in.data_t) == AXI_WIDTH)
 `ASSERT_ELAB(type(out.data_t) == type(data_t))
 
 `ASSERT_ELAB(AXI_WIDTH == AXI_ELEMENT_WIDTH * NUM_AXI_ELEMENTS)
@@ -117,9 +111,7 @@ endmodule
  * full, this returns data beats that have a low keep.
  */
 module AXIToData #(
-    parameter type data_t,
-    parameter AXI_WIDTH = 512,
-    parameter DATA_WIDTH = $bits(data_t)
+    parameter type data_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -129,10 +121,11 @@ module AXIToData #(
     data_i.m out // #(data_t)
 );
 
-localparam NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH;
+localparam int AXI_WIDTH   = in.AXI4S_DATA_BITS;
+localparam int DATA_WIDTH  = $bits(data_t);
+localparam int NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH;
 
 `ASSERT_ELAB(type(out.data_t) == type(data_t))
-`ASSERT_ELAB(AXI_WIDTH == in.AXI4S_DATA_BITS)
 
 generate if (NUM_ELEMENTS == 1) begin
 

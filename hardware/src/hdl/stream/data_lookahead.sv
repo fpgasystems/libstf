@@ -13,7 +13,6 @@
  */
 module NDataLookahead #(
     parameter type data_t,
-    parameter int NUM_ELEMENTS,
     parameter int PREVIEW_SIZE = 3
 ) (
     input logic clk,
@@ -23,7 +22,10 @@ module NDataLookahead #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS + PREVIEW_SIZE)
 );
 
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
+
 `ASSERT_ELAB(PREVIEW_SIZE >= 1 && PREVIEW_SIZE <= NUM_ELEMENTS)
+`ASSERT_ELAB(out.NUM_ELEMENTS == NUM_ELEMENTS + PREVIEW_SIZE)
 
 typedef enum logic[1:0] {
     WAIT_FIRST, // Waiting for the first beat of a stream

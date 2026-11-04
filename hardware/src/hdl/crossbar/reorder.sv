@@ -8,7 +8,8 @@
  */
 module Reorder #(
     parameter type data_t,
-    parameter DEPTH
+    parameter type serial_t,
+    parameter int DEPTH
 ) (
     input logic clk,
     input logic rst_n,
@@ -19,11 +20,14 @@ module Reorder #(
 
 `RESET_RESYNC // Reset pipelining
 
-localparam type serial_t = type(in.tag);
 
-localparam SERIAL_WIDTH = $bits(serial_t);
-localparam DATA_WIDTH = $bits(data_t);
-localparam RAM_WIDTH = DATA_WIDTH + 2;
+localparam int SERIAL_WIDTH = $bits(serial_t);
+localparam int DATA_WIDTH = $bits(data_t);
+localparam int RAM_WIDTH = DATA_WIDTH + 2;
+
+`ASSERT_ELAB(type(data_t) == type(in.data_t))
+`ASSERT_ELAB(type(serial_t) == type(in.tag_t))
+`ASSERT_ELAB(type(data_t) == type(out.data_t))
 
 // The serial number is the RAM address
 `ASSERT_ELAB(SERIAL_WIDTH == $clog2(DEPTH))

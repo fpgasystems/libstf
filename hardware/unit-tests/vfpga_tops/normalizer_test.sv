@@ -3,7 +3,7 @@ import libstf::*;
 
 `include "axi_macros.svh"
 
-parameter NUM_ELEMENTS = 512 / 8;
+parameter int NUM_ELEMENTS = 512 / 8;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb axi_ctrl.tie_off_s();
@@ -46,8 +46,7 @@ assign axis_host_recv_0.tlast  = axis_host_recv[0].tlast;
 assign axis_host_recv[0].tready = axis_host_recv_0.tready;
 
 AXIToNData #(
-    .data_t(data8_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(data8_t)
 ) inst_axi_to_ndata (
     .clk(clk),
     .rst_n(rst_n),
@@ -59,7 +58,6 @@ AXIToNData #(
 // -- Stream Normalizer ----------------------------------------------------------------------------
 DataNormalizer #( 
   .data_t(data8_t),
-  .NUM_ELEMENTS(NUM_ELEMENTS),
   .ENABLE_COMPACTOR(1)
 ) inst_normalizer (
   .clk(clk),
@@ -71,8 +69,7 @@ DataNormalizer #(
 
 // -- Output wiring --------------------------------------------------------------------------------
 NDataToAXI #(
-    .data_t(data8_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(data8_t)
 ) inst_ndata_to_axi (
     .clk(clk),
     .rst_n(rst_n),

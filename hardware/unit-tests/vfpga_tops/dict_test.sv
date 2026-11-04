@@ -4,7 +4,7 @@ import libstf::*;
 `include "axi_macros.svh"
 `include "config_macros.svh"
 
-parameter NUM_ELEMENTS = 8;
+parameter int NUM_ELEMENTS = 8;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb notify.tie_off_m();
@@ -83,9 +83,7 @@ assign stream_config[0].select_ready = 1'b1;
 // -- Input multiplexing ---------------------------------------------------------------------------
 // Values
 `AXIS_ASSIGN(axis_host_recv[0], axi_host_recv_0) // AXI4SR to AXI4S
-AXIToNDataTyped #(
-    .NUM_ELEMENTS(NUM_ELEMENTS)
-) inst_values_axi_to_data (
+AXIToNDataTyped inst_values_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
 
@@ -98,10 +96,8 @@ AXIToNDataTyped #(
 // Indices
 `AXIS_ASSIGN(axis_host_recv[1], axi_host_recv_1) // AXI4SR to AXI4S
 AXIToNData #(
-    .AXI_WIDTH(AXI_DATA_BITS),
-    .NUM_AXI_ELEMENTS(16),
-    .data_t(data32_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .AXI_ELEMENT_WIDTH(32),
+    .data_t(data32_t)
 ) inst_dict_id_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
@@ -113,8 +109,7 @@ AXIToNData #(
 // -- Materialization ------------------------------------------------------------------------------
 Dictionary #(
     .value_t(data64_t),
-    .id_t(data32_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .id_t(data32_t)
 ) inst_dict (
     .clk(clk),
     .rst_n(rst_n),
@@ -126,9 +121,7 @@ Dictionary #(
 );
 
 // -- Output multiplexing --------------------------------------------------------------------------
-NDataToAXITyped #(
-    .NUM_ELEMENTS(NUM_ELEMENTS)
-) inst_data_to_axi (
+NDataToAXITyped inst_data_to_axi (
     .clk(clk),
     .rst_n(rst_n),
 

@@ -8,7 +8,7 @@
 module ReorderDecoupler #(
     parameter type data_t, 
     parameter type serial_t, // the tag type of the outputs
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -29,8 +29,7 @@ data_i  #(serial_data_t)               decoupler_out[NUM_ELEMENTS](clk, rst_n);
 
 ReorderEnumerator #(
     .data_t(data_t),
-    .serial_t(serial_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .serial_t(serial_t)
 ) inst_enumerator (
     .clk(clk),
     .rst_n(rst_n),
