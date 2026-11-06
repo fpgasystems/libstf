@@ -4,8 +4,8 @@
  * Hasher that implements MurMur2 hashing with a pipeline of depth 6.
  */
 module MurMurHasher #(
-    parameter integer KEY_WIDTH = 32, // Currently, 32 and 64 are possible
-    parameter integer HASH_WIDTH = 32
+    parameter int KEY_WIDTH = 32, // Currently, 32 and 64 are possible
+    parameter int HASH_WIDTH = 32
 ) (
     input logic clk,
 

@@ -4,10 +4,10 @@
 
 module DataNormalizer #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter ENABLE_COMPACTOR = 0,
-    parameter COMPACTOR_REGISTER_LEVELS = 1,
-    parameter BARREL_SHIFTER_REGISTER_LEVELS = 1
+    parameter int NUM_ELEMENTS,
+    parameter int ENABLE_COMPACTOR = 0,
+    parameter int COMPACTOR_REGISTER_LEVELS = 1,
+    parameter int BARREL_SHIFTER_REGISTER_LEVELS = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -15,6 +15,8 @@ module DataNormalizer #(
     ndata_i.s in, // #(data_t, NUM_ELEMENTS)
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 logic[$clog2(NUM_ELEMENTS) - 1:0] offset;
 

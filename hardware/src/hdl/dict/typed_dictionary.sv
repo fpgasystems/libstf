@@ -13,11 +13,11 @@ module TypedDictionary
     import libstf::*;
 #(
     parameter type id_t,
-    parameter DATABEAT_SIZE,
+    parameter int DATABEAT_SIZE,
     localparam type typed_dictionary_data_t = data32_t,
     localparam int TYPED_DICTIONARY_DATA_SIZE = $bits(typed_dictionary_data_t) / 8,
-    parameter NUM_ELEMENTS = DATABEAT_SIZE / TYPED_DICTIONARY_DATA_SIZE,
-    parameter NUM_BANKS = 16,
+    parameter int NUM_ELEMENTS = DATABEAT_SIZE / TYPED_DICTIONARY_DATA_SIZE,
+    parameter int NUM_BANKS = 16,
     // Number of 32 bit values the dictionary can hold (a 64 bit value takes two entries, a 128 bit value four)
     parameter longint NUM_VALUES = longint'(2) ** $bits(id_t)
 ) (
@@ -29,6 +29,9 @@ module TypedDictionary
 
     typed_ndata_i.m out        // #(DATABEAT_SIZE)
 );
+
+`ASSERT_ELAB(DATABEAT_SIZE == in_values.DATABEAT_SIZE)
+`ASSERT_ELAB(NUM_ELEMENTS == in_ids.NUM_ELEMENTS)
 
 `ASSERT_ELAB(DATABEAT_SIZE == NUM_ELEMENTS * TYPED_DICTIONARY_DATA_SIZE)
 
@@ -107,7 +110,7 @@ for (genvar P = 0; P < NUM_PATHS; P++) begin : gen_paths
     assign path_in[P].ready = expanded.ready;
 
     NDataSkidBuffer #(id_t, NUM_ELEMENTS * FACTOR) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(expanded), .out(expanded_buffered));
-    NDataWidthConverter #(id_t) inst_width_converter (.clk(clk), .rst_n(rst_n), .in(expanded_buffered), .out(path_out[P]));
+    NDataWidthConverter #(id_t, NUM_ELEMENTS * FACTOR, NUM_ELEMENTS) inst_width_converter (.clk(clk), .rst_n(rst_n), .in(expanded_buffered), .out(path_out[P]));
 end
 
 ndata_i #(id_t, NUM_ELEMENTS) entry_ids(clk, rst_n);

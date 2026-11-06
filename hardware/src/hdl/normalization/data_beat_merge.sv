@@ -9,7 +9,7 @@
  */
 module DataBeatMerge #(
     parameter type data_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -17,6 +17,8 @@ module DataBeatMerge #(
     ndata_i.s in, // #(data_t, NUM_ELEMENTS)
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 ndata_i #(data_t, NUM_ELEMENTS) register(clk, rst_n);
 

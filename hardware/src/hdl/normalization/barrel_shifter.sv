@@ -4,9 +4,9 @@
 
 module BarrelShifter #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter REGISTER_LEVELS = 0,
-    parameter OFFSET_WIDTH = $clog2(NUM_ELEMENTS)
+    parameter int NUM_ELEMENTS,
+    parameter int REGISTER_LEVELS = 0,
+    parameter int OFFSET_WIDTH = $clog2(NUM_ELEMENTS)
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,6 +16,8 @@ module BarrelShifter #(
     ndata_i.s in, // #(data_t, NUM_ELEMENTS)
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 localparam int NUM_STAGES = $clog2(NUM_ELEMENTS);
 localparam int NUM_PIPES  = NUM_STAGES + 1;

@@ -17,8 +17,8 @@ module ReplayBufferConfig
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter NUM_BUFFERS,
-    parameter TRANSFER_SIZE = TRANSFER_SIZE_BYTES // Must match the ReplayBuffers
+    parameter int NUM_BUFFERS,
+    parameter int TRANSFER_SIZE = TRANSFER_SIZE_BYTES // Must match the ReplayBuffers
 ) (
     input logic clk,
     input logic rst_n,

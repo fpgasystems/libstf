@@ -5,7 +5,7 @@
  */
 module Decoupler #(
     parameter type data_t, 
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,

@@ -116,7 +116,7 @@ endinterface
 
 interface ndata_i #(
     parameter type data_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n
@@ -212,7 +212,7 @@ endinterface
 interface ntagged_i #(
     parameter type data_t,
     parameter type tag_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n
@@ -263,7 +263,7 @@ endinterface
 interface typed_ndata_i
     import libstf::*;
 #(
-    parameter DATABEAT_SIZE
+    parameter int DATABEAT_SIZE
 ) (
     input logic clk,
     input logic rst_n

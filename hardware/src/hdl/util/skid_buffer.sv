@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 module SkidBuffer #(
     parameter type data_t
 ) (
@@ -96,7 +98,7 @@ endmodule
 
 module NDataSkidBuffer #(
     parameter type data_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -104,6 +106,8 @@ module NDataSkidBuffer #(
     ndata_i.s in, // #(data_t, NUM_ELEMENTS) 
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 typedef struct packed {
     data_t[NUM_ELEMENTS - 1:0] data;
@@ -184,7 +188,7 @@ endmodule
 module NTaggedSkidBuffer #(
     parameter type data_t,
     parameter type tag_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -192,6 +196,8 @@ module NTaggedSkidBuffer #(
     ntagged_i.s in, // #(data_t, tag_t, NUM_ELEMENTS)
     ntagged_i.m out // #(data_t, tag_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 typedef struct packed {
     data_t[NUM_ELEMENTS - 1:0] data;
@@ -231,7 +237,7 @@ endmodule
 module AXISkidBuffer
     import lynxTypes::*;
 #(
-    parameter AXI4S_DATA_BITS = AXI_DATA_BITS
+    parameter int AXI4S_DATA_BITS = AXI_DATA_BITS
 ) (
     input logic clk,
     input logic rst_n,
@@ -239,6 +245,8 @@ module AXISkidBuffer
     AXI4S.s in, // #(AXI4S_DATA_BITS) 
     AXI4S.m out // #(AXI4S_DATA_BITS) 
 );
+
+`ASSERT_ELAB(AXI4S_DATA_BITS == in.AXI4S_DATA_BITS)
 
 typedef struct packed {
     logic[AXI4S_DATA_BITS - 1:0]     tdata;
@@ -275,7 +283,7 @@ endmodule
 module TypedNDataSkidBuffer
     import libstf::*;
 #(
-    parameter DATABEAT_SIZE
+    parameter int DATABEAT_SIZE
 ) (
     input logic clk,
     input logic rst_n,
@@ -283,6 +291,8 @@ module TypedNDataSkidBuffer
     typed_ndata_i.s in, // #(DATABEAT_SIZE) 
     typed_ndata_i.m out // #(DATABEAT_SIZE)
 );
+
+`ASSERT_ELAB(DATABEAT_SIZE == in.DATABEAT_SIZE)
 
 typedef struct packed {
     data8_t[DATABEAT_SIZE - 1:0] data;
@@ -321,7 +331,7 @@ endmodule
 
 module MetaIntfSkidBuffer #(
     parameter type STYPE = logic[63:0],
-    parameter NUM_STAGES = 1
+    parameter int NUM_STAGES = 1
 ) (
     input logic clk,
     input logic rst_n,

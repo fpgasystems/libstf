@@ -5,8 +5,8 @@
  * be lost.
  */
 module ConfigWriteReadyRegister #(
-    parameter integer ADDR,
-    parameter type    data_t
+    parameter int ADDR,
+    parameter type data_t
 ) (
     input logic clk,
     input logic rst_n,

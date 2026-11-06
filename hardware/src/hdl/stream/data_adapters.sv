@@ -11,9 +11,9 @@ module NDataToAXI
     import lynxTypes::*;
 #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter AXI_WIDTH = AXI_DATA_BITS,
-    parameter NUM_AXI_ELEMENTS = AXI_WIDTH / $bits(data_t)
+    parameter int NUM_ELEMENTS,
+    parameter int AXI_WIDTH = AXI_DATA_BITS,
+    parameter int NUM_AXI_ELEMENTS = AXI_WIDTH / $bits(data_t)
 ) (
     input logic clk,
     input logic rst_n,
@@ -23,19 +23,22 @@ module NDataToAXI
     AXI4S.m out // #(AXI_WIDTH)
 );
 
-localparam AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
-localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
+`ASSERT_ELAB(AXI_WIDTH == out.AXI4S_DATA_BITS)
+
+localparam int AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
+localparam int AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
 
 `ASSERT_ELAB(type(data_t) == type(in.data_t))
 `ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 `ASSERT_ELAB(AXI_WIDTH == AXI_ELEMENT_WIDTH * NUM_AXI_ELEMENTS)
 `ASSERT_ELAB($bits(data_t) <= AXI_ELEMENT_WIDTH)
-`ASSERT_ELAB($bits(out.data_t) == AXI_WIDTH)
 
 ndata_i #(data_t, NUM_AXI_ELEMENTS) internal(clk, rst_n);
 
 NDataWidthConverter #(
-    .data_t(data_t)
+    .data_t(data_t),
+    .IN_WIDTH(NUM_ELEMENTS),
+    .OUT_WIDTH(NUM_AXI_ELEMENTS)
 ) inst_width_converter (
     .clk(clk),
     .rst_n(rst_n),
@@ -68,9 +71,9 @@ module AXIToNData
     import lynxTypes::*;
 #(
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter AXI_WIDTH = AXI_DATA_BITS,
-    parameter NUM_AXI_ELEMENTS = AXI_WIDTH / $bits(data_t)
+    parameter int NUM_ELEMENTS,
+    parameter int AXI_WIDTH = AXI_DATA_BITS,
+    parameter int NUM_AXI_ELEMENTS = AXI_WIDTH / $bits(data_t)
 ) (
     input logic clk,
     input logic rst_n,
@@ -80,10 +83,12 @@ module AXIToNData
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
-localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
+`ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
+`ASSERT_ELAB(AXI_WIDTH == in.AXI4S_DATA_BITS)
 
-`ASSERT_ELAB($bits(in.data_t) == AXI_WIDTH)
+localparam int AXI_ELEMENT_WIDTH = AXI_WIDTH / NUM_AXI_ELEMENTS;
+localparam int AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
+
 `ASSERT_ELAB(type(out.data_t) == type(data_t))
 
 `ASSERT_ELAB(AXI_WIDTH == AXI_ELEMENT_WIDTH * NUM_AXI_ELEMENTS)
@@ -92,7 +97,10 @@ localparam AXI_ELEMENT_SIZE = AXI_ELEMENT_WIDTH / 8;
 
 AXI4S #(AXI_ELEMENT_WIDTH * NUM_ELEMENTS) internal(.aclk(clk), .aresetn(rst_n));
 
-AXIWidthConverter inst_width_converter (
+AXIWidthConverter #(
+    .IN_WIDTH(AXI_WIDTH),
+    .OUT_WIDTH(AXI_ELEMENT_WIDTH * NUM_ELEMENTS)
+) inst_width_converter (
     .clk(clk),
     .rst_n(rst_n),
 
@@ -118,8 +126,8 @@ endmodule
  */
 module AXIToData #(
     parameter type data_t,
-    parameter AXI_WIDTH = 512,
-    parameter DATA_WIDTH = $bits(data_t)
+    parameter int AXI_WIDTH = 512,
+    parameter int DATA_WIDTH = $bits(data_t)
 ) (
     input logic clk,
     input logic rst_n,
@@ -129,7 +137,7 @@ module AXIToData #(
     data_i.m out // #(data_t)
 );
 
-localparam NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH;
+localparam int NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH;
 
 `ASSERT_ELAB(type(out.data_t) == type(data_t))
 `ASSERT_ELAB(AXI_WIDTH == in.AXI4S_DATA_BITS)

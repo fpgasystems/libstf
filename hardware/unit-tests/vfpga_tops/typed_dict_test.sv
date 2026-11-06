@@ -4,8 +4,8 @@ import libstf::*;
 `include "axi_macros.svh"
 `include "config_macros.svh"
 
-parameter NUM_IDS = 16;
-parameter DATABEAT_SIZE = 64;
+parameter int NUM_IDS = 16;
+parameter int DATABEAT_SIZE = 64;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb notify.tie_off_m();

@@ -21,6 +21,8 @@ module NDataToAXITyped
     AXI4S.m   out // #(AXI_WIDTH)
 );
 
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+
 localparam int DATA_WIDTH = 64;
 localparam int AXI_WIDTH  = DATA_WIDTH * NUM_ELEMENTS;
 
@@ -155,6 +157,8 @@ module AXIToNDataTyped
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
+`ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
+
 localparam int DATA_WIDTH = 64;
 localparam int AXI_WIDTH  = DATA_WIDTH * NUM_ELEMENTS;
 
@@ -209,7 +213,7 @@ endmodule
 module NDataToTypedNData
     import libstf::*;
 #(
-    parameter DATABEAT_SIZE
+    parameter int DATABEAT_SIZE
 ) (
     input logic clk,
     input logic rst_n,
@@ -276,8 +280,8 @@ endmodule
 module AXIToTypedNData
     import libstf::*;
 #(
-    parameter DATABEAT_SIZE,
-    parameter AXI_WIDTH = DATABEAT_SIZE * 8
+    parameter int DATABEAT_SIZE,
+    parameter int AXI_WIDTH = DATABEAT_SIZE * 8
 ) (
     input logic clk,
     input logic rst_n,
@@ -287,6 +291,8 @@ module AXIToTypedNData
 
     typed_ndata_i.m out          // #(DATABEAT_SIZE)
 );
+
+`ASSERT_ELAB(DATABEAT_SIZE == out.DATABEAT_SIZE)
 
 ndata_i #(data8_t, DATABEAT_SIZE) inner(clk, rst_n);
 
@@ -322,8 +328,8 @@ endmodule
 module TypedNDataToAXI
     import libstf::*;
 #(
-    parameter DATABEAT_SIZE,
-    parameter AXI_WIDTH = DATABEAT_SIZE * 8
+    parameter int DATABEAT_SIZE,
+    parameter int AXI_WIDTH = DATABEAT_SIZE * 8
 ) (
     input logic clk,
     input logic rst_n,

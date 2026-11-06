@@ -13,9 +13,9 @@
 module ReadConfigSplitter
     import lynxTypes::*;
 #(
-    parameter integer NUM_CONFIGS,
-    parameter integer ADDR_SPACE_BOUNDS[NUM_CONFIGS + 1],
-    parameter integer FIFO_DEPTH = 64
+    parameter int NUM_CONFIGS,
+    parameter int ADDR_SPACE_BOUNDS[NUM_CONFIGS + 1],
+    parameter int FIFO_DEPTH = 64
 ) (
     input logic clk,
     input logic rst_n,
@@ -29,7 +29,7 @@ module ReadConfigSplitter
 `ASSERT_ELAB(NUM_CONFIGS > 1)
 `ASSERT_ELAB(ADDR_SPACE_BOUNDS[0] == 0)
 
-localparam FIFO_WIDTH = $clog2(NUM_CONFIGS);
+localparam int FIFO_WIDTH = $clog2(NUM_CONFIGS);
 
 typedef logic[AXIL_DATA_BITS - 1:0] axil_data_t;
 

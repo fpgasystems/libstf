@@ -4,7 +4,7 @@ module AXIMultiplexer
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter NUM_STREAMS
+    parameter int NUM_STREAMS
 ) (
     input logic clk,
     input logic rst_n,

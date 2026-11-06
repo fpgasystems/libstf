@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module ConfigWriteRegister #(
-    parameter integer ADDR,
+    parameter int ADDR,
     parameter type    data_t
 ) (
     input logic clk,

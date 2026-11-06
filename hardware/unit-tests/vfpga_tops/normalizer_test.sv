@@ -3,7 +3,7 @@ import libstf::*;
 
 `include "axi_macros.svh"
 
-parameter NUM_ELEMENTS = 512 / 8;
+parameter int NUM_ELEMENTS = 512 / 8;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb axi_ctrl.tie_off_s();

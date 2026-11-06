@@ -7,8 +7,8 @@
  * register chain stalls together with a downstream pipeline.
  */
 module ReadyShiftRegister #(
-    parameter WIDTH  = 1,
-    parameter LEVELS = 1
+    parameter int WIDTH  = 1,
+    parameter int LEVELS = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -45,8 +45,8 @@ endmodule
  * Delays i_data by LEVELS register stages.
  */
 module ShiftRegister #(
-    parameter WIDTH  = 1,
-    parameter LEVELS = 1
+    parameter int WIDTH  = 1,
+    parameter int LEVELS = 1
 ) (
     input logic clk,
     input logic rst_n,

@@ -11,7 +11,7 @@
 module DataEnumerator #(
     parameter type data_t,
     parameter type serial_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -20,6 +20,8 @@ module DataEnumerator #(
     ntagged_i.m out // #(data_t, serial_t, NUM_ELEMENTS)
 );
 
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+
 `RESET_RESYNC // Reset pipelining
 
 `ifndef SYNTHESIS
@@ -27,7 +29,7 @@ assert property (@(posedge clk) disable iff (!reset_synced) !in.valid || $onehot
 else $fatal(1, "Incoming keep signal (%h) most be contiguous starting from the least significant bit!", in.keep);
 `endif
 
-localparam ELEMENT_BITS = $clog2(NUM_ELEMENTS);
+localparam int ELEMENT_BITS = $clog2(NUM_ELEMENTS);
 
 `ASSERT_ELAB($bits(out.tag) == NUM_ELEMENTS * $bits(serial_t))
 

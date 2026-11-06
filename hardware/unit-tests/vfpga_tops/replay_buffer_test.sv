@@ -43,14 +43,14 @@ assign rst_n = aresetn;
 // -- Configuration of the buffer ------------------------------------------------------------------
 // The unit tests use small transfers to exercise many transfers with little data
 `ifdef REPLAY_BUFFER_TRANSFER_SIZE
-localparam integer TRANSFER_SIZE = `REPLAY_BUFFER_TRANSFER_SIZE;
+localparam int TRANSFER_SIZE = `REPLAY_BUFFER_TRANSFER_SIZE;
 `else
-localparam integer TRANSFER_SIZE = TRANSFER_SIZE_BYTES;
+localparam int TRANSFER_SIZE = TRANSFER_SIZE_BYTES;
 `endif
 
 // -- Configuration --------------------------------------------------------------------------------
-localparam integer NUM_PROFILES         = 2;
-localparam integer COUNTERS_PER_PROFILE = 5;
+localparam int NUM_PROFILES         = 2;
+localparam int COUNTERS_PER_PROFILE = 5;
 
 write_config_i write_configs[2](clk, rst_n);
 read_config_i  read_configs [2](clk, rst_n);

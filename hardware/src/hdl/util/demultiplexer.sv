@@ -4,11 +4,11 @@
 
 // General de-muxing implementation that is used for AXI and metaIntf streams below.
 module Demultiplexer #(
-    parameter integer N_STREAMS = 2,
+    parameter int N_STREAMS = 2,
     parameter type DATA_TYPE = logic[63:0],
     // Needs to be defined here because it is needed in the module definition
     // This should NOT be overwritten.
-    parameter integer N_BITS = $clog2(N_STREAMS)
+    parameter int N_BITS = $clog2(N_STREAMS)
 ) (
     input logic clk,
     input logic rst_n,
@@ -85,7 +85,7 @@ endmodule
 module CQDemultiplexer
     import lynxTypes::*;
 #(
-    parameter integer N_STREAMS = 2
+    parameter int N_STREAMS = 2
 ) (
     input logic         clk,
     input logic         rst_n,

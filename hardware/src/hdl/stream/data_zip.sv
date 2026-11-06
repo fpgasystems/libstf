@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * Turns two ndata streams into one stream of pairs of values, 
  * interleaving left and right elements.
@@ -13,7 +15,7 @@
 module NDataZip #(
     parameter type left_t,
     parameter type right_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -23,6 +25,8 @@ module NDataZip #(
 
     ndata_i.m out // #((left_t, right_t), NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
 
 typedef struct packed {
     left_t left;

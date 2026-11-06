@@ -2,7 +2,7 @@ import lynxTypes::*;
 
 `include "axi_macros.svh"
 
-parameter NUM_LANES = AXI_DATA_BITS / 64;
+parameter int NUM_LANES = AXI_DATA_BITS / 64;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb axi_ctrl.tie_off_s();

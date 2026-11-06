@@ -9,7 +9,7 @@
 module ReadConfigSkidBuffers
     import lynxTypes::*;
 #(
-    parameter integer DEPTH = 1
+    parameter int DEPTH = 1
 ) (
     input logic clk,
     input logic rst_n,

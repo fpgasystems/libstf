@@ -1,10 +1,12 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 module TypedNDataMultiplexer
     import libstf::*;
 #(
-    parameter DATABEAT_SIZE,
-    parameter NUM_STREAMS
+    parameter int DATABEAT_SIZE,
+    parameter int NUM_STREAMS
 ) (
     input logic clk,
     input logic rst_n,
@@ -14,6 +16,8 @@ module TypedNDataMultiplexer
     typed_ndata_i.s in[NUM_STREAMS], // #(DATABEAT_SIZE)
     typed_ndata_i.m out              // #(DATABEAT_SIZE)
 );
+
+`ASSERT_ELAB(DATABEAT_SIZE == out.DATABEAT_SIZE)
 
 typedef data8_t[DATABEAT_SIZE - 1:0] ndata_t;
 typedef logic[DATABEAT_SIZE - 1:0]   nkeep_t;
