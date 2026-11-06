@@ -9,8 +9,8 @@
  */
 module DataSink #(
     parameter type    data_t,
-    parameter integer ID,
-    parameter integer EN_SKID_BUFFER = 1
+    parameter int ID,
+    parameter int EN_SKID_BUFFER = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -21,7 +21,7 @@ module DataSink #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
-localparam integer NUM_ELEMENTS = in.NUM_ELEMENTS;
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
 `ASSERT_ELAB($bits(in.data) == NUM_ELEMENTS * $bits(data_t))
 
@@ -62,7 +62,7 @@ assign internal.last  = in.last;
 assign internal.valid = enable_sink_valid && !enable_sink ? in.valid : 1'b0;
 
 generate if (EN_SKID_BUFFER) begin
-    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(internal), .out(out));
+    NDataSkidBuffer #(data_t) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(internal), .out(out));
 end else begin
     `DATA_ASSIGN(internal, out)
 end endgenerate

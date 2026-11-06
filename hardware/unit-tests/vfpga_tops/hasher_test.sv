@@ -5,8 +5,8 @@ import libstf::*;
 `include "libstf_macros.svh"
 
 parameter type data_t = data32_t;
-parameter NUM_ELEMENTS = 16;
-parameter HASH_WIDTH = 32;
+parameter int NUM_ELEMENTS = 16;
+parameter int HASH_WIDTH = 32;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb axi_ctrl.tie_off_s();
@@ -50,8 +50,7 @@ AXI4S axi_host_recv(.aclk(clk), .aresetn(rst_n)), axi_host_send(.aclk(clk), .are
 `AXIS_ASSIGN(axis_host_recv[0], axi_host_recv)
 
 AXIToNData #(
-  .data_t(data_t),
-  .NUM_ELEMENTS(NUM_ELEMENTS)
+  .data_t(data_t)
 ) inst_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
@@ -63,9 +62,7 @@ AXIToNData #(
 `DATA_ASSIGN(ndata_in, hasher_in)
 
 StreamHasher #(
-    .tuple_t(hasher_data_t), 
-    .NUM_TUPLES(NUM_ELEMENTS), 
-    .HASH_WIDTH(HASH_WIDTH)
+    .tuple_t(hasher_data_t)
 ) inst_hasher (
     .clk(clk),
     .rst_n(rst_n),
@@ -81,8 +78,7 @@ assign ndata_out.valid  = hasher_out.valid;
 assign hasher_out.ready = ndata_out.ready;
 
 NDataToAXI #(
-    .data_t(data_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .data_t(data_t)
 ) inst_probe_to_axi (
     .clk(clk),
     .rst_n(rst_n),

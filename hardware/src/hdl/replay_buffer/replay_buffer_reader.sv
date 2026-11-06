@@ -28,10 +28,10 @@ module ReplayBufferReader
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter AXI_STRM_ID = 0,
-    parameter TRANSFER_SIZE = TRANSFER_SIZE_BYTES,
-    parameter MAX_TRANSFERS_PER_READ = 16,
-    parameter MAX_WAITING_EXTENTS = MAXIMUM_NUM_ENQUEUED_STREAMS
+    parameter int AXI_STRM_ID = 0,
+    parameter int TRANSFER_SIZE = TRANSFER_SIZE_BYTES,
+    parameter int MAX_TRANSFERS_PER_READ = 16,
+    parameter int MAX_WAITING_EXTENTS = MAXIMUM_NUM_ENQUEUED_STREAMS
 ) (
     input logic clk,
     input logic rst_n,
@@ -50,9 +50,9 @@ module ReplayBufferReader
 `RESET_RESYNC // Reset pipelining
 
 // -- Parameters -----------------------------------------------------------------------------------
-localparam AXI_DATA_BYTES = AXI_DATA_BITS / 8;
+localparam int AXI_DATA_BYTES = AXI_DATA_BITS / 8;
 localparam vaddress_t MAX_READ_BYTES = MAX_TRANSFERS_PER_READ * TRANSFER_SIZE;
-localparam integer MAX_OUTSTANDING_READS = 16;
+localparam int MAX_OUTSTANDING_READS = 16;
 
 function automatic vaddress_t align(vaddress_t value);
     return (value + AXI_DATA_BYTES - 1) & ~vaddress_t'(AXI_DATA_BYTES - 1);

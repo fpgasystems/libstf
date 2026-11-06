@@ -1,9 +1,12 @@
 /**
  * This module gets rid of data beats with keep == '0.
+ *
+ * The parameters of both modules are not inferred from the interfaces on purpose. Inferring them
+ * makes the Vivado source scan fail in designs that use the StreamWriter ([filemgmt 56-315]).
  */
 module NullBeatSuppressor #(
     parameter type data_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -80,7 +83,7 @@ module AXINullBeatSuppressor
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter AXI4S_DATA_BITS = AXI_DATA_BITS
+    parameter int AXI4S_DATA_BITS = AXI_DATA_BITS
 ) (
     input logic clk,
     input logic rst_n,
@@ -89,7 +92,7 @@ module AXINullBeatSuppressor
     AXI4S.m out // #(AXI4S_DATA_BITS) 
 );
 
-localparam NUM_ELEMENTS = AXI4S_DATA_BITS / 8;
+localparam int NUM_ELEMENTS = AXI4S_DATA_BITS / 8;
 
 ndata_i #(data8_t, NUM_ELEMENTS) ndata_in(clk, rst_n), ndata_out(clk, rst_n);
 

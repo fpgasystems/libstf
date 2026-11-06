@@ -8,7 +8,7 @@
  *   3. [31]   Whether this was the last transfer, i.e., all output data was written
  */
 module NotifyMetaIntfAdapter #(
-    parameter AXI_STRM_ID = 0
+    parameter int AXI_STRM_ID = 0
 ) (
     stream_writer_notify_i.s in,
     metaIntf.m out

@@ -7,7 +7,7 @@
  * signal of the input is driven when all output ready signals are high.
  */
 module NDataDuplicator #(
-    parameter integer NUM_OUTPUTS
+    parameter int NUM_OUTPUTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -55,10 +55,9 @@ endmodule
  * signal of the input is driven when all output ready signals are high.
  */
 module NTaggedDuplicator #(
-    parameter integer NUM_OUTPUTS,
+    parameter int NUM_OUTPUTS,
     parameter type data_t,
-    parameter type    tag_t,
-    parameter integer NUM_ELEMENTS
+    parameter type    tag_t
 ) (
     input logic clk,
     input logic rst_n,
@@ -66,6 +65,8 @@ module NTaggedDuplicator #(
     ntagged_i.s in,              // #(data_t, tag_t, NUM_ELEMENTS)
     ntagged_i.m out[NUM_OUTPUTS] // #(data_t, tag_t, NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
 
 typedef struct packed {
     data_t data;
@@ -113,7 +114,7 @@ endmodule
  * signal of the input is driven when all output ready signals are high.
  */
 module DataDuplicator #(
-    parameter integer NUM_OUTPUTS,
+    parameter int NUM_OUTPUTS,
     parameter type data_t
 ) (
     input logic clk,

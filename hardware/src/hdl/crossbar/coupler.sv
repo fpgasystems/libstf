@@ -9,9 +9,9 @@
  */
 module Coupler #(
     parameter type data_t, // the data type of the inputs
-    parameter NUM_ELEMENTS,
-    parameter MAX_IN_TRANSIT,
-    parameter EN_SKID_BUFFER = 1
+    parameter int NUM_ELEMENTS,
+    parameter int MAX_IN_TRANSIT,
+    parameter int EN_SKID_BUFFER = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -77,7 +77,7 @@ assign internal.last  = curr_mask.data.last;
 assign internal.valid = data_beat_complete;
 
 generate if (EN_SKID_BUFFER) begin
-    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(internal), .out(out));
+    NDataSkidBuffer #(data_t) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(internal), .out(out));
 end else begin
     `DATA_ASSIGN(internal, out)
 end endgenerate

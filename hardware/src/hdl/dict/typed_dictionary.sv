@@ -6,11 +6,7 @@ module TypedDictionary
     import libstf::*;
 #(
     parameter type id_t,
-    parameter DATABEAT_SIZE,
-    localparam type typed_dictionary_data_t = data32_t,
-    localparam int TYPED_DICTIONARY_DATA_SIZE = $bits(typed_dictionary_data_t) / 8,
-    parameter NUM_ELEMENTS = DATABEAT_SIZE / TYPED_DICTIONARY_DATA_SIZE,
-    parameter NUM_BANKS = 16,
+    parameter int NUM_BANKS = 16,
     // Number of 32 bit values the dictionary can hold (a 64 bit value takes two entries)
     parameter longint NUM_VALUES = longint'(2) ** $bits(id_t)
 ) (
@@ -22,6 +18,11 @@ module TypedDictionary
 
     typed_ndata_i.m out        // #(DATABEAT_SIZE)
 );
+
+localparam int  DATABEAT_SIZE              = in_values.DATABEAT_SIZE;
+localparam int  NUM_ELEMENTS               = in_ids.NUM_ELEMENTS;
+localparam type typed_dictionary_data_t    = data32_t;
+localparam int  TYPED_DICTIONARY_DATA_SIZE = $bits(typed_dictionary_data_t) / 8;
 
 `ASSERT_ELAB(DATABEAT_SIZE == NUM_ELEMENTS * TYPED_DICTIONARY_DATA_SIZE)
 
@@ -160,7 +161,7 @@ always_comb begin
     endcase
 end
 
-NDataSkidBuffer #(id_t, NUM_ELEMENTS) inst_ids_skid_buffer (
+NDataSkidBuffer #(id_t) inst_ids_skid_buffer (
     .clk(clk),
     .rst_n(rst_n),
 
@@ -171,7 +172,6 @@ NDataSkidBuffer #(id_t, NUM_ELEMENTS) inst_ids_skid_buffer (
 Dictionary #(
     .value_t(data32_t),
     .id_t(id_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS),
     .NUM_BANKS(NUM_BANKS),
     .NUM_VALUES(NUM_VALUES)
 ) inst_dictionary (

@@ -4,7 +4,7 @@ import libstf::*;
 `include "axi_macros.svh"
 `include "config_macros.svh"
 
-parameter NUM_ELEMENTS = 8;
+parameter int NUM_ELEMENTS = 8;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb notify.tie_off_m();
@@ -72,24 +72,21 @@ StreamConfig #(
 );
 
 ready_valid_i #(type_t) data_type(clk, rst_n);
-ready_valid_i #(type_t) in_data_type(clk, rst_n);
-ready_valid_i #(type_t) out_data_type(clk, rst_n);
+ready_valid_i #(type_t) dup_out[2](clk, rst_n);
 
 `CONFIG_SIGNALS_TO_INTF(stream_config[0].data_type, data_type)
-ReadyValidDuplicator #(2) inst_data_type_duplicate (clk, rst_n, data_type, {in_data_type, out_data_type});
+ReadyValidDuplicator #(2) inst_data_type_duplicate (clk, rst_n, data_type, dup_out);
 
 assign stream_config[0].select_ready = 1'b1;
 
 // -- Input multiplexing ---------------------------------------------------------------------------
 // Values
 `AXIS_ASSIGN(axis_host_recv[0], axi_host_recv_0) // AXI4SR to AXI4S
-AXIToNDataTyped #(
-    .NUM_ELEMENTS(NUM_ELEMENTS)
-) inst_values_axi_to_data (
+AXIToNDataTyped inst_values_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
 
-    .in_type(in_data_type),
+    .in_type(dup_out[0]),
 
     .in(axi_host_recv_0),
     .out(dict_values)
@@ -98,10 +95,8 @@ AXIToNDataTyped #(
 // Indices
 `AXIS_ASSIGN(axis_host_recv[1], axi_host_recv_1) // AXI4SR to AXI4S
 AXIToNData #(
-    .AXI_WIDTH(AXI_DATA_BITS),
-    .NUM_AXI_ELEMENTS(16),
-    .data_t(data32_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .AXI_ELEMENT_WIDTH(32),
+    .data_t(data32_t)
 ) inst_dict_id_axi_to_data (
     .clk(clk),
     .rst_n(rst_n),
@@ -113,8 +108,7 @@ AXIToNData #(
 // -- Materialization ------------------------------------------------------------------------------
 Dictionary #(
     .value_t(data64_t),
-    .id_t(data32_t),
-    .NUM_ELEMENTS(NUM_ELEMENTS)
+    .id_t(data32_t)
 ) inst_dict (
     .clk(clk),
     .rst_n(rst_n),
@@ -126,13 +120,11 @@ Dictionary #(
 );
 
 // -- Output multiplexing --------------------------------------------------------------------------
-NDataToAXITyped #(
-    .NUM_ELEMENTS(NUM_ELEMENTS)
-) inst_data_to_axi (
+NDataToAXITyped inst_data_to_axi (
     .clk(clk),
     .rst_n(rst_n),
 
-    .out_type(out_data_type),
+    .out_type(dup_out[1]),
 
     .in(dict_out),
     .out(axi_out[0])

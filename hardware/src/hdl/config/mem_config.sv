@@ -18,8 +18,8 @@ module MemConfig
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter NUM_STREAMS,
-    parameter EMPTY_STREAM_CONSUMES_BUFFER = 0
+    parameter int NUM_STREAMS,
+    parameter int EMPTY_STREAM_CONSUMES_BUFFER = 0
 ) (
     input logic clk,
     input logic rst_n,

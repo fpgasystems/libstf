@@ -3,10 +3,9 @@
 `include "libstf_macros.svh"
 
 module Duplicate #(
-    parameter type data_t, 
-    parameter NUM_ELEMENTS,
-    parameter MAX_IN_TRANSIT,
-    parameter EN_SKID_BUFFER = 1
+    parameter type data_t,
+    parameter int MAX_IN_TRANSIT,
+    parameter int EN_SKID_BUFFER = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,6 +15,10 @@ module Duplicate #(
     ndata_i.s in,    // #(data_t, NUM_ELEMENTS)
     ndata_i.m out    // #(data_t, NUM_ELEMENTS)
 );
+
+localparam int NUM_ELEMENTS = in.NUM_ELEMENTS;
+
+`ASSERT_ELAB(EN_SKID_BUFFER == 0 || EN_SKID_BUFFER == 1)
 
 duplicate_i #(NUM_ELEMENTS)         curr_mask();
 ndata_i     #(data_t, NUM_ELEMENTS) data(clk, rst_n), n_data(clk, rst_n);
@@ -79,7 +82,7 @@ end
 assign n_data.ready = 1'b1;
 
 generate if (EN_SKID_BUFFER) begin
-    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(data), .out(out));
+    NDataSkidBuffer #(data_t) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(data), .out(out));
 end else begin
     `DATA_ASSIGN(data, out)
 end endgenerate

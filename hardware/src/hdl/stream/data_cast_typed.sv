@@ -16,9 +16,7 @@
  */
 module TypedNDataCast
     import libstf::*;
-#(
-    parameter DATABEAT_SIZE
-) (
+(
     input logic clk,
     input logic rst_n,
 
@@ -28,12 +26,14 @@ module TypedNDataCast
     typed_ndata_i.m out       // #(DATABEAT_SIZE)
 );
 
+localparam int DATABEAT_SIZE = in.DATABEAT_SIZE;
+
 // The output beat is filled in quarters: one 32 bit -> 8 bit input beat fills one quarter, one
 // 32 bit -> 16 bit or 64 bit -> 32 bit input beat two quarters, and a pass-through beat all four.
-localparam NUM_QUARTERS  = 4;
-localparam QUARTER_SIZE  = DATABEAT_SIZE / NUM_QUARTERS; // Bytes per quarter
-localparam NUM_32B_LANES = DATABEAT_SIZE / 4;            // 32 bit elements per input beat
-localparam NUM_64B_LANES = DATABEAT_SIZE / 8;            // 64 bit elements per input beat
+localparam int NUM_QUARTERS  = 4;
+localparam int QUARTER_SIZE  = DATABEAT_SIZE / NUM_QUARTERS; // Bytes per quarter
+localparam int NUM_32B_LANES = DATABEAT_SIZE / 4;            // 32 bit elements per input beat
+localparam int NUM_64B_LANES = DATABEAT_SIZE / 8;            // 64 bit elements per input beat
 
 `ASSERT_ELAB(DATABEAT_SIZE % 16 == 0)
 

@@ -10,9 +10,9 @@
 module WriteConfigSplitter
     import lynxTypes::*;
 #(
-    parameter integer NUM_CONFIGS,
-    parameter integer ADDR_SPACE_BOUNDS[NUM_CONFIGS + 1],
-    parameter integer REG_LEVELS = 1
+    parameter int NUM_CONFIGS,
+    parameter int ADDR_SPACE_BOUNDS[NUM_CONFIGS + 1],
+    parameter int REG_LEVELS = 1
 ) (
     input logic clk,
     input logic rst_n,

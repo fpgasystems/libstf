@@ -9,7 +9,7 @@
 module ConfigReadRegisterFile
     import lynxTypes::*;
 #(
-    parameter integer NUM_REGS
+    parameter int NUM_REGS
 ) (
     input logic clk,
     input logic rst_n,
@@ -23,7 +23,7 @@ module ConfigReadRegisterFile
 `ASSERT_ELAB(NUM_REGS > 0)
 
 // -- Signals --------------------------------------------------------------------------------------
-localparam ADDR_BITS = NUM_REGS > 1 ? $clog2(NUM_REGS) : 1;
+localparam int ADDR_BITS = NUM_REGS > 1 ? $clog2(NUM_REGS) : 1;
 
 typedef enum logic[1:0] {WAIT, LOOKUP, RESPOND} state_t;
 state_t state;
