@@ -7,8 +7,8 @@ module StreamConfig
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter NUM_STREAMS,
-    parameter MAX_OUTSTANDING_STREAMS = MAXIMUM_NUM_ENQUEUED_STREAMS // Configs that can be enqueued per stream
+    parameter int NUM_STREAMS,
+    parameter int MAX_OUTSTANDING_STREAMS = MAXIMUM_NUM_ENQUEUED_STREAMS // Configs that can be enqueued per stream
 ) (
     input logic clk,
     input logic rst_n,

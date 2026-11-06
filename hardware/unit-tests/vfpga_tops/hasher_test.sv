@@ -5,8 +5,8 @@ import libstf::*;
 `include "libstf_macros.svh"
 
 parameter type data_t = data32_t;
-parameter NUM_ELEMENTS = 16;
-parameter HASH_WIDTH = 32;
+parameter int NUM_ELEMENTS = 16;
+parameter int HASH_WIDTH = 32;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb axi_ctrl.tie_off_s();

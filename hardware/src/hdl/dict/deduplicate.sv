@@ -1,8 +1,10 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 // TODO: Replace this interface with a tagged data stream
 interface duplicate_i #(
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 );
     typedef logic [$clog2(NUM_ELEMENTS)-1:0] origin_t;
 
@@ -21,7 +23,7 @@ endinterface
 
 module Deduplicate #(
     parameter type data_t, 
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -31,6 +33,8 @@ module Deduplicate #(
     duplicate_i.m mask,  // #(logic[NUM_ELEMENTS + NUM_ELEMENTS * $clog2(NUM_VALUES) - 1:0])
     ndata_i.m out        // #(data_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 localparam int unsigned N_STAGES = 4;
 

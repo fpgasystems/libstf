@@ -5,7 +5,7 @@
  * the input is driven when all output ready signals are high.
  */
 module ReadyValidDuplicator #(
-    parameter integer NUM_OUTPUTS
+    parameter int NUM_OUTPUTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -124,7 +124,7 @@ endmodule
 
 module ReadyValidShiftRegister #(
     parameter type data_t,
-    parameter DEPTH
+    parameter int DEPTH
 ) (
     input logic clk,
     input logic rst_n,

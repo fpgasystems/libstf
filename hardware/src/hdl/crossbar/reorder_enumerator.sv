@@ -9,7 +9,7 @@
 module ReorderEnumerator #(
     parameter type data_t,
     parameter type serial_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -18,10 +18,12 @@ module ReorderEnumerator #(
     ntagged_i.m out // #(data_t, serial_t, NUM_ELEMENTS)
 );
 
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+
 `ASSERT_ELAB($bits(out.tag) == NUM_ELEMENTS * $bits(serial_t))
 
-localparam DATA_BITS = $clog2(NUM_ELEMENTS);
-localparam SERIAL_BEAT_BITS = $bits(serial_t) - DATA_BITS;
+localparam int DATA_BITS = $clog2(NUM_ELEMENTS);
+localparam int SERIAL_BEAT_BITS = $bits(serial_t) - DATA_BITS;
 
 typedef logic[SERIAL_BEAT_BITS - 1:0] beat_serial_t;
 

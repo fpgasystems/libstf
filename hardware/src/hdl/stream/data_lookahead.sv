@@ -23,6 +23,8 @@ module NDataLookahead #(
     ndata_i.m out // #(data_t, NUM_ELEMENTS + PREVIEW_SIZE)
 );
 
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+`ASSERT_ELAB(out.NUM_ELEMENTS == NUM_ELEMENTS + PREVIEW_SIZE)
 `ASSERT_ELAB(PREVIEW_SIZE >= 1 && PREVIEW_SIZE <= NUM_ELEMENTS)
 
 typedef enum logic[1:0] {

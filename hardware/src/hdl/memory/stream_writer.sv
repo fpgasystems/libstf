@@ -33,10 +33,10 @@ module StreamWriter
     import lynxTypes::*;
     import libstf::*;
 #(
-    parameter STRM = STRM_HOST,
-    parameter AXI_STRM_ID = 0,
-    parameter IS_LOCAL = 1,
-    parameter TRANSFER_LENGTH_BYTES = 4096
+    parameter int STRM = STRM_HOST,
+    parameter int AXI_STRM_ID = 0,
+    parameter int IS_LOCAL = 1,
+    parameter int TRANSFER_LENGTH_BYTES = 4096
 ) (
     input logic clk,
     input logic rst_n,
@@ -59,10 +59,10 @@ module StreamWriter
 
 // -- Parameters -----------------------------------------------------------------------------------
 // For RDMA, Coyote parses RDMA_WRITE requests into packets of at most the PMTU
-localparam OPCODE = IS_LOCAL ? LOCAL_WRITE : RDMA_WRITE;
+localparam int OPCODE = IS_LOCAL ? LOCAL_WRITE : RDMA_WRITE;
 // How many bits we need to address one transfer of size TRANSFER_LENGTH_BYTES
-localparam TRANSFER_ADDRESS_LEN_BITS = $clog2(TRANSFER_LENGTH_BYTES) + 1;
-localparam AXI_DATA_BYTES = (AXI_DATA_BITS / 8);
+localparam int TRANSFER_ADDRESS_LEN_BITS = $clog2(TRANSFER_LENGTH_BYTES) + 1;
+localparam int AXI_DATA_BYTES = (AXI_DATA_BITS / 8);
 
 // -- Assertions -----------------------------------------------------------------------------------
 
@@ -143,9 +143,9 @@ always_ff @(posedge clk) begin
 end
 
 // -- Input and length buffering -------------------------------------------------------------------
-localparam integer TARGET_DATA_DEPTH = 2 * (TRANSFER_LENGTH_BYTES / AXI_DATA_BYTES);
+localparam int TARGET_DATA_DEPTH = 2 * (TRANSFER_LENGTH_BYTES / AXI_DATA_BYTES);
 // This ensures we don't go below the minimum size supported by the FIFO
-localparam integer DATA_FIFO_DEPTH = TARGET_DATA_DEPTH >= 4 ? TARGET_DATA_DEPTH : 4;
+localparam int DATA_FIFO_DEPTH = TARGET_DATA_DEPTH >= 4 ? TARGET_DATA_DEPTH : 4;
 
 AXI4S axis_data_fifo(.aclk(clk), .aresetn(reset_synced));
 FIFOAXI #(
@@ -208,8 +208,8 @@ data32_t num_requests, n_num_requests;
 assign buffer.ready = output_state == WAIT_FOR_BUFFER || output_state == FLUSH_BUFFERS;
 
 // Tracking of the amount of data we have written in the current transfer
-localparam BEAT_BITS = $clog2(AXI_DATA_BYTES);
-localparam TRANSFER_BEAT_COUNTER_WIDTH = TRANSFER_ADDRESS_LEN_BITS - BEAT_BITS;
+localparam int BEAT_BITS = $clog2(AXI_DATA_BYTES);
+localparam int TRANSFER_BEAT_COUNTER_WIDTH = TRANSFER_ADDRESS_LEN_BITS - BEAT_BITS;
 logic[TRANSFER_BEAT_COUNTER_WIDTH - 1 : 0] beats_written_to_transfer, n_beats_written_to_transfer, beats_written_to_transfer_succ;
 logic has_partial_beat;
 logic current_transfer_completed;
@@ -237,7 +237,7 @@ typedef struct packed {
     data32_t   num_requests;
 } pending_notify_t;
 
-localparam integer PENDING_NOTIFY_DEPTH = 16;
+localparam int PENDING_NOTIFY_DEPTH = 16;
 
 pending_notify_t pending_in, pending_out;
 logic pending_in_valid, pending_in_ready, pending_out_valid, pending_out_ready;

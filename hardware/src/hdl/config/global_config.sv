@@ -15,12 +15,12 @@
 module GlobalConfig
     import lynxTypes::*;
 #(
-    parameter integer SYSTEM_ID,
-    parameter integer NUM_CONFIGS,
-    parameter integer ADDR_SPACE_SIZES[NUM_CONFIGS],
+    parameter int SYSTEM_ID,
+    parameter int NUM_CONFIGS,
+    parameter int ADDR_SPACE_SIZES[NUM_CONFIGS],
     // Number of skid-buffer stages inserted on each read_configs port. Breaks the combinational
     // readback broadcast/mux into short registered hops (0 = no skid buffers).
-    parameter integer READ_CONFIG_SKID_DEPTH = 0
+    parameter int READ_CONFIG_SKID_DEPTH = 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -34,9 +34,9 @@ module GlobalConfig
 `RESET_RESYNC // Reset pipelining
 
 // -- Global parameters ----------------------------------------------------------------------------
-typedef integer bounds_t[NUM_CONFIGS + 2];
+typedef int bounds_t[NUM_CONFIGS + 2];
 
-localparam integer NUM_GLOBAL_REGS = 2 + NUM_CONFIGS;
+localparam int NUM_GLOBAL_REGS = 2 + NUM_CONFIGS;
 
 // Prefix sum including the global read registers
 function automatic bounds_t get_read_bounds();
@@ -52,7 +52,7 @@ function automatic bounds_t get_read_bounds();
 endfunction;
 
 localparam bounds_t ADDR_SPACE_BOUNDS = get_read_bounds();
-localparam integer NUM_TOTAL_REGS  = ADDR_SPACE_BOUNDS[NUM_CONFIGS + 1];
+localparam int NUM_TOTAL_REGS  = ADDR_SPACE_BOUNDS[NUM_CONFIGS + 1];
 
 // Note: We read the address shifted to the right by ADDR_LSB (3)
 // The reason is that the address is supposed to address bytes,
@@ -60,9 +60,9 @@ localparam integer NUM_TOTAL_REGS  = ADDR_SPACE_BOUNDS[NUM_CONFIGS + 1];
 // Every register has AXIL_DATA_BITS (64) bits/8 bytes
 // -> We shift the address by 3 bit to the right
 //    To address the whole register!
-localparam integer ADDR_LSB = $clog2(AXIL_DATA_BITS / 8);
-localparam integer ADDR_MSB = $clog2(NUM_TOTAL_REGS);
-localparam integer AXI_ADDR_BITS = ADDR_LSB + ADDR_MSB;
+localparam int ADDR_LSB = $clog2(AXIL_DATA_BITS / 8);
+localparam int ADDR_MSB = $clog2(NUM_TOTAL_REGS);
+localparam int AXI_ADDR_BITS = ADDR_LSB + ADDR_MSB;
 
 // Response status codes
 localparam logic[1:0] RESP_OKAY   = 2'b00;

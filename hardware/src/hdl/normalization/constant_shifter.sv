@@ -1,11 +1,13 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 module ConstantShifter #(
-    parameter SHIFT_INDEX,
+    parameter int SHIFT_INDEX,
     parameter type data_t,
-    parameter NUM_ELEMENTS,
-    parameter REGISTER = 0,
-    parameter OFFSET_WIDTH = $clog2(NUM_ELEMENTS)
+    parameter int NUM_ELEMENTS,
+    parameter int REGISTER = 0,
+    parameter int OFFSET_WIDTH = $clog2(NUM_ELEMENTS)
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,6 +18,8 @@ module ConstantShifter #(
     ndata_i.m out, // #(data_t, NUM_ELEMENTS)
     output logic[OFFSET_WIDTH - 1:0] offset_out
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 // Calculate the shift amount from the bit index
 localparam int SHIFT = 32'd1 << SHIFT_INDEX;

@@ -10,9 +10,9 @@
  */
 module TaggedMultiplexer #(
     parameter type data_t,
-    parameter NUM_INPUTS,
-    parameter LAST_HANDLING = 1, // 0: Wait until we see an element with a last signal for every input stream and produce a dummy last element; 1: Directly forward the incoming elements as they are
-    parameter FILTER_KEEP = 1    // 0: Forward all elements even if the keep signal is 0, 1: Do not forward elements where keep is 0
+    parameter int NUM_INPUTS,
+    parameter int LAST_HANDLING = 1, // 0: Wait until we see an element with a last signal for every input stream and produce a dummy last element; 1: Directly forward the incoming elements as they are
+    parameter int FILTER_KEEP = 1    // 0: Forward all elements even if the keep signal is 0, 1: Do not forward elements where keep is 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -24,8 +24,8 @@ module TaggedMultiplexer #(
 `RESET_RESYNC // Reset pipelining
 
 // Note: WAIT_ALL breaks the stream semantics because it may produce dummy last elements in the output
-localparam WAIT_ALL = 0;
-localparam FORWARD = 1;
+localparam int WAIT_ALL = 0;
+localparam int FORWARD = 1;
 
 // -- Multiplex round robin ------------------------------------------------------------------------
 logic[NUM_INPUTS - 1:0] tags, is_selected;

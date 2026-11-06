@@ -1,12 +1,14 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * Splits up a composite data stream into a left and a right stream
  */
 module DataSplitter #(
     parameter type left_data_t,
     parameter type right_data_t,
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,6 +18,8 @@ module DataSplitter #(
     ndata_i.m left_out, // #(left_data_t, NUM_ELEMENTS)
     ndata_i.m right_out // #(right_data_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 typedef struct packed {
     left_data_t  left;

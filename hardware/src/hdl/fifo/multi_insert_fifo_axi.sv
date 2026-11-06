@@ -1,9 +1,11 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 module MultiInsertFIFOAXI #(
-    parameter DEPTH,
-    parameter DATA_WIDTH,
-    parameter FACTOR
+    parameter int DEPTH,
+    parameter int DATA_WIDTH,
+    parameter int FACTOR
 ) (
     input logic clk,
     input logic rst_n,
@@ -14,8 +16,12 @@ module MultiInsertFIFOAXI #(
     output logic[$clog2(DEPTH):0] filling_level
 );
 
-localparam FIFO_WIDTH = DATA_WIDTH + DATA_WIDTH / 8 + 1;
-localparam TOTAL_WIDTH = FIFO_WIDTH * FACTOR;
+localparam int FIFO_WIDTH = DATA_WIDTH + DATA_WIDTH / 8 + 1;
+localparam int TOTAL_WIDTH = FIFO_WIDTH * FACTOR;
+
+`ASSERT_ELAB(DATA_WIDTH == o_data.AXI4S_DATA_BITS)
+`ASSERT_ELAB(FACTOR * DATA_WIDTH == i_data.AXI4S_DATA_BITS)
+`ASSERT_ELAB(FACTOR >= 2 && 2**$clog2(FACTOR) == FACTOR, "FACTOR has to be a power of two > 1")
 
 logic[TOTAL_WIDTH - 1:0] data_flattened;
 

@@ -4,9 +4,9 @@
 
 module Duplicate #(
     parameter type data_t, 
-    parameter NUM_ELEMENTS,
-    parameter MAX_IN_TRANSIT,
-    parameter EN_SKID_BUFFER = 1
+    parameter int NUM_ELEMENTS,
+    parameter int MAX_IN_TRANSIT,
+    parameter int EN_SKID_BUFFER = 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -16,6 +16,8 @@ module Duplicate #(
     ndata_i.s in,    // #(data_t, NUM_ELEMENTS)
     ndata_i.m out    // #(data_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 
 duplicate_i #(NUM_ELEMENTS)         curr_mask();
 ndata_i     #(data_t, NUM_ELEMENTS) data(clk, rst_n), n_data(clk, rst_n);

@@ -5,7 +5,7 @@
  * returned after the credited section of code.
  */
 module Creditor #(
-    parameter MAX_IN_TRANSIT
+    parameter int MAX_IN_TRANSIT
 ) (
     input logic clk,
     input logic rst_n,

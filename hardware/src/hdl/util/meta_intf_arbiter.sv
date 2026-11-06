@@ -14,9 +14,9 @@
 module MetaIntfArbiter
     import lynxTypes::*;
 #(
-    parameter N_INTERFACES = N_STRM_AXI,
+    parameter int N_INTERFACES = N_STRM_AXI,
     parameter type STYPE = logic[63:0],
-    localparam SELECT_BITS = N_INTERFACES > 1 ? $clog2(N_INTERFACES) : 1
+    localparam int SELECT_BITS = N_INTERFACES > 1 ? $clog2(N_INTERFACES) : 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -32,7 +32,7 @@ module MetaIntfArbiter
 
 `RESET_RESYNC // Reset pipelining
 
-localparam integer N_BITS = $clog2(N_INTERFACES);
+localparam int N_BITS = $clog2(N_INTERFACES);
 
 // Which stream would be next, according to round-robin
 logic [N_BITS - 1 : 0] input_stream_rr_next;

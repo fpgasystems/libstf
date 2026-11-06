@@ -5,7 +5,7 @@ import libstf::*;
 `include "libstf_macros.svh"
 `include "config_macros.svh"
 
-parameter DATABEAT_SIZE = AXI_DATA_BITS / 8;
+parameter int DATABEAT_SIZE = AXI_DATA_BITS / 8;
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb notify.tie_off_m();

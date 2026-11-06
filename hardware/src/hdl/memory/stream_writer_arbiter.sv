@@ -16,11 +16,11 @@
 module StreamWriterArbiter
     import lynxTypes::*;
 #(
-    parameter N_WRITERS = 2,
-    parameter STRM = STRM_HOST,
-    parameter AXI_STRM_ID = 0,
-    parameter DATA_ORDER_DEPTH = 8,
-    parameter CQ_ORDER_DEPTH = 64
+    parameter int N_WRITERS = 2,
+    parameter int STRM = STRM_HOST,
+    parameter int AXI_STRM_ID = 0,
+    parameter int DATA_ORDER_DEPTH = 8,
+    parameter int CQ_ORDER_DEPTH = 64
 ) (
     input logic clk,
     input logic rst_n,

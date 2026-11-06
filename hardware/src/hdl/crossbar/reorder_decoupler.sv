@@ -8,7 +8,7 @@
 module ReorderDecoupler #(
     parameter type data_t, 
     parameter type serial_t, // the tag type of the outputs
-    parameter NUM_ELEMENTS
+    parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,

@@ -9,9 +9,9 @@
  */
 module Coupler #(
     parameter type data_t, // the data type of the inputs
-    parameter NUM_ELEMENTS,
-    parameter MAX_IN_TRANSIT,
-    parameter EN_SKID_BUFFER = 1
+    parameter int NUM_ELEMENTS,
+    parameter int MAX_IN_TRANSIT,
+    parameter int EN_SKID_BUFFER = 1
 ) (
     input logic clk,
     input logic rst_n,

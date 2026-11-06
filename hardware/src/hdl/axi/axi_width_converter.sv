@@ -8,7 +8,10 @@
  *
  * Currently only same input and output width and  512bit to 256bit is supported.
  */
-module AXIWidthConverter (
+module AXIWidthConverter #(
+    parameter int IN_WIDTH,
+    parameter int OUT_WIDTH
+) (
     input logic clk,
     input logic rst_n,
 
@@ -16,8 +19,8 @@ module AXIWidthConverter (
     AXI4S.m out // #(OUT_WIDTH)
 );
 
-localparam IN_WIDTH  = in.AXI4S_DATA_BITS;
-localparam OUT_WIDTH = out.AXI4S_DATA_BITS;
+`ASSERT_ELAB(IN_WIDTH == in.AXI4S_DATA_BITS)
+`ASSERT_ELAB(OUT_WIDTH == out.AXI4S_DATA_BITS)
 
 `ASSERT_ELAB(IN_WIDTH == OUT_WIDTH || (IN_WIDTH == 512 && OUT_WIDTH == 256))
 

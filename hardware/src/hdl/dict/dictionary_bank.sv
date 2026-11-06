@@ -4,8 +4,8 @@
 
 module DictionaryBank #(
     parameter type value_t,
-    parameter type id_t,
-    parameter DEPTH = 2 ** $bits(id_t) // Number of values, ids from 0 to DEPTH - 1
+    parameter type id_t, // RAM address, i.e., the id field of in_id
+    parameter int DEPTH = 2 ** $bits(id_t) // Number of values, ids from 0 to DEPTH - 1
 ) (
     input logic clk,
     input logic rst_n,
