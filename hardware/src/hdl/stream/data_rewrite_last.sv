@@ -136,6 +136,9 @@ always_comb begin
         INT64_T, DOUBLE_T: begin
             in_num_elements = in_num_bytes / 8;
         end
+        INT128_T: begin
+            in_num_elements = in_num_bytes / 16;
+        end
         default: begin
         `ifndef SYNTHESIS
             if (in.valid) begin
