@@ -107,6 +107,18 @@ function automatic int GET_TYPE_WIDTH(type_t data_type);
     endcase
 endfunction
 
+localparam integer SUM_MAX_VALUES = 64;
+
+// Sums a packed array of up to SUM_MAX_VALUES values. Constant functions in Vivado and xsim can't
+// take unpacked arrays of arbitrary size, but a shorter packed array zero-extends into the argument.
+function automatic int SUM(logic [0:SUM_MAX_VALUES - 1][31:0] values);
+    int sum = 0;
+    for (int i = 0; i < SUM_MAX_VALUES; i++) begin
+        sum += values[i];
+    end
+    return sum;
+endfunction
+
 function automatic int GET_TYPE_BYTES(type_t data_type);
     return GET_TYPE_WIDTH(data_type) / 8;
 endfunction

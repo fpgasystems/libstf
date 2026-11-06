@@ -7,6 +7,7 @@ from libstf_utils.memory_manager import FPGAOutputMemoryManager
 MAX_NUMBER_STREAMS = constants.MAX_NUMBER_STREAMS
 TRANSFER_SIZE_BYTES_OVERWRITE = "TRANSFER_SIZE_BYTES_OVERWRITE"
 EMPTY_STREAM_CONSUMES_BUFFER = "OUTPUT_WRITER_EMPTY_STREAM_CONSUMES_BUFFER"
+SHARED_STREAM = "OUTPUT_WRITER_SHARED_STREAM"
 # A stream of a single element with this value is turned into an empty stream by the vFPGA top
 # (vfpga_tops/output_writer_test.sv). Keep this value in sync with the one there.
 EMPTY_STREAM_MAGIC = 0xDEADBEEF0BADF00D
@@ -191,6 +192,14 @@ class OutputWriterTest(OutputWriterTestCase):
 
         # Assert
         self.assert_simulation_output()
+
+
+class OutputWriterSharedStreamTest(OutputWriterTest):
+    """All ports share stream 0, the other streams are unused."""
+
+    def setUp(self):
+        super().setUp()
+        self._custom_defines[SHARED_STREAM] = "1"
 
 
 class OutputWriterPerformanceTest(OutputWriterPerformanceTestCase):

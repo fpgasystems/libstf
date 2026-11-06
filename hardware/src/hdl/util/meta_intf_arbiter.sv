@@ -15,7 +15,8 @@ module MetaIntfArbiter
     import lynxTypes::*;
 #(
     parameter N_INTERFACES = N_STRM_AXI,
-    parameter type STYPE = logic[63:0]
+    parameter type STYPE = logic[63:0],
+    localparam SELECT_BITS = N_INTERFACES > 1 ? $clog2(N_INTERFACES) : 1
 ) (
     input logic clk,
     input logic rst_n,
@@ -24,7 +25,9 @@ module MetaIntfArbiter
     metaIntf.s intf_in[N_INTERFACES],
 
     // The interface to assign to
-    metaIntf.m intf_out
+    metaIntf.m intf_out,
+    // The index of the input interface that intf_out holds
+    output logic [SELECT_BITS - 1:0] intf_out_select
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -118,18 +121,21 @@ end
 // ----------------------------------------------------------------------------
 // Assign the output and update round-robin stream selection
 // ----------------------------------------------------------------------------
-logic                 n_intf_out_valid;
-STYPE                 n_intf_out_data;
+logic                     n_intf_out_valid;
+STYPE                     n_intf_out_data;
+logic[SELECT_BITS - 1:0]  n_intf_out_select;
 logic[N_BITS - 1 : 0] n_input_stream_rr_next;
 
 always_ff @(posedge clk) begin
     if (reset_synced == 1'b0) begin
         intf_out.data        <= 'X;
         intf_out.valid       <= 1'b0;
+        intf_out_select      <= 'X;
         input_stream_rr_next <= '0;
     end else begin
         intf_out.data        <= n_intf_out_data;
         intf_out.valid       <= n_intf_out_valid;
+        intf_out_select      <= n_intf_out_select;
         input_stream_rr_next <= n_input_stream_rr_next;
     end
 end
@@ -137,12 +143,14 @@ end
 always_comb begin
     n_intf_out_data        = intf_out.data;
     n_intf_out_valid       = intf_out.valid;
+    n_intf_out_select      = intf_out_select;
     n_input_stream_rr_next = input_stream_rr_next;
 
     if (can_load) begin
         if (buf_valid[input_stream_select]) begin
             n_intf_out_data        = data_buf[input_stream_select];
             n_intf_out_valid       = 1'b1;
+            n_intf_out_select      = SELECT_BITS'(input_stream_select);
             n_input_stream_rr_next =
                 (input_stream_rr_next == N_INTERFACES - 1) ? '0 : input_stream_rr_next + 1;
         end else begin

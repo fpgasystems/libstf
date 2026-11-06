@@ -161,7 +161,27 @@ for (genvar I = 0; I < N_STRM_AXI; I++) begin
     assign axi_host_recv_raw[I].tready = axi_host_recv[I].tready;
 end
 
-OutputWriter inst_output_writer (
+`ifdef OUTPUT_WRITER_SHARED_STREAM
+localparam int NUM_WRITER_STREAMS = 1;
+localparam logic [0:NUM_WRITER_STREAMS - 1][31:0] PORTS_PER_STREAM = '{N_STRM_AXI};
+`else
+localparam int NUM_WRITER_STREAMS = N_STRM_AXI;
+localparam logic [0:NUM_WRITER_STREAMS - 1][31:0] PORTS_PER_STREAM = '{default: 1};
+`endif
+
+AXI4SR writer_out[NUM_WRITER_STREAMS](.aclk(clk), .aresetn(rst_n));
+for (genvar I = 0; I < N_STRM_AXI; I++) begin
+    if (I < NUM_WRITER_STREAMS) begin
+        `AXISR_ASSIGN(writer_out[I], axis_host_send[I])
+    end else begin
+        always_comb axis_host_send[I].tie_off_m();
+    end
+end
+
+OutputWriter #(
+    .NUM_STREAMS(NUM_WRITER_STREAMS),
+    .PORTS_PER_STREAM(PORTS_PER_STREAM)
+) inst_output_writer (
     .clk(aclk),
     .rst_n(rst_n),
 
@@ -172,7 +192,7 @@ OutputWriter inst_output_writer (
     .mem_config(mem_config),
 
     .data_in(axi_host_recv),
-    .data_out(axis_host_send),
+    .data_out(writer_out),
 
     .notify_count() // Unused
 );
