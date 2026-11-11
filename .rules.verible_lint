@@ -1,0 +1,28 @@
+# Verible lint rules for libSTF. See CODING_STYLE.md for the rules behind this configuration and
+# `verible-verilog-lint --help_rules=all` for all rules. Run with scripts/lint.sh.
+
+# -- Rules from CODING_STYLE.md -------------------------------------------------------------------
++line-length=length:100
++generate-label
++generate-label-prefix=style_regex:gen_.*
++parameter-name-style=parameter_style:ALL_CAPS;localparam_style:ALL_CAPS
++signal-name-style
++interface-name-style=style_regex:[a-z_0-9]+_i
++enum-name-style=style_regex:[a-z_0-9]+_t
++struct-union-name-style
++parameter-type-name-style
++no-tabs
++no-trailing-spaces
+
+# -- Defaults that conflict with the libSTF style -------------------------------------------------
+# Modules are CamelCase while files are snake_case and may contain several module variants. The
+# libstf package lives in common.sv.
+-module-filename
+-package-filename
+# Modules and interfaces may be instantiated with positional parameters, e.g., data_i #(data_t).
+# Interfaces may also use positional ports, see .waivers.verible_lint.
+-module-parameter
+# Parameters such as NUM_ELEMENTS are declared without a type
+-explicit-parameter-storage-type
+# The tie_off_m()/tie_off_s() tasks of the interfaces have no explicit lifetime
+-explicit-task-lifetime

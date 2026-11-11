@@ -92,14 +92,9 @@ If you want to enable profiling, you have to add `-DLIBSTF_WITH_PROFILING=ON` to
 command.
 
 ## Code style
-For now, we have a couple of code style rules:
-
-- Camel case for class names; Snake case for file names and everything else in the code
-- _i suffix for interfaces
-- _t suffix for types
-- n_ prefix for next signals in sequential logic
-- inst_ prefix for module instantiations
-- The term *width* always refers to width in bits and *size* to width in bytes
+See [CODING_STYLE.md](CODING_STYLE.md). SystemVerilog code is linted with
+[Verible](https://github.com/chipsalliance/verible). Install it with
+`./scripts/install_verible.sh` and lint your staged changes with `./scripts/lint.sh`.
 
 ## License
 The libSTF code is licensed under the terms in 
