@@ -7,7 +7,7 @@ import lynxTypes::LEN_BITS;
 
 // -- Constants ------------------------------------------------------------------------------------
 
-// This value describes the maximum size in Bytes of one transfer of the `OutputWriter`. The  buffer
+// This value describes the maximum size in Bytes of one transfer of the `OutputWriter`. The buffer
 // allocated for the output by the host should be a multiple of this size. The overwrite value is
 // only used on tests to trigger specific conditions.
 `ifdef TRANSFER_SIZE_BYTES_OVERWRITE

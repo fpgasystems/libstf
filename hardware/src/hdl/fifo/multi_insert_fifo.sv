@@ -1,75 +1,80 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 // FIFO that reduces an input to smaller chunks as output
 module MultiInsertFIFO #(
-    parameter int DEPTH, //a power of two except 1
+    parameter int DEPTH, // A power of two > 1
     parameter int WIDTH,
-    parameter int FACTOR
+    parameter int FACTOR // A power of two > 1
 ) (
-    input logic i_clk,
-    input logic i_rst_n,
+    input logic clk,
+    input logic rst_n,
 
-    input  logic[FACTOR * WIDTH - 1:0] i_data,
-    input  logic                       i_valid,
-    output logic                       o_ready,
+    input  logic[FACTOR * WIDTH - 1:0] in_data,
+    input  logic                       in_valid,
+    output logic                       in_ready,
 
-    output logic[WIDTH - 1:0] o_data,
-    output logic              o_valid,
-    input  logic              i_ready,
+    output logic[WIDTH - 1:0] out_data,
+    output logic              out_valid,
+    input  logic              out_ready,
 
-    output logic[$clog2(DEPTH):0] o_filling_level
+    output logic[$clog2(DEPTH):0] filling_level
 );
 
 localparam int SWITCH_WIDTH = $clog2(FACTOR);
 
-logic[SWITCH_WIDTH - 1:0] s_switch, s_next_switch;
+`ASSERT_ELAB(DEPTH > 1 && 2 ** $clog2(DEPTH) == DEPTH, "DEPTH has to be a power of two > 1")
+`ASSERT_ELAB(FACTOR > 1 && 2 ** $clog2(FACTOR) == FACTOR, "FACTOR has to be a power of two > 1")
 
-logic[FACTOR * WIDTH - 1:0] s_data;
-logic s_valid, s_ready;
+logic[SWITCH_WIDTH - 1:0] switch, n_switch;
+
+logic[FACTOR * WIDTH - 1:0] fifo_data;
+logic fifo_valid, fifo_ready;
 
 MehdiFIFO #(
     .DEPTH(DEPTH),
     .WIDTH(FACTOR * WIDTH)
 ) inst_fifo (
-    .i_clk(i_clk),
-    .i_rst_n(i_rst_n),
+    .clk(clk),
+    .rst_n(rst_n),
 
-    .i_data(i_data),
-    .i_valid(i_valid),
-    .i_ready(o_ready),
+    .in_data(in_data),
+    .in_valid(in_valid),
+    .in_ready(in_ready),
 
-    .o_data(s_data),
-    .o_valid(s_valid),
-    .o_ready(s_ready),
+    .out_data(fifo_data),
+    .out_valid(fifo_valid),
+    .out_ready(fifo_ready),
 
-    .o_filling_level(o_filling_level)
+    .filling_level(filling_level)
 );
 
-always_ff @(posedge i_clk) begin
-    if (i_rst_n == 1'b0) begin
-        s_switch <= '0;
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        switch <= '0;
     end else begin
-        s_switch <= s_next_switch;
+        switch <= n_switch;
     end
 end
 
 always_comb begin
-    s_next_switch = s_switch;
+    n_switch = switch;
 
-    if (i_ready == 1'b1 && s_valid == 1'b1) begin
-        s_next_switch = s_switch + 1'b1;
+    if (out_ready == 1'b1 && fifo_valid == 1'b1) begin
+        n_switch = switch + 1'b1;
     end
 end
 
 always_comb begin
-    if (i_ready == 1'b1 && s_switch == '1) begin
-        s_ready = 1'b1;
+    if (out_ready == 1'b1 && switch == '1) begin
+        fifo_ready = 1'b1;
     end else begin
-        s_ready = 1'b0;
+        fifo_ready = 1'b0;
     end
 end
 
-assign o_data  = s_data[s_switch * WIDTH +: WIDTH];
-assign o_valid = s_valid;
+assign out_data  = fifo_data[switch * WIDTH +: WIDTH];
+assign out_valid = fifo_valid;
 
 endmodule

@@ -11,9 +11,9 @@ module DictionaryBank #(
     input logic rst_n,
 
     data_i.s in_value, // #(value_t)
-    data_i.s in_id,    // #(serial_id_t)
+    data_i.s in_id,    // #(struct {id_t id, serial})
 
-    data_i.m out // #(serial_value_t)
+    data_i.m out // #(struct {value_t value, serial})
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -59,7 +59,7 @@ else $fatal(1, "DictionaryBank read of id %0d beyond its %0d values", in_id.data
 `endif
 
 always_ff @(posedge clk) begin
-    if(!reset_synced) begin
+    if (!reset_synced) begin
         state      <= WRITE;
         write_addr <= '0;
 

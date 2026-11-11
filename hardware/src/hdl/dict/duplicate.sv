@@ -26,21 +26,21 @@ MehdiFIFO #(
     .DEPTH(MAX_IN_TRANSIT),
     .WIDTH(NUM_ELEMENTS + NUM_ELEMENTS * $clog2(NUM_ELEMENTS))
 ) inst_mask_fifo (
-    .i_clk(clk),
-    .i_rst_n(rst_n),
-    .i_data({mask.duplicates, mask.origins}),
-    .i_valid(mask.valid),
-    .i_ready(),
-    .o_data({curr_mask.duplicates, curr_mask.origins}),
-    .o_valid(curr_mask.valid),
-    .o_ready(in.valid && data.ready),
-    .o_filling_level()
+    .clk(clk),
+    .rst_n(rst_n),
+    .in_data({mask.duplicates, mask.origins}),
+    .in_valid(mask.valid),
+    .in_ready(),
+    .out_data({curr_mask.duplicates, curr_mask.origins}),
+    .out_valid(curr_mask.valid),
+    .out_ready(in.valid && data.ready),
+    .filling_level()
 );
 
 assign in.ready = data.ready & curr_mask.valid;
 
 always_ff @(posedge clk) begin
-    if (~rst_n) begin
+    if (!rst_n) begin
         data.data  <= 'X;
         data.keep  <= 'X;
         data.last  <= 'X;
@@ -77,7 +77,7 @@ always_comb begin
 end
 
 // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
-// get in trouble with with stable assertion of the interface.
+// get in trouble with the stable assertion of the interface.
 assign n_data.ready = 1'b1;
 
 generate if (EN_SKID_BUFFER) begin : gen_skid_buffer

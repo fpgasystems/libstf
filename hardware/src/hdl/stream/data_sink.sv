@@ -16,7 +16,7 @@ module DataSink #(
     input logic clk,
     input logic rst_n,
 
-    ready_valid_i.s enable, // #(logic[NUM_STREAMS - 1:0])
+    ready_valid_i.s enable, // #(logic[N - 1:0]) with N > ID
 
     ndata_i.s in, // #(data_t, NUM_ELEMENTS)
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
@@ -25,6 +25,7 @@ module DataSink #(
 `ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
 `ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
 `ASSERT_ELAB($bits(in.data) == NUM_ELEMENTS * $bits(data_t))
+`ASSERT_ELAB(ID >= 0 && ID < $bits(enable.data))
 
 // If we don't pull this into an internal register we have to assign valid to ready which is bad
 logic enable_sink;
@@ -35,7 +36,7 @@ logic was_last_data_beat;
 ndata_i #(data_t, NUM_ELEMENTS) internal(clk, rst_n);
 
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         enable_sink       <= 'X;
         enable_sink_valid <= 1'b0;
     end else begin

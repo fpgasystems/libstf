@@ -115,7 +115,7 @@ always_ff @(posedge clk) begin
 end
 
 // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
-// get in trouble with with stable assertion of the interface.
+// get in trouble with the stable assertion of the interface.
 assign register.ready = 1'b1;
 
 assign emit = register.valid && in.valid && &(register.keep | in.keep);

@@ -17,7 +17,7 @@ module NDataToAXITyped
 
     ready_valid_i.s out_type, // #(type_t)
 
-    ndata_i.s in, // #(data_t, NUM_ELEMENTS)
+    ndata_i.s in, // #(data64_t, NUM_ELEMENTS)
     AXI4S.m   out // #(AXI_WIDTH)
 );
 
@@ -72,7 +72,7 @@ for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
 end
 
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         is_upper <= 1'b0;
 
         data  <= 'X;
@@ -140,7 +140,7 @@ assign out.tvalid = valid;
 endmodule
 
 /**
- * Converts an 64 * NUM_ELEMENTS AXI stream containing 32bit or 64bit elements to a NUM_ELEMENTS
+ * Converts a 64 * NUM_ELEMENTS AXI stream containing 32bit or 64bit elements to a NUM_ELEMENTS
  * ndata stream. Use this in cases where you want to have a fixed number of elements in the stream,
  * but the width of the elements in the AXI stream may differ.
  */
@@ -155,7 +155,7 @@ module AXIToNDataTyped
     ready_valid_i.s in_type, // #(type_t)
 
     AXI4S.s   in,   // #(AXI_WIDTH)
-    ndata_i.m out // #(data_t, NUM_ELEMENTS)
+    ndata_i.m out // #(data64_t, NUM_ELEMENTS)
 );
 
 `ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
@@ -194,7 +194,7 @@ for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
 end
 
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         is_upper <= 1'b0;
     end else begin
         if (in_type.valid && in.tvalid && out.ready) begin
@@ -211,7 +211,7 @@ assign out.valid = in_type.valid && in.tvalid;
 endmodule
 
 /**
- * Converts an data8_t ndata stream to a typed ndata stream.
+ * Converts a data8_t ndata stream to a typed ndata stream.
  */
 module NDataToTypedNData
     import libstf::*;
@@ -232,7 +232,7 @@ module NDataToTypedNData
 
 valid_i #(type_t) keep_type(clk, rst_n);
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         keep_type.data  <= 'X;
         keep_type.valid <= 0;
     end else begin

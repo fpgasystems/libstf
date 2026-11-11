@@ -34,6 +34,7 @@ module MemConfig
 
 `ASSERT_ELAB(NUM_STREAMS > 0)
 `ASSERT_ELAB(MAXIMUM_NUM_ENQUEUED_BUFFERS > 0)
+`ASSERT_ELAB(EMPTY_STREAM_CONSUMES_BUFFER == 0 || EMPTY_STREAM_CONSUMES_BUFFER == 1)
 
 // -- Read -----------------------------------------------------------------------------------------
 logic[AXIL_DATA_BITS - 1:0] read_registers[4];
@@ -63,7 +64,7 @@ for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
         .rst_n(reset_synced),
 
         .write_config(write_config),
-        .data(buffer)
+        .out(buffer)
     );
 
     SkidBuffer #(buffer_t) inst_buffer_skid_buffer (
@@ -88,7 +89,7 @@ ConfigWriteReadyRegister #(NUM_STREAMS, logic) inst_flush_buffers (
     .rst_n(reset_synced),
 
     .write_config(write_config),
-    .data(flush_buffers)
+    .out(flush_buffers)
 );
 
 assign flush_buffers.ready = 1'b1;

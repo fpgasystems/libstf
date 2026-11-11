@@ -27,7 +27,7 @@ module DataEnumerator #(
 `ifndef SYNTHESIS
 assert property (@(posedge clk) disable iff (!reset_synced) !in.valid || $onehot0(in.keep + 1'b1))
 else $fatal(1,
-    "Incoming keep signal (%h) most be contiguous starting from the least significant bit!",
+    "Incoming keep signal (%h) must be contiguous starting from the least significant bit!",
     in.keep);
 `endif
 
@@ -40,7 +40,7 @@ serial_t serial_count;
 assign in.ready = out.ready;
 
 always_ff @(posedge clk) begin
-    if(!reset_synced) begin
+    if (!reset_synced) begin
         serial_count <= '0;
     end else begin
         if (in.valid && in.ready) begin

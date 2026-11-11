@@ -12,19 +12,19 @@ module ConfigWriteReadyRegister #(
     input logic rst_n,
 
     write_config_i.s write_config,
-    ready_valid_i.m  data // #(data_t)
+    ready_valid_i.m  out // #(data_t)
 );
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        data.data  <= 'X;
-        data.valid <= 1'b0;
+        out.data  <= 'X;
+        out.valid <= 1'b0;
     end else begin
         if (write_config.valid && write_config.addr == ADDR) begin
-            data.data  <= data_t'(write_config.data);
-            data.valid <= 1'b1;
-        end else if (data.ready) begin
-            data.valid <= 1'b0;
+            out.data  <= data_t'(write_config.data);
+            out.valid <= 1'b1;
+        end else if (out.ready) begin
+            out.valid <= 1'b0;
         end
     end
 end

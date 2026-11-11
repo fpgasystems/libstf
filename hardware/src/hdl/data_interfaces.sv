@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 
 `include "libstf_macros.svh"
 
@@ -10,7 +11,7 @@ interface valid_i #(
     data_t data;
     logic  valid;
 
-    task tie_off_m(); // Tie off unused slave signals
+    task tie_off_m(); // Tie off unused master signals
         data = '0;
         valid = 1'b0;
     endtask
@@ -40,12 +41,12 @@ interface ready_valid_i #(
     logic  valid;
     logic  ready;
 
-    task tie_off_m(); // Tie off unused slave signals
+    task tie_off_m(); // Tie off unused master signals
         data  = '0;
         valid = 1'b0;
     endtask
 
-    task tie_off_s(); // Tie off unused master signals
+    task tie_off_s(); // Tie off unused slave signals
         ready = 1'b0;
     endtask
 
@@ -81,14 +82,14 @@ interface data_i #(
     logic  valid;
     logic  ready;
 
-    task tie_off_m(); // Tie off unused slave signals
+    task tie_off_m(); // Tie off unused master signals
         data  = '0;
         keep  = 1'b0;
         last  = 1'b0;
         valid = 1'b0;
     endtask
 
-    task tie_off_s(); // Tie off unused master signals
+    task tie_off_s(); // Tie off unused slave signals
         ready = 1'b0;
     endtask
 
@@ -127,14 +128,14 @@ interface ndata_i #(
     logic                      valid;
     logic                      ready;
 
-    task tie_off_m(); // Tie off unused slave signals
+    task tie_off_m(); // Tie off unused master signals
         data  = '0;
         keep  = '0;
         last  = 1'b0;
         valid = 1'b0;
     endtask
 
-    task tie_off_s(); // Tie off unused master signals
+    task tie_off_s(); // Tie off unused slave signals
         ready = 1'b0;
     endtask
 
@@ -174,7 +175,7 @@ interface tagged_i #(
     logic  valid;
     logic  ready;
 
-    task tie_off_m(); // Tie off unused slave signals
+    task tie_off_m(); // Tie off unused master signals
         data  = '0;
         tag   = '0;
         keep  = 1'b0;
@@ -182,7 +183,7 @@ interface tagged_i #(
         valid = 1'b0;
     endtask
 
-    task tie_off_s(); // Tie off unused master signals
+    task tie_off_s(); // Tie off unused slave signals
         ready = 1'b0;
     endtask
 
@@ -225,7 +226,7 @@ interface ntagged_i #(
     logic                      valid;
     logic                      ready;
 
-    task tie_off_m(); // Tie off unused slave signals
+    task tie_off_m(); // Tie off unused master signals
         data  = '0;
         tag   = '0;
         keep  = '0;
@@ -233,7 +234,7 @@ interface ntagged_i #(
         valid = 1'b0;
     endtask
 
-    task tie_off_s(); // Tie off unused master signals
+    task tie_off_s(); // Tie off unused slave signals
         ready = 1'b0;
     endtask
 
@@ -275,7 +276,7 @@ interface typed_ndata_i
     logic                        valid;
     logic                        ready;
 
-    task tie_off_m(); // Tie off unused slave signals
+    task tie_off_m(); // Tie off unused master signals
         data  = '0;
         typ   = BYTE_T;
         keep  = '0;
@@ -283,7 +284,7 @@ interface typed_ndata_i
         valid = 1'b0;
     endtask
 
-    task tie_off_s(); // Tie off unused master signals
+    task tie_off_s(); // Tie off unused slave signals
         ready = 1'b0;
     endtask
 

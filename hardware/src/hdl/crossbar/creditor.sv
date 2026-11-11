@@ -25,7 +25,7 @@ logic[$clog2(MAX_IN_TRANSIT):0] credit_count, n_credit_count;
 logic has_credit;
 
 always_ff @(posedge clk) begin
-    if(!rst_n) begin
+    if (!rst_n) begin
         credit_count <= MAX_IN_TRANSIT - 1;
     end else begin
         credit_count <= n_credit_count;

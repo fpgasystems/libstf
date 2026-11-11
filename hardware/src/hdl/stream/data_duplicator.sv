@@ -22,7 +22,7 @@ logic[NUM_OUTPUTS - 1:0] seen, n_seen;
 assign in.ready = &(seen | out_ready);
 
 always_ff @(posedge clk) begin
-    if(!rst_n) begin
+    if (!rst_n) begin
         seen <= '0;
     end else begin
         seen <= n_seen;

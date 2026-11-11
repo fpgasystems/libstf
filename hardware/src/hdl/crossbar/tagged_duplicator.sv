@@ -34,7 +34,7 @@ tagged_i #(data_t, tag_t) internal[NUM_STREAMS][NUM_SKID_STAGES + 1](clk, reset_
 assign in.ready = &(seen | internal_ready);
 
 always_ff @(posedge clk) begin
-    if(!reset_synced) begin
+    if (!reset_synced) begin
         seen <= '0;
     end else begin
         seen <= n_seen;

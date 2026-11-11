@@ -18,6 +18,8 @@ module DataDemultiplexer #(
     ndata_i.m out[NUM_STREAMS] // #(data_t, NUM_ELEMENTS)
 );
 
+`ASSERT_ELAB(NUM_STREAMS > 1, "NUM_STREAMS has to be > 1")
+
 typedef logic[$clog2(NUM_STREAMS) - 1:0] select_t;
 
 // If we don't pull this into an internal register we have to assign valid to ready which is bad
@@ -29,7 +31,7 @@ logic[NUM_STREAMS - 1:0] is_selected, stream_ready;
 logic was_last_data_beat;
 
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         select_reg       <= 'X;
         select_reg_valid <= 1'b0;
     end else begin

@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * The ReadyValidDuplicator creates NUM_OUTPUTS outputs based on one input. The ready signal of
  * the input is driven when all output ready signals are high.
@@ -10,7 +12,7 @@ module ReadyValidDuplicator #(
     input logic clk,
     input logic rst_n,
 
-    ready_valid_i.s in,                 // #(data_t)
+    ready_valid_i.s in,              // #(data_t)
     ready_valid_i.m out[NUM_OUTPUTS] // #(data_t)
 );
 
@@ -20,7 +22,7 @@ logic[NUM_OUTPUTS - 1:0] seen, n_seen;
 assign in.ready = &(seen | out_ready);
 
 always_ff @(posedge clk) begin
-    if(!rst_n) begin
+    if (!rst_n) begin
         seen <= '0;
     end else begin
         seen <= n_seen;
@@ -92,7 +94,7 @@ logic[1:0] seen, n_seen;
 assign in.ready = &(seen | out_ready);
 
 always_ff @(posedge clk) begin
-    if(!rst_n) begin
+    if (!rst_n) begin
         seen <= '0;
     end else begin
         seen <= n_seen;
@@ -133,6 +135,8 @@ module ReadyValidShiftRegister #(
     ready_valid_i.m out // #(data_t)
 );
 
+`ASSERT_ELAB(DEPTH > 0)
+
 data_t[DEPTH:0] shift_data;
 logic [DEPTH:0] shift_valid;
 
@@ -142,7 +146,7 @@ assign shift_data[0]  = in.data;
 assign shift_valid[0] = in.valid;
 
 always_ff @(posedge clk) begin
-    if(!rst_n) begin
+    if (!rst_n) begin
         shift_data[DEPTH:1]  <= 'X;
         shift_valid[DEPTH:1] <= '0;
     end else begin

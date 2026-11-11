@@ -20,6 +20,10 @@ module SortedSeqToBitmask #(
 localparam int DATA_WIDTH = $bits(data_t);
 localparam int RIDX_WIDTH = $clog2(NUM_ELEMENTS) + 1;
 
+`ASSERT_ELAB(NUM_ELEMENTS >= 2)
+`ASSERT_ELAB(DATA_WIDTH >= RIDX_WIDTH)
+`ASSERT_ELAB($bits(out.data) == NUM_ELEMENTS)
+
 typedef logic[NUM_ELEMENTS - 1:0] mask_t;
 typedef logic[RIDX_WIDTH - 1:0]   rid_t;
 
@@ -67,7 +71,7 @@ end
 assign data_beat_done = (processed | current_processed) == in.keep;
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         current_id <= '0;
         processed  <= '0;
         mask       <= '0;

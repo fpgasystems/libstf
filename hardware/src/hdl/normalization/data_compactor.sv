@@ -102,6 +102,7 @@ for (genvar L = 0; L < NUM_LEVELS; L++) begin : gen_levels
 
         always_ff @(posedge clk) begin
             if (!rst_n) begin
+                q       <= 'X;
                 q_valid <= 1'b0;
             end else if (!q_valid || stage_ready[L + 1]) begin
                 q       <= next;

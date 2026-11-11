@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 
 interface stream_profile_i;
     import libstf::*;

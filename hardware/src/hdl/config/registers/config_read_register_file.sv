@@ -43,7 +43,7 @@ always_ff @(posedge clk) begin
     if (!rst_n) begin
         state      <= WAIT;
         addr       <= 'X;
-        addr_valid <= 'X;
+        addr_valid <= 1'b0;
 
         in.resp_data  <= 'X;
         in.resp_error <= 'X;

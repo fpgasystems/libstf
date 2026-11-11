@@ -64,12 +64,12 @@ always_ff @(posedge clk) begin
     if (!reset_synced) begin
         state <= WAIT;
 
-        handshakes_reg <= 'X;
-        starved_reg    <= 'X;
-        stalled_reg    <= 'X;
-        idle_reg       <= 'X;
-        idle_acc_reg   <= 'X;
-        last_reg       <= 'X;
+        handshakes_reg <= '0;
+        starved_reg    <= '0;
+        stalled_reg    <= '0;
+        idle_reg       <= '0;
+        idle_acc_reg   <= '0;
+        last_reg       <= '0;
     end else begin
         state <= n_state;
 
@@ -174,8 +174,8 @@ ShiftRegister #(.WIDTH($bits(stream_profile_t)), .LEVELS(OUT_REG_LEVELS)) inst_c
     .clk(clk),
     .rst_n(reset_synced),
 
-    .i_data(counters_reg),
-    .o_data(profile.counters)
+    .in_data(counters_reg),
+    .out_data(profile.counters)
 );
 
 endmodule

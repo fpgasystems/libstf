@@ -40,6 +40,8 @@ logic [NUM_ELEMENTS - 1:0] keep,  n_keep;
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         state <= WAIT_FIRST;
+        data  <= 'X;
+        keep  <= 'X;
     end else begin
         state <= n_state;
         data  <= n_data;

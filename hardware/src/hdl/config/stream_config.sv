@@ -49,7 +49,7 @@ for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
         .rst_n(reset_synced),
 
         .write_config(write_config),
-        .data(conf_reg)
+        .out(conf_reg)
     );
 
     ReadyValidSplitter #(select_t, type_t) inst_conf_split (

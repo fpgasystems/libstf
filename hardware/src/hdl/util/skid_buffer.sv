@@ -44,7 +44,7 @@ always_ff @(posedge clk) begin
 end
 
 // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
-// get in trouble with with stable assertion of the interface.
+// get in trouble with the stable assertion of the interface.
 assign head.ready = 1'b1;
 
 assign in.ready = !skid_valid;
@@ -108,6 +108,7 @@ module NDataSkidBuffer #(
 );
 
 `ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+`ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
 
 typedef struct packed {
     data_t[NUM_ELEMENTS - 1:0] data;
@@ -198,6 +199,7 @@ module NTaggedSkidBuffer #(
 );
 
 `ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+`ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
 
 typedef struct packed {
     data_t[NUM_ELEMENTS - 1:0] data;
@@ -247,6 +249,7 @@ module AXISkidBuffer
 );
 
 `ASSERT_ELAB(AXI4S_DATA_BITS == in.AXI4S_DATA_BITS)
+`ASSERT_ELAB(AXI4S_DATA_BITS == out.AXI4S_DATA_BITS)
 
 typedef struct packed {
     logic[AXI4S_DATA_BITS - 1:0]     tdata;
@@ -293,6 +296,7 @@ module TypedNDataSkidBuffer
 );
 
 `ASSERT_ELAB(DATABEAT_SIZE == in.DATABEAT_SIZE)
+`ASSERT_ELAB(DATABEAT_SIZE == out.DATABEAT_SIZE)
 
 typedef struct packed {
     data8_t[DATABEAT_SIZE - 1:0] data;

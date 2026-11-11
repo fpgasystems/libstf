@@ -47,7 +47,7 @@ typed_ndata_i #(DATABEAT_SIZE) dict_out(clk, rst_n);
 
 AXI4S axi_out[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
 
-// -- Configuration -------------------------------------------------------------------------------
+// -- Configuration --------------------------------------------------------------------------------
 write_config_i write_configs[1](clk, rst_n);
 read_config_i  read_configs [1](clk, rst_n);
 GlobalConfig #(

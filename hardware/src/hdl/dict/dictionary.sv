@@ -3,7 +3,7 @@
 `include "libstf_macros.svh"
 
 /**
- * This module is able to materialize a column based on a random sequences of column identifiers
+ * This module is able to materialize a column based on a random sequence of column identifiers
  * (e.g., the build-side result of a hash join).
  *
  * It has two phases:
@@ -49,6 +49,11 @@ localparam int BANK_DEPTH = NUM_VALUES / NUM_BANKS;
 
 `ASSERT_ELAB(NUM_VALUES % NUM_BANKS == 0)
 `ASSERT_ELAB(NUM_VALUES <= longint'(2) ** ID_BITS)
+`ASSERT_ELAB(NUM_ELEMENTS > 1 && 2 ** $clog2(NUM_ELEMENTS) == NUM_ELEMENTS,
+    "NUM_ELEMENTS has to be a power of two > 1")
+`ASSERT_ELAB(NUM_BANKS > 1 && 2 ** $clog2(NUM_BANKS) == NUM_BANKS,
+    "NUM_BANKS has to be a power of two > 1")
+`ASSERT_ELAB(ID_BITS > LOG_NUM_BANKS, "The lowest id bits select the bank")
 
 typedef logic[SERIAL_WIDTH - 1:0]            full_serial_t;
 typedef logic[LOG_MAX_IN_TRANSIT - 1:0]      serial_t;
@@ -129,8 +134,8 @@ ShiftRegister #(.WIDTH(1), .LEVELS(1)) inst_credit_return_sr (
     .clk(clk),
     .rst_n(reset_synced),
 
-    .i_data(out.valid && out.ready),
-    .o_data(credit_return)
+    .in_data(out.valid && out.ready),
+    .out_data(credit_return)
 );
 
 Creditor #(

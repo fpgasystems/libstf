@@ -16,11 +16,14 @@ module Coupler #(
     input logic clk,
     input logic rst_n,
 
-    valid_i.s mask, // logic[NUM_ELEMENTS:0] -> NUM_ELEMENTS keep bits and one last bit
+    // NUM_ELEMENTS keep bits and one last bit
+    valid_i.s mask, // #(logic[NUM_ELEMENTS:0])
 
     data_i.s  in[NUM_ELEMENTS], // #(data_t)
     ndata_i.m out               // #(data_t, NUM_ELEMENTS)
 );
+
+`ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
 
 typedef struct packed {
     logic[NUM_ELEMENTS - 1:0] keep;
@@ -37,18 +40,18 @@ MehdiFIFO #(
     .DEPTH(MAX_IN_TRANSIT),
     .WIDTH(NUM_ELEMENTS + 1)
 ) inst_mask_fifo (
-    .i_clk(clk),
-    .i_rst_n(rst_n),
+    .clk(clk),
+    .rst_n(rst_n),
 
-    .i_data(mask.data),
-    .i_valid(mask.valid),
-    .i_ready(),
+    .in_data(mask.data),
+    .in_valid(mask.valid),
+    .in_ready(),
 
-    .o_data(fifo_mask.data),
-    .o_valid(fifo_mask.valid),
-    .o_ready(fifo_mask.ready),
+    .out_data(fifo_mask.data),
+    .out_valid(fifo_mask.valid),
+    .out_ready(fifo_mask.ready),
 
-    .o_filling_level()
+    .filling_level()
 );
 
 SkidBuffer #(mask_t) inst_mask_skid_buffer (

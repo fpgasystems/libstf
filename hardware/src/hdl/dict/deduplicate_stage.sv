@@ -29,7 +29,7 @@ ndata_i     #(data_t, NUM_ELEMENTS) data(clk, rst_n), n_data(clk, rst_n);
 duplicate_i #(NUM_ELEMENTS)         mask(),           n_mask();
 
 always_ff @(posedge clk) begin
-    if (~rst_n) begin
+    if (!rst_n) begin
         data.data  <= 'X;
         data.keep  <= 'X;
         data.last  <= 'X;
@@ -89,7 +89,7 @@ always_comb begin
 end
 
 // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
-// get in trouble with with stable assertion of the interface.
+// get in trouble with the stable assertion of the interface.
 assign data.ready   = 1'b1;
 assign n_data.ready = 1'b1;
 

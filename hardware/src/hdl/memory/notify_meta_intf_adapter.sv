@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * Converts the notifications of a StreamWriter to the Coyote notify interface. The 32-bit value
  * consists of:
@@ -11,8 +13,10 @@ module NotifyMetaIntfAdapter #(
     parameter int AXI_STRM_ID = 0
 ) (
     stream_writer_notify_i.s in,
-    metaIntf.m out
+    metaIntf.m out // #(irq_not_t)
 );
+
+`ASSERT_ELAB(AXI_STRM_ID >= 0 && AXI_STRM_ID < 8, "AXI_STRM_ID has to fit in 3 bits")
 
 always_comb begin
     out.data.pid         = 6'd0;

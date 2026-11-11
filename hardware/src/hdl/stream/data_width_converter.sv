@@ -26,8 +26,8 @@ module NDataWidthConverter #(
 `ASSERT_ELAB(IN_WIDTH == in.NUM_ELEMENTS)
 `ASSERT_ELAB(OUT_WIDTH == out.NUM_ELEMENTS)
 
-`ASSERT_ELAB((IN_WIDTH & (IN_WIDTH - 1)) == 0)   // IN_WIDTH is power of 2
-`ASSERT_ELAB((OUT_WIDTH & (OUT_WIDTH - 1)) == 0) // OUT_WIDTH is power of 2
+`ASSERT_ELAB(2 ** $clog2(IN_WIDTH) == IN_WIDTH, "IN_WIDTH has to be a power of two")
+`ASSERT_ELAB(2 ** $clog2(OUT_WIDTH) == OUT_WIDTH, "OUT_WIDTH has to be a power of two")
 
 generate if (IN_WIDTH == OUT_WIDTH) begin : gen_passthrough
     `DATA_ASSIGN(in, out)

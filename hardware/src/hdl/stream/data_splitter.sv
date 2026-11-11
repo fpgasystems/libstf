@@ -13,18 +13,22 @@ module DataSplitter #(
     input logic clk,
     input logic rst_n,
 
-    ndata_i.s in,
+    ndata_i.s in, // #({left_data_t, right_data_t}, NUM_ELEMENTS)
 
     ndata_i.m left_out, // #(left_data_t, NUM_ELEMENTS)
     ndata_i.m right_out // #(right_data_t, NUM_ELEMENTS)
 );
 
 `ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+`ASSERT_ELAB(NUM_ELEMENTS == left_out.NUM_ELEMENTS)
+`ASSERT_ELAB(NUM_ELEMENTS == right_out.NUM_ELEMENTS)
 
 typedef struct packed {
     left_data_t  left;
     right_data_t right;
 } full_data_t;
+
+`ASSERT_ELAB($bits(in.data) == NUM_ELEMENTS * $bits(full_data_t))
 
 full_data_t[NUM_ELEMENTS - 1:0] in_data;
 logic[1:0] is_ready, is_handshake, was_handshake;
