@@ -49,10 +49,12 @@ ReadyRAM #(
 );
 
 `ifndef SYNTHESIS
-assert property (@(posedge clk) disable iff (!reset_synced) !(state == WRITE && in_value.valid) || write_addr < DEPTH)
+assert property (@(posedge clk) disable iff (!reset_synced)
+    !(state == WRITE && in_value.valid) || write_addr < DEPTH)
 else $fatal(1, "DictionaryBank holds at most %0d values", DEPTH);
 
-assert property (@(posedge clk) disable iff (!reset_synced) !(state == READ && in_id.valid && in_id.keep) || in_id.data.id < DEPTH)
+assert property (@(posedge clk) disable iff (!reset_synced)
+    !(state == READ && in_id.valid && in_id.keep) || in_id.data.id < DEPTH)
 else $fatal(1, "DictionaryBank read of id %0d beyond its %0d values", in_id.data.id, DEPTH);
 `endif
 
@@ -96,7 +98,9 @@ always_ff @(posedge clk) begin
                 out.valid <= 1'b0;
                 state     <= WRITE;
             end
-        end endcase
+        end
+        default: ;
+        endcase
     end
 end
 

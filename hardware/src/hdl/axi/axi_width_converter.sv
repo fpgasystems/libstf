@@ -26,9 +26,9 @@ module AXIWidthConverter #(
 
 logic is_upper;
 
-generate if (IN_WIDTH == OUT_WIDTH) begin
+generate if (IN_WIDTH == OUT_WIDTH) begin : gen_passthrough
     `AXIS_ASSIGN(in, out);
-end else if (IN_WIDTH == 512 && OUT_WIDTH == 256) begin // Downsize
+end else if (IN_WIDTH == 512 && OUT_WIDTH == 256) begin : gen_downsize
     logic has_upper_data, beat_done;
 
     assign has_upper_data = |in.tkeep[63:32];
@@ -54,7 +54,8 @@ end else if (IN_WIDTH == 512 && OUT_WIDTH == 256) begin // Downsize
     assign out.tkeep  = in.tkeep[32 * is_upper+:32];
     assign out.tlast  = in.tlast && beat_done;
     assign out.tvalid = in.tvalid;
-end else if (IN_WIDTH == 256 && OUT_WIDTH == 512) begin // Upsize // TODO: This code does not work
+end else if (IN_WIDTH == 256 && OUT_WIDTH == 512) begin : gen_upsize
+    // TODO: This code does not work
     logic[255:0] reg_data;
     logic[31:0]  reg_keep;
 

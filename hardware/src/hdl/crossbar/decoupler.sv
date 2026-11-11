@@ -4,12 +4,12 @@
  * The Decoupler splits up data beats of an ndata stream into individual data streams per element.
  */
 module Decoupler #(
-    parameter type data_t, 
+    parameter type data_t,
     parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
-    
+
     ndata_i.s in,               // #(data_t, NUM_ELEMENTS)
     data_i.m  out[NUM_ELEMENTS] // #(data_t)
 );
@@ -19,13 +19,13 @@ logic[NUM_ELEMENTS - 1:0] out_valid, out_ready;
 
 assign in.ready = ~|out_valid || &out_ready;
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_lanes
     assign out_valid[I] = out[I].valid;
     assign out_ready[I] = out[I].ready;
 
     always_ff @(posedge clk) begin
         if(!rst_n) begin
-            out[I].valid <= 1'b0;     
+            out[I].valid <= 1'b0;
         end else begin
             out[I].data  <= n_out[I].data;
             out[I].keep  <= n_out[I].keep;
@@ -45,13 +45,15 @@ for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
             n_out[I].keep  = in.keep[I];
             n_out[I].last  = in.last;
             n_out[I].valid = in.valid;
-        end else if (!out[I].ready) begin // Not all output streams are ready => We need to stall and keep only the valid signals of the lanes that are not ready
+        end else if (!out[I].ready) begin
+            // Not all output streams are ready => We need to stall and keep only the valid signals
+            // of the lanes that are not ready
             n_out[I].valid = out[I].valid;
         end
     end
 
-    // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not 
-    // get in trouble with with stable assertion of the interface.
+    // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do
+    // not get in trouble with with stable assertion of the interface.
     assign n_out[I].ready = 1'b1;
 end
 

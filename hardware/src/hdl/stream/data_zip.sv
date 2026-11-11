@@ -3,13 +3,13 @@
 `include "libstf_macros.svh"
 
 /**
- * Turns two ndata streams into one stream of pairs of values, 
+ * Turns two ndata streams into one stream of pairs of values,
  * interleaving left and right elements.
  *
  * It requires the two streams to be the same length (same number of beats)
  * otherwise it won't work. This edge case also isn't caught / asserted,
  * so it if it happens it might lead cause undefined outputs. If the two
- * streams assert last on the same beat but have different keep signals 
+ * streams assert last on the same beat but have different keep signals
  * for each the output will be the bitwise AND of the two keeps.
  */
 module NDataZip #(
@@ -40,7 +40,7 @@ always_comb out.valid = left_in.valid & right_in.valid;
 always_comb left_in.ready = right_in.valid & out.ready;
 always_comb right_in.ready = left_in.valid & out.ready;
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin 
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
     assign out_data[I].left = left_in.data[I];
     assign out_data[I].right = right_in.data[I];
 

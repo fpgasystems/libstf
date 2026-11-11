@@ -52,13 +52,30 @@ ConfigReadRegisterFile #(
 );
 
 // -- Write ----------------------------------------------------------------------------------------
-for (genvar I = 0; I < NUM_BUFFERS; I++) begin
+for (genvar I = 0; I < NUM_BUFFERS; I++) begin : gen_buffers
     ready_valid_i #(vaddress_t) size(clk, reset_synced);
     ready_valid_i #(data32_t)   num_reads(clk, reset_synced);
-    
-    ConfigWriteRegister #(3 * I, vaddress_t) inst_base (clk, write_config, out[I].base);
-    ConfigWriteReadyRegister #(3 * I + 1, vaddress_t) inst_size (clk, reset_synced, write_config, size);
-    ConfigWriteFIFO #(3 * I + 2, MAXIMUM_NUM_ENQUEUED_STREAMS, data32_t) inst_num_reads (clk, reset_synced, write_config, num_reads);
+
+    ConfigWriteRegister #(3 * I, vaddress_t) inst_base (
+        .clk(clk),
+
+        .write_config(write_config),
+        .data(out[I].base)
+    );
+    ConfigWriteReadyRegister #(3 * I + 1, vaddress_t) inst_size (
+        .clk(clk),
+        .rst_n(reset_synced),
+
+        .write_config(write_config),
+        .data(size)
+    );
+    ConfigWriteFIFO #(3 * I + 2, MAXIMUM_NUM_ENQUEUED_STREAMS, data32_t) inst_num_reads (
+        .clk(clk),
+        .rst_n(reset_synced),
+
+        .write_config(write_config),
+        .data(num_reads)
+    );
 
     assign out[I].size  = size.data;
     assign out[I].valid = size.valid;

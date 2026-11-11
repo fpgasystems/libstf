@@ -7,7 +7,7 @@ import libstf::*;
 always_comb sq_rd.tie_off_m();
 always_comb cq_rd.tie_off_s();
 
-for (genvar I = 0; I < N_CARD_AXI; I++) begin
+for (genvar I = 0; I < N_CARD_AXI; I++) begin : gen_tie_off_card
     always_comb axis_card_send[I].tie_off_m();
     always_comb axis_card_recv[I].tie_off_s();
 end
@@ -79,7 +79,7 @@ GenericConfig #(
 data64_t num_runs;
 assign num_runs = write_regs[0];
 
-for (genvar I = 0; I < N_STRM_AXI; I++) begin
+for (genvar I = 0; I < N_STRM_AXI; I++) begin : gen_profiles
     data64_t run_counter, n_run_counter;
     logic    is_stop;
 
@@ -134,7 +134,7 @@ localparam data64_t EMPTY_STREAM_MAGIC = 64'hDEAD_BEEF_0BAD_F00D;
 
 AXI4S axi_host_recv_raw[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
 AXI4S axi_host_recv[N_STRM_AXI](.aclk(clk), .aresetn(rst_n));
-for (genvar I = 0; I < N_STRM_AXI; I++) begin
+for (genvar I = 0; I < N_STRM_AXI; I++) begin : gen_empty_stream_markers
     `AXIS_ASSIGN(axis_host_recv[I], axi_host_recv_raw[I]) // AXI4SR to AXI4S
 
     // Only a stream that consists of a single beat can be the marker. Otherwise, the last element
@@ -163,17 +163,19 @@ end
 
 `ifdef OUTPUT_WRITER_SHARED_STREAM
 localparam int NUM_WRITER_STREAMS = 1;
+// verilog_lint: waive packed-dimensions-range-ordering
 localparam logic [0:NUM_WRITER_STREAMS - 1][31:0] PORTS_PER_STREAM = '{N_STRM_AXI};
 `else
 localparam int NUM_WRITER_STREAMS = N_STRM_AXI;
+// verilog_lint: waive packed-dimensions-range-ordering
 localparam logic [0:NUM_WRITER_STREAMS - 1][31:0] PORTS_PER_STREAM = '{default: 1};
 `endif
 
 AXI4SR writer_out[NUM_WRITER_STREAMS](.aclk(clk), .aresetn(rst_n));
-for (genvar I = 0; I < N_STRM_AXI; I++) begin
-    if (I < NUM_WRITER_STREAMS) begin
+for (genvar I = 0; I < N_STRM_AXI; I++) begin : gen_host_send
+    if (I < NUM_WRITER_STREAMS) begin : gen_writer_stream
         `AXISR_ASSIGN(writer_out[I], axis_host_send[I])
-    end else begin
+    end else begin : gen_tie_off
         always_comb axis_host_send[I].tie_off_m();
     end
 end

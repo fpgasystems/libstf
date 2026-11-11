@@ -49,7 +49,7 @@ always_ff @(posedge clk) begin
     end
 end
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
     assign in_data[I]  = full_data_t'(in.data[I]);
     assign left_out.data[I]  = in_data[I].left;
     assign right_out.data[I] = in_data[I].right;

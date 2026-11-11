@@ -3,7 +3,7 @@
 `include "libstf_macros.svh"
 
 /**
- * The Reorder module reorders a data stream that may have been shuffled out of order based on a 
+ * The Reorder module reorders a data stream that may have been shuffled out of order based on a
  * pre-assigned serial number passed as the tag.
  */
 module Reorder #(
@@ -114,7 +114,7 @@ always_comb begin
     end
 end
 
-// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not 
+// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
 // get in trouble with with stable assertion of the interface.
 assign n_out.ready = 1'b1;
 

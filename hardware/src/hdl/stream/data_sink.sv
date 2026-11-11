@@ -3,8 +3,8 @@
 `include "libstf_macros.svh"
 
 /**
- * Can be configured to discard the input stream or forward it to the output. The ID parameter can 
- * be used to select the correct enable signal in case the enable configuration carries the signal 
+ * Can be configured to discard the input stream or forward it to the output. The ID parameter can
+ * be used to select the correct enable signal in case the enable configuration carries the signal
  * for multiple DataSinks.
  */
 module DataSink #(
@@ -51,7 +51,7 @@ end
 assign was_last_data_beat = in.valid && in.last && in.ready;
 assign enable.ready       = !enable_sink_valid || was_last_data_beat;
 
-// Note: There is a special case for the last signal of a disabled stream. We zero out all keep 
+// Note: There is a special case for the last signal of a disabled stream. We zero out all keep
 // signals but forward the last signal as valid such that the modules after know that the stream has
 // finished without getting any data.
 
@@ -62,9 +62,15 @@ assign internal.keep  = in.keep;
 assign internal.last  = in.last;
 assign internal.valid = enable_sink_valid && !enable_sink ? in.valid : 1'b0;
 
-generate if (EN_SKID_BUFFER) begin
-    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(internal), .out(out));
-end else begin
+generate if (EN_SKID_BUFFER) begin : gen_skid_buffer
+    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (
+        .clk(clk),
+        .rst_n(rst_n),
+
+        .in(internal),
+        .out(out)
+    );
+end else begin : gen_no_skid_buffer
     `DATA_ASSIGN(internal, out)
 end endgenerate
 

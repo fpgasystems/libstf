@@ -5,11 +5,11 @@
 `include "libstf_macros.svh"
 
 /**
- * This module handles the configuration of the design. As the first parameter, it takes a system id 
- * that should be a unique identifier so the software side can check which design is loaded to the 
+ * This module handles the configuration of the design. As the first parameter, it takes a system id
+ * that should be a unique identifier so the software side can check which design is loaded to the
  * FPGA. It also takes a number of configurations and their address space bounds.
  *
- * On the axi_ctrl input, it receives configuration messages and forwards them to the corresponding 
+ * On the axi_ctrl input, it receives configuration messages and forwards them to the corresponding
  * configuration based on the address spaces.
  */
 module GlobalConfig
@@ -73,7 +73,7 @@ localparam logic[1:0] RESP_SLVERR = 2'b10;
 // =================================================================================================
 
 // Note: It is possible that the write address & data are valid but there is no valid data to write
-//       (axi_ctrl.wstrb is all zeroes). In this case we cannot set the register to valid as this 
+//       (axi_ctrl.wstrb is all zeroes). In this case we cannot set the register to valid as this
 //       case is different from writing all zero to the registers.
 // -> We track whether there is any valid data to determine if the register is actually written.
 logic any_wstrb;
@@ -115,9 +115,9 @@ assign axi_ctrl.awready = axi_ctrl.wvalid;
 assign axi_ctrl.wready  = axi_ctrl.awvalid;
 
 // Write acknowledge
-assign axi_ctrl.bresp = RESP_OKAY; // We cannot correctly handle errors here because burst writes 
-                                   // that occur in real hardware may write addresses that do not 
-                                   // correspond to an actual register. Thus, we always return 
+assign axi_ctrl.bresp = RESP_OKAY; // We cannot correctly handle errors here because burst writes
+                                   // that occur in real hardware may write addresses that do not
+                                   // correspond to an actual register. Thus, we always return
                                    // RESP_OKAY.
 
 always_ff @(posedge clk) begin
@@ -167,7 +167,7 @@ logic[AXIL_DATA_BITS - 1:0] global_registers[NUM_GLOBAL_REGS];
 assign global_registers[0] = SYSTEM_ID;
 assign global_registers[1] = NUM_CONFIGS;
 
-for (genvar I = 0; I < NUM_CONFIGS; I++) begin
+for (genvar I = 0; I < NUM_CONFIGS; I++) begin : gen_bound_registers
     assign global_registers[I + 2] = ADDR_SPACE_BOUNDS[I + 2];
 end
 
@@ -202,9 +202,9 @@ assign axi_ctrl.arready = pre_read_splitter_config.read_ready;
 
 // Read response: rvalid and rresp
 assign axi_ctrl.rdata  = pre_read_splitter_config.resp_data;
-assign axi_ctrl.rresp  = RESP_OKAY; // We cannot correctly handle errors here because burst reads 
-                                    // that occur in real hardware may read addresses that do not 
-                                    // correspond to an actual register. Thus, we always return 
+assign axi_ctrl.rresp  = RESP_OKAY; // We cannot correctly handle errors here because burst reads
+                                    // that occur in real hardware may read addresses that do not
+                                    // correspond to an actual register. Thus, we always return
                                     // RESP_OKAY.
 assign axi_ctrl.rvalid = pre_read_splitter_config.resp_valid;
 

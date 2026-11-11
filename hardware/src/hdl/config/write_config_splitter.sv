@@ -3,8 +3,8 @@
 `include "libstf_macros.svh"
 
 /**
- * The WriteConfigSplitter splits a write config interface into multiple config interfaces based on 
- * address space bounds. I also substracts the corresponding address space bound from the address it 
+ * The WriteConfigSplitter splits a write config interface into multiple config interfaces based on
+ * address space bounds. I also substracts the corresponding address space bound from the address it
  * passes on. The address space has to start at 0.
  */
 module WriteConfigSplitter
@@ -30,14 +30,14 @@ write_config_i internal[NUM_CONFIGS](.clk(clk), .rst_n(reset_synced));
 
 `ifndef SYNTHESIS
 // Address needs to be within address space bounds
-assert property (@(posedge clk) disable iff (!reset_synced) !in.valid || 
+assert property (@(posedge clk) disable iff (!reset_synced) !in.valid ||
     (in.addr >= ADDR_SPACE_BOUNDS[0] && in.addr < ADDR_SPACE_BOUNDS[NUM_CONFIGS]))
 else $fatal(1, "Write address %0d is out-of-bounds!", in.addr);
 `endif
 
 assign smaller_than_bound[0] = 1'b0;
 
-for (genvar I = 0; I < NUM_CONFIGS; I++) begin
+for (genvar I = 0; I < NUM_CONFIGS; I++) begin : gen_configs
     assign smaller_than_bound[I + 1] = in.addr < ADDR_SPACE_BOUNDS[I + 1];
     assign addr_matches[I]           = !smaller_than_bound[I] && smaller_than_bound[I + 1];
 
@@ -45,7 +45,10 @@ for (genvar I = 0; I < NUM_CONFIGS; I++) begin
     assign internal[I].data  = in.data;
     assign internal[I].valid = in.valid && addr_matches[I] ? 1'b1 : 1'b0;
 
-    ShiftRegister #(.WIDTH(AXI_ADDR_BITS + AXIL_DATA_BITS + 1), .LEVELS(REG_LEVELS)) inst_shift_reg (
+    ShiftRegister #(
+        .WIDTH(AXI_ADDR_BITS + AXIL_DATA_BITS + 1),
+        .LEVELS(REG_LEVELS)
+    ) inst_shift_reg (
         .clk(clk),
         .rst_n(reset_synced),
 

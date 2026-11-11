@@ -14,14 +14,14 @@ always_comb sq_wr.tie_off_m();
 always_comb cq_rd.tie_off_s();
 always_comb cq_wr.tie_off_s();
 
-if (N_STRM_AXI > 1) begin
+if (N_STRM_AXI > 1) begin : gen_tie_off_host_recv
     always_comb axis_host_recv[1].tie_off_s();
 end
-for (genvar I = 2; I < N_STRM_AXI; I++) begin
+for (genvar I = 2; I < N_STRM_AXI; I++) begin : gen_tie_off_host
     always_comb axis_host_send[I].tie_off_m();
     always_comb axis_host_recv[I].tie_off_s();
 end
-for (genvar I = 0; I < N_CARD_AXI; I++) begin
+for (genvar I = 0; I < N_CARD_AXI; I++) begin : gen_tie_off_card
     always_comb axis_card_send[I].tie_off_m();
     always_comb axis_card_recv[I].tie_off_s();
 end
@@ -73,7 +73,7 @@ NDataLookahead #(
 // -- Output wiring --------------------------------------------------------------------------------
 
 // Stream 0 contains the original beats
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_original_elements
     assign out_stream_0.data[I] = lookahead_out.data[I];
     assign out_stream_0.keep[I] = lookahead_out.keep[I];
 end
@@ -82,15 +82,15 @@ assign out_stream_0.valid = lookahead_out.valid && out_stream_1.ready;
 
 // Stream 1 contains the lookahead bytes + one additional byte denoting the keeps of the lookahead
 // bytes
-for (genvar I = 0; I < PREVIEW_SIZE; I++) begin
+for (genvar I = 0; I < PREVIEW_SIZE; I++) begin : gen_lookahead_elements
     assign out_stream_1.data[I] =
         lookahead_out.keep[NUM_ELEMENTS + I] ? lookahead_out.data[NUM_ELEMENTS + I] : 0;
 end
 assign out_stream_1.data[PREVIEW_SIZE] = data8_t'(lookahead_out.keep[NUM_ELEMENTS +: PREVIEW_SIZE]);
-for (genvar I = PREVIEW_SIZE + 1; I < NUM_ELEMENTS; I++) begin
+for (genvar I = PREVIEW_SIZE + 1; I < NUM_ELEMENTS; I++) begin : gen_padding_elements
     assign out_stream_1.data[I] = 0;
 end
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_lookahead_keep
     assign out_stream_1.keep[I] = I <= PREVIEW_SIZE;
 end
 assign out_stream_1.last  = lookahead_out.last;

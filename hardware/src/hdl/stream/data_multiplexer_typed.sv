@@ -32,7 +32,7 @@ logic[NUM_STREAMS - 1:0]   in_valid;
 
 assign select.ready = out.valid && out.last && out.ready;
 
-for (genvar I = 0; I < NUM_STREAMS; I++) begin
+for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
     assign selected[I] = I == select.data;
 
     assign in[I].ready = select.valid && selected[I] && out.ready;

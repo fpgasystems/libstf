@@ -3,7 +3,7 @@
 `include "libstf_macros.svh"
 
 module Duplicate #(
-    parameter type data_t, 
+    parameter type data_t,
     parameter int NUM_ELEMENTS,
     parameter int MAX_IN_TRANSIT,
     parameter int EN_SKID_BUFFER = 1
@@ -76,13 +76,19 @@ always_comb begin
     end
 end
 
-// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not 
+// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
 // get in trouble with with stable assertion of the interface.
 assign n_data.ready = 1'b1;
 
-generate if (EN_SKID_BUFFER) begin
-    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(data), .out(out));
-end else begin
+generate if (EN_SKID_BUFFER) begin : gen_skid_buffer
+    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (
+        .clk(clk),
+        .rst_n(rst_n),
+
+        .in(data),
+        .out(out)
+    );
+end else begin : gen_no_skid_buffer
     `DATA_ASSIGN(data, out)
 end endgenerate
 

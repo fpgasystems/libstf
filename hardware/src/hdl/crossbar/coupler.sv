@@ -4,7 +4,7 @@
 
 /**
  * The Coupler combines individual, decoupled data streams into one ndata stream.
- * It waits until the valid signals of all incoming streams are high before it passes on the next 
+ * It waits until the valid signals of all incoming streams are high before it passes on the next
  * data beat.
  */
 module Coupler #(
@@ -60,13 +60,14 @@ SkidBuffer #(mask_t) inst_mask_skid_buffer (
 );
 
 assign curr_mask.ready = data_beat_complete && internal.ready;
-assign data_beat_complete = curr_mask.valid && (in_valid & curr_mask.data.keep) == curr_mask.data.keep;
+assign data_beat_complete = curr_mask.valid &&
+                            (in_valid & curr_mask.data.keep) == curr_mask.data.keep;
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_in_valid
     assign in_valid[I] = in[I].valid;
 end
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_lanes
     assign in[I].ready = curr_mask.data.keep[I] && curr_mask.ready;
 
     assign internal.data[I] = in[I].data;
@@ -76,9 +77,15 @@ end
 assign internal.last  = curr_mask.data.last;
 assign internal.valid = data_beat_complete;
 
-generate if (EN_SKID_BUFFER) begin
-    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (.clk(clk), .rst_n(rst_n), .in(internal), .out(out));
-end else begin
+generate if (EN_SKID_BUFFER) begin : gen_skid_buffer
+    NDataSkidBuffer #(data_t, NUM_ELEMENTS) inst_skid_buffer (
+        .clk(clk),
+        .rst_n(rst_n),
+
+        .in(internal),
+        .out(out)
+    );
+end else begin : gen_no_skid_buffer
     `DATA_ASSIGN(internal, out)
 end endgenerate
 

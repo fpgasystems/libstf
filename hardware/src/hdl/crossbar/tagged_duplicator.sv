@@ -3,9 +3,9 @@
 `include "libstf_macros.svh"
 
 /**
- * The Duplicator creates NUM_STREAMS output streams based on one input stream. The ready signal of 
- * the input is driven when all output ready signals are high. The valid signals of the output 
- * streams are masked with their previous ready signal. The mask is reset when every output stream 
+ * The Duplicator creates NUM_STREAMS output streams based on one input stream. The ready signal of
+ * the input is driven when all output ready signals are high. The valid signals of the output
+ * streams are masked with their previous ready signal. The mask is reset when every output stream
  * has acknowledged the element with a ready.
  */
 module TaggedDuplicator #(
@@ -35,7 +35,7 @@ assign in.ready = &(seen | internal_ready);
 
 always_ff @(posedge clk) begin
     if(!reset_synced) begin
-        seen <= '0;     
+        seen <= '0;
     end else begin
         seen <= n_seen;
     end
@@ -51,7 +51,7 @@ always_comb begin
     end
 end
 
-for (genvar I = 0; I < NUM_STREAMS; I++) begin
+for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
     assign internal_ready[I] = internal[I][0].ready;
 
     assign internal[I][0].data  = in.data;
@@ -60,8 +60,14 @@ for (genvar I = 0; I < NUM_STREAMS; I++) begin
     assign internal[I][0].last  = in.last;
     assign internal[I][0].valid = in.valid && !seen[I];
 
-    for (genvar J = 0; J < NUM_SKID_STAGES; J++) begin
-        TaggedSkidBuffer #(data_t, tag_t) inst_skid_buffer (.clk(clk), .rst_n(reset_synced), .in(internal[I][J]), .out(internal[I][J + 1]));
+    for (genvar J = 0; J < NUM_SKID_STAGES; J++) begin : gen_stages
+        TaggedSkidBuffer #(data_t, tag_t) inst_skid_buffer (
+            .clk(clk),
+            .rst_n(reset_synced),
+
+            .in(internal[I][J]),
+            .out(internal[I][J + 1])
+        );
     end
 
     assign internal[I][NUM_SKID_STAGES].ready = out[I].ready;

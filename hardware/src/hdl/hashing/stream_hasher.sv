@@ -26,7 +26,7 @@ localparam int INTERNAL_HASH_WIDTH = HASH_WIDTH > 32 ? 64 : 32;
 
 logic[INTERNAL_HASH_WIDTH - 1:0] internal_hashes[NUM_TUPLES];
 
-for (genvar I = 0; I < NUM_TUPLES; I++) begin
+for (genvar I = 0; I < NUM_TUPLES; I++) begin : gen_hashers
     MurMurHasher #(
         .KEY_WIDTH(KEY_WIDTH),
         .HASH_WIDTH(INTERNAL_HASH_WIDTH)
@@ -43,7 +43,8 @@ for (genvar I = 0; I < NUM_TUPLES; I++) begin
     assign out.tag[I] = internal_hashes[I][0+:HASH_WIDTH];
 end
 
-// Shift registers with depth matching that of the hasher pipeline for all other values that we need for the output
+// Shift registers with depth matching that of the hasher pipeline for all other values that we need
+// for the output
 ReadyShiftRegister #($bits(tuple_t) * NUM_TUPLES, NUM_PIPE_STAGES) inst_data_sr (
     .clk(clk),
     .rst_n(rst_n),

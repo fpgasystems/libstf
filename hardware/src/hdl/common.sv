@@ -13,8 +13,8 @@ import lynxTypes::LEN_BITS;
 `ifdef TRANSFER_SIZE_BYTES_OVERWRITE
     localparam int TRANSFER_SIZE_BYTES = `TRANSFER_SIZE_BYTES_OVERWRITE;
 `else
-    // This value is chosen as it is the smallest transfer size to get peak PCIe throughput in the 
-    // perf_fpga example. See: 
+    // This value is chosen as it is the smallest transfer size to get peak PCIe throughput in the
+    // perf_fpga example. See:
     //      https://github.com/fpgasystems/Coyote/tree/master/examples/07_perf_fpga
     localparam int TRANSFER_SIZE_BYTES = 65536;
 `endif
@@ -63,7 +63,8 @@ typedef struct packed {
 } stream_profile_t;
 
 // MemConfig
-typedef logic[VADDR_BITS - 1:0]       vaddress_t; // Cannot be vaddr_t because of conflict with Coyote sim
+// Cannot be vaddr_t because of conflict with Coyote sim
+typedef logic[VADDR_BITS - 1:0]       vaddress_t;
 typedef logic[BUFFER_SIZE_BITS - 1:0] buffer_size_t;
 
 typedef struct packed {
@@ -110,7 +111,9 @@ endfunction
 localparam int SUM_MAX_VALUES = 64;
 
 // Sums a packed array of up to SUM_MAX_VALUES values. Constant functions in Vivado and xsim can't
-// take unpacked arrays of arbitrary size, but a shorter packed array zero-extends into the argument.
+// take unpacked arrays of arbitrary size, but a shorter packed array zero-extends into the
+// argument.
+// verilog_lint: waive packed-dimensions-range-ordering
 function automatic int SUM(logic [0:SUM_MAX_VALUES - 1][31:0] values);
     int sum = 0;
     for (int i = 0; i < SUM_MAX_VALUES; i++) begin

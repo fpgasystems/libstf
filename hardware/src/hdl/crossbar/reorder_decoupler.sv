@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps
 
 /**
- * The ReorderDecoupler splits up data beats of an ndata stream into individual data streams per 
- * element and assigns them a serial number in the tag field for later reordering with the Reorder 
+ * The ReorderDecoupler splits up data beats of an ndata stream into individual data streams per
+ * element and assigns them a serial number in the tag field for later reordering with the Reorder
  * module.
  */
 module ReorderDecoupler #(
-    parameter type data_t, 
+    parameter type data_t,
     parameter type serial_t, // the tag type of the outputs
     parameter int NUM_ELEMENTS
 ) (
     input logic clk,
     input logic rst_n,
-    
+
     ndata_i.s  in,               // #(data_t, NUM_ELEMENTS)
     tagged_i.m out[NUM_ELEMENTS] // #(data_t, serial_t)
 );
@@ -39,7 +39,7 @@ ReorderEnumerator #(
     .out(enumerator_out)
 );
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_decoupler_in
     assign decoupler_in.data[I].data   = enumerator_out.data[I];
     assign decoupler_in.data[I].serial = enumerator_out.tag[I];
 end
@@ -60,7 +60,7 @@ Decoupler #(
     .out(decoupler_out)
 );
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_out
     assign out[I].data  = decoupler_out[I].data.data;
     assign out[I].tag   = decoupler_out[I].data.serial;
     assign out[I].keep  = decoupler_out[I].keep;

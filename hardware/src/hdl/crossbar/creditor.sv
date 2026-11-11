@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 /**
- * The Creditor lets through new data beats as long as there is credit left. Credits have to be 
+ * The Creditor lets through new data beats as long as there is credit left. Credits have to be
  * returned after the credited section of code.
  */
 module Creditor #(
@@ -9,9 +9,9 @@ module Creditor #(
 ) (
     input logic clk,
     input logic rst_n,
-    
+
     ndata_i.s in,  // #(data_t, NUM_ELEMENTS)
-    ndata_i.m out, // #(data_t, NUM_ELEMENTS) 
+    ndata_i.m out, // #(data_t, NUM_ELEMENTS)
 
     input logic credit_return
 );

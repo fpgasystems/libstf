@@ -5,14 +5,17 @@
 /**
  * The input has to be matched already with a 1 bit tag per element.
  *
- * At the end of the stream, it waits to see all last signals before any elements of a new stream 
+ * At the end of the stream, it waits to see all last signals before any elements of a new stream
  * are accepted.
  */
 module TaggedMultiplexer #(
     parameter type data_t,
     parameter int NUM_INPUTS,
-    parameter int LAST_HANDLING = 1, // 0: Wait until we see an element with a last signal for every input stream and produce a dummy last element; 1: Directly forward the incoming elements as they are
-    parameter int FILTER_KEEP = 1    // 0: Forward all elements even if the keep signal is 0, 1: Do not forward elements where keep is 0
+    parameter int LAST_HANDLING = 1, // 0: Wait until we see an element with a last signal for
+                                     //    every input stream and produce a dummy last element; 1:
+                                     //    Directly forward the incoming elements as they are
+    parameter int FILTER_KEEP = 1    // 0: Forward all elements even if the keep signal is 0, 1: Do
+                                     //    not forward elements where keep is 0
 ) (
     input logic clk,
     input logic rst_n,
@@ -23,7 +26,7 @@ module TaggedMultiplexer #(
 
 `RESET_RESYNC // Reset pipelining
 
-// Note: WAIT_ALL breaks the stream semantics because it may produce dummy last elements in the output
+// Note: WAIT_ALL breaks the stream semantics because it may output dummy last elements
 localparam int WAIT_ALL = 0;
 localparam int FORWARD = 1;
 
@@ -38,8 +41,10 @@ logic[NUM_INPUTS - 1:0] last_seen, n_last_seen;
 
 data_i #(data_t) mux_out(clk, rst_n), n_mux_out(clk, rst_n);
 
-for(genvar I = 0; I < NUM_INPUTS; I++) begin
-    assign in[I].ready = mux_in_ready[I]; // We need to reassign these values to local arrays because SystemVerilog thinks the iterator in a process is not constant for arrays of interfaces
+for(genvar I = 0; I < NUM_INPUTS; I++) begin : gen_inputs
+    // We need to reassign these values to local arrays because SystemVerilog thinks the iterator in
+    // a process is not constant for arrays of interfaces
+    assign in[I].ready = mux_in_ready[I];
 
     assign mux_in_data[I]  = in[I].data;
     assign mux_in_keep[I]  = in[I].keep;
@@ -71,7 +76,7 @@ assign masked_tags  = high_mask & tags;
 assign prefix_sum_high[0]  = masked_tags[0];
 assign is_selected_high[0] = masked_tags[0];
 
-for (genvar I = 1; I < NUM_INPUTS; I++) begin
+for (genvar I = 1; I < NUM_INPUTS; I++) begin : gen_select_high
     assign prefix_sum_high[I]  = masked_tags[I] ? 1'b1 : prefix_sum_high[I - 1];
     assign is_selected_high[I] = masked_tags[I] && !prefix_sum_high[I - 1];
 end
@@ -82,7 +87,7 @@ logic[NUM_INPUTS - 1:0] prefix_sum_low, is_selected_low;
 assign prefix_sum_low[0]  = tags[0];
 assign is_selected_low[0] = tags[0];
 
-for (genvar I = 1; I < NUM_INPUTS; I++) begin
+for (genvar I = 1; I < NUM_INPUTS; I++) begin : gen_select_low
     assign prefix_sum_low[I]  = tags[I] ? 1'b1 : prefix_sum_low[I - 1];
     assign is_selected_low[I] = tags[I] && !prefix_sum_low[I - 1];
 end
@@ -94,7 +99,7 @@ always_comb begin
     selected.data  = '0;
     selected.keep  = 1'b0;
     selected.last  = 1'b0;
-    selected.valid = |tags; 
+    selected.valid = |tags;
 
     for (int i = 0; i < NUM_INPUTS; i++) begin
         selected.data |= is_selected[i] ? mux_in_data[i]  : '0;
@@ -123,7 +128,7 @@ always_ff @(posedge clk) begin
 end
 
 always_comb begin
-    // If we wait for all last signals, the inputs where we have seen the last belong to the next 
+    // If we wait for all last signals, the inputs where we have seen the last belong to the next
     // stream and cannot yet be consumed
     if (LAST_HANDLING == WAIT_ALL) begin
         mux_in_ready = ~last_seen;
@@ -136,25 +141,27 @@ always_comb begin
     n_mux_out.data  = mux_out.data;
     n_mux_out.keep  = 1'b0;
     n_mux_out.last  = 1'b0;
-    n_mux_out.valid = 1'b0; 
+    n_mux_out.valid = 1'b0;
 
     if (mux_out.ready) begin
         n_mux_out.data  = selected.data;
         n_mux_out.keep  = selected.keep;
         n_mux_out.last  = selected.last;
-        n_mux_out.valid = selected.valid; 
+        n_mux_out.valid = selected.valid;
 
         for (int i = 0; i < NUM_INPUTS; i++) begin
             if (tags[i] && !is_selected[i]) begin
                 mux_in_ready[i] = 1'b0; // Stall element
             end
-            if (LAST_HANDLING == WAIT_ALL && mux_in_last[i] && (is_selected[i] || (mux_in_valid[i] && !tags[i]))) begin
+            if (LAST_HANDLING == WAIT_ALL && mux_in_last[i] &&
+                (is_selected[i] || (mux_in_valid[i] && !tags[i]))) begin
                 n_last_seen[i] = 1'b1; // Mark last seen
             end
         end
 
         // We have seen all last signals or the last element is processed in this clock cycle
-        if (LAST_HANDLING == WAIT_ALL && (&last_seen || ($onehot0(tags) && &(last_seen | (mux_in_valid & mux_in_last))))) begin 
+        if (LAST_HANDLING == WAIT_ALL &&
+            (&last_seen || ($onehot0(tags) && &(last_seen | (mux_in_valid & mux_in_last))))) begin
             n_last_seen     = '0;
             n_mux_out.last  = 1'b1;
             n_mux_out.valid = 1'b1;
@@ -173,14 +180,20 @@ always_comb begin
         n_mux_out.keep  = mux_out.keep;
         n_mux_out.last  = mux_out.last;
         n_mux_out.valid = mux_out.valid;
-    end 
+    end
 end
 
-// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not 
+// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
 // get in trouble with with stable assertion of the interface.
 assign selected.ready  = 1'b1;
 assign n_mux_out.ready = 1'b1;
 
-DataSkidBuffer #(data_t) inst_output_buffer (.clk(clk), .rst_n(reset_synced), .in(mux_out), .out(out));
+DataSkidBuffer #(data_t) inst_output_buffer (
+    .clk(clk),
+    .rst_n(reset_synced),
+
+    .in(mux_out),
+    .out(out)
+);
 
 endmodule

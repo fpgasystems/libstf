@@ -3,7 +3,7 @@
 `include "libstf_macros.svh"
 
 /**
- * The ReorderEnumerator assigns each element in an ndata input stream a serial number in the tag 
+ * The ReorderEnumerator assigns each element in an ndata input stream a serial number in the tag
  * field of the ntagged output stream for later reordering with the Reorder module.
  */
 module ReorderEnumerator #(
@@ -13,7 +13,7 @@ module ReorderEnumerator #(
 ) (
     input logic clk,
     input logic rst_n,
-    
+
     ndata_i.s   in, // #(data_t, NUM_ELEMENTS)
     ntagged_i.m out // #(data_t, serial_t, NUM_ELEMENTS)
 );
@@ -51,7 +51,7 @@ always_ff @(posedge clk) begin
     end
 end
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_tags
     assign out.tag[I] = (serial_count[I] << DATA_BITS) + I;
 end
 

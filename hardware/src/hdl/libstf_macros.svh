@@ -27,19 +27,19 @@ else $fatal(1, "Signal %s needs to be stable while valid && !ready!", `STF_STRIN
 `define STF_ASSERT_SIGNAL_STABLE(sig) `STF_ASSERT_STABLE(sig, valid, ready)
 
 `define DATA_ASSIGN(s, m)         \
-	assign m.data      = s.data;  \
-	assign m.keep      = s.keep;  \
-	assign m.last      = s.last;  \
-	assign m.valid     = s.valid; \
-	assign s.ready     = m.ready;
+    assign m.data      = s.data;  \
+    assign m.keep      = s.keep;  \
+    assign m.last      = s.last;  \
+    assign m.valid     = s.valid; \
+    assign s.ready     = m.ready;
 
 `define TAGGED_ASSIGN(s, m)       \
-	assign m.data      = s.data;  \
+    assign m.data      = s.data;  \
     assign m.tag       = s.tag;   \
-	assign m.keep      = s.keep;  \
-	assign m.last      = s.last;  \
-	assign m.valid     = s.valid; \
-	assign s.ready     = m.ready;
+    assign m.keep      = s.keep;  \
+    assign m.last      = s.last;  \
+    assign m.valid     = s.valid; \
+    assign s.ready     = m.ready;
 
 `define READY_VALID_ASSIGN(s, m)  \
     assign m.data      = s.data;  \

@@ -3,10 +3,11 @@
 `include "libstf_macros.svh"
 
 /**
- * Shared state machine for the *RewriteLast modules. It tracks a running count of values and, on the
- * beat where that count reaches the number configured through `num_elements`, asserts `force_last`.
- * After that beat it waits for the next `num_elements` configuration. Null beats (keep == 0) are
- * dropped: they are accepted from the input but never forwarded and do not affect the count.
+ * Shared state machine for the *RewriteLast modules. It tracks a running count of values and, on
+ * the beat where that count reaches the number configured through `num_elements`, asserts
+ * `force_last`. After that beat it waits for the next `num_elements` configuration. Null beats
+ * (keep == 0) are dropped: they are accepted from the input but never forwarded and do not affect
+ * the count.
  *
  * This module is interface-agnostic: the wrappers (TypedRewriteLast, DataRewriteLast) compute the
  * number of values carried by the current beat (`in_num_elements`) and wire up their respective
@@ -18,8 +19,8 @@ module RewriteLastCore
     parameter type size_t = data32_t,
     parameter int ELEMENT_BITS = 8, // wide enough to hold in_num_elements
     // When set, the forced-last beat is allowed to carry more values than remain; the wrapper masks
-    // that beat's keep down to `remaining_elements` to strip the surplus. Used for reads whose length
-    // was rounded up to a beat multiple. Default 0 keeps the strict no-overshoot invariant.
+    // that beat's keep down to `remaining_elements` to strip the surplus. Used for reads whose
+    // length was rounded up to a beat multiple. Default 0 keeps the strict no-overshoot invariant.
     parameter int ALLOW_OVERSHOOT = 0
 ) (
     input logic clk,
@@ -35,7 +36,8 @@ module RewriteLastCore
 
     // Controls consumed by the wrapper.
     output logic                     force_last,
-    output logic[ELEMENT_BITS - 1:0] remaining_elements, // values still expected at start of this beat
+    output logic[ELEMENT_BITS - 1:0] remaining_elements, // values still expected at start of
+                                                         // this beat
     output logic                     out_valid,
     output logic                     in_ready
 );
@@ -63,7 +65,8 @@ assign remaining_elements = remaining[ELEMENT_BITS-1:0];
 assert property (@(posedge clk) disable iff (!rst_n)
     !(state == REWRITING && in_valid && !in_is_null_beat) || in_num_elements <= remaining
     || (ALLOW_OVERSHOOT && force_last))
-else $fatal(1, "RewriteLastCore beat carries %0d values but only %0d more expected!", in_num_elements, remaining);
+else $fatal(1, "RewriteLastCore beat carries %0d values but only %0d more expected!",
+    in_num_elements, remaining);
 `endif
 
 always_ff @(posedge clk) begin

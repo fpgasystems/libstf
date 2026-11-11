@@ -15,7 +15,7 @@ module ConfigReadRegisterFile
     input logic rst_n,
 
     read_config_i.s in,
-    
+
     logic[AXIL_DATA_BITS - 1:0] values[NUM_REGS]
 );
 

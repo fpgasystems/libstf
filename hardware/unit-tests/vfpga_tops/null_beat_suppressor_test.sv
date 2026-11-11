@@ -12,11 +12,11 @@ always_comb sq_wr.tie_off_m();
 always_comb cq_rd.tie_off_s();
 always_comb cq_wr.tie_off_s();
 
-for (genvar I = 1; I < N_STRM_AXI; I++) begin
+for (genvar I = 1; I < N_STRM_AXI; I++) begin : gen_tie_off_host
     always_comb axis_host_recv[I].tie_off_s();
     always_comb axis_host_send[I].tie_off_m();
 end
-for (genvar I = 0; I < N_CARD_AXI; I++) begin
+for (genvar I = 0; I < N_CARD_AXI; I++) begin : gen_tie_off_card
     always_comb axis_card_send[I].tie_off_m();
     always_comb axis_card_recv[I].tie_off_s();
 end
@@ -40,7 +40,7 @@ logic[NUM_LANES - 1:0] lane_empty;
 
 // To create null beats from the host stream, we interpret the input as a stream of 64-bit values
 // and clear the keep of every beat in which all kept values are zero.
-for (genvar I = 0; I < NUM_LANES; I++) begin
+for (genvar I = 0; I < NUM_LANES; I++) begin : gen_lanes
     assign lane_empty[I] = !axi_host_recv.tkeep[I * 8] || axi_host_recv.tdata[I * 64+:64] == '0;
 end
 
@@ -91,12 +91,13 @@ assign axis_host_send[0].tdata  = throttled_out.tdata;
 assign axis_host_send[0].tkeep  = throttled_out.tkeep;
 assign axis_host_send[0].tlast  = throttled_out.tlast;
 assign axis_host_send[0].tvalid = throttled_out.tvalid && throttled_out.tkeep != '0;
-assign throttled_out.tready     = axis_host_send[0].tready || (throttled_out.tvalid && throttled_out.tkeep == '0);
+assign throttled_out.tready     = axis_host_send[0].tready
+                                  || (throttled_out.tvalid && throttled_out.tkeep == '0);
 
 // -- Stream boundary checks -----------------------------------------------------------------------
 `ifndef SYNTHESIS
 // The host only checks the number of bytes it receives, not where the last signals are. Therefore,
-// we check here that every input stream, including empty ones, results in exactly one output stream.
+// we check here that every input stream, including empty ones, results in exactly one stream.
 int unsigned expected_stream_bytes[$];
 int unsigned in_stream_bytes, out_stream_bytes;
 
@@ -117,10 +118,14 @@ always_ff @(posedge clk) begin
         if (axi_host_send.tvalid && axi_host_send.tready) begin
             if (axi_host_send.tlast) begin
                 if (expected_stream_bytes.size() == 0) begin
-                    $fatal(1, "NullBeatSuppressor emitted a last signal without a corresponding input stream!");
-                end else if (expected_stream_bytes[0] != out_stream_bytes + $countones(axi_host_send.tkeep)) begin
-                    $fatal(1, "NullBeatSuppressor output stream has %0d bytes but the input stream had %0d bytes!",
-                        out_stream_bytes + $countones(axi_host_send.tkeep), expected_stream_bytes[0]);
+                    $fatal(1,
+                        "NullBeatSuppressor emitted a last signal without an input stream!");
+                end else if (expected_stream_bytes[0]
+                             != out_stream_bytes + $countones(axi_host_send.tkeep)) begin
+                    $fatal(1,
+                        "NullBeatSuppressor output stream has %0d bytes but input had %0d bytes!",
+                        out_stream_bytes + $countones(axi_host_send.tkeep),
+                        expected_stream_bytes[0]);
                 end
                 void'(expected_stream_bytes.pop_front());
                 out_stream_bytes <= 0;

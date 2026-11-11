@@ -2,7 +2,7 @@
 
 `include "libstf_macros.svh"
 
-// This module performs a round-robin based arbitration for metaIntf interfaces. The STYPE for the
+// This module performs a round-robin based arbitration for metaIntf interfaces. The data_t for the
 // data field for each interface can be supplied as a parameter.
 //
 // From the given N_INTERFACES input interfaces, the module selects one interface to write to the
@@ -10,12 +10,12 @@
 // other interface with valid data is selected. This ensures the output interface can be written to
 // in every cycle and no starvation is encountered. Moreover, fair resource sharing is ensured due
 // to the round-robin implementation. Each interface has to wait at most N_INTERFACES - 1 cycles
-// between outputs. 
+// between outputs.
 module MetaIntfArbiter
     import lynxTypes::*;
 #(
     parameter int N_INTERFACES = N_STRM_AXI,
-    parameter type STYPE = logic[63:0],
+    parameter type data_t = logic[63:0],
     localparam int SELECT_BITS = N_INTERFACES > 1 ? $clog2(N_INTERFACES) : 1
 ) (
     input logic clk,
@@ -45,25 +45,25 @@ logic can_load;
 assign can_load = ~intf_out.valid | intf_out.ready;
 
 // We keep a buffer of input for every stream
-STYPE [N_INTERFACES - 1 : 0] data_buf;
+data_t [N_INTERFACES - 1 : 0] data_buf;
 logic [N_INTERFACES - 1 : 0] buf_valid;
 
 // ----------------------------------------------------------------------------
 // Assign ready and buffers for the input
 // ----------------------------------------------------------------------------
 logic [N_INTERFACES - 1 : 0] in_valid;
-STYPE [N_INTERFACES - 1 : 0] in_data;
+data_t [N_INTERFACES - 1 : 0] in_data;
 logic [N_INTERFACES - 1 : 0] in_ready;
 
 generate
-    for(genvar stream = 0; stream < N_INTERFACES; stream++) begin
+    for(genvar stream = 0; stream < N_INTERFACES; stream++) begin : gen_interfaces
         assign in_valid[stream]      = intf_in[stream].valid;
         assign in_data[stream]       = intf_in[stream].data;
         assign intf_in[stream].ready = in_ready[stream];
     end
 endgenerate
 
-STYPE [N_INTERFACES - 1 : 0] n_data_buf;
+data_t [N_INTERFACES - 1 : 0] n_data_buf;
 logic [N_INTERFACES - 1 : 0] n_buf_valid;
 
 always_ff @(posedge clk) begin
@@ -122,7 +122,7 @@ end
 // Assign the output and update round-robin stream selection
 // ----------------------------------------------------------------------------
 logic                     n_intf_out_valid;
-STYPE                     n_intf_out_data;
+data_t                     n_intf_out_data;
 logic[SELECT_BITS - 1:0]  n_intf_out_select;
 logic[N_BITS - 1 : 0] n_input_stream_rr_next;
 

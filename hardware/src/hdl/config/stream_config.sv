@@ -8,7 +8,8 @@ module StreamConfig
     import libstf::*;
 #(
     parameter int NUM_STREAMS,
-    parameter int MAX_OUTSTANDING_STREAMS = MAXIMUM_NUM_ENQUEUED_STREAMS // Configs that can be enqueued per stream
+    // Configs that can be enqueued per stream
+    parameter int MAX_OUTSTANDING_STREAMS = MAXIMUM_NUM_ENQUEUED_STREAMS
 ) (
     input logic clk,
     input logic rst_n,
@@ -38,14 +39,27 @@ ConfigReadRegisterFile #(
 );
 
 // -- Write ----------------------------------------------------------------------------------------
-for (genvar I = 0; I < NUM_STREAMS; I++) begin
+for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
     ready_valid_i #(stream_conf_t) conf_reg(clk, reset_synced);
     ready_valid_i #(select_t)      select(clk, reset_synced);
     ready_valid_i #(type_t)        data_type(clk, reset_synced);
 
-    ConfigWriteFIFO #(I, MAX_OUTSTANDING_STREAMS, stream_conf_t) inst_write_fifo (clk, reset_synced, write_config, conf_reg);
+    ConfigWriteFIFO #(I, MAX_OUTSTANDING_STREAMS, stream_conf_t) inst_write_fifo (
+        .clk(clk),
+        .rst_n(reset_synced),
 
-    ReadyValidSplitter #(select_t, type_t) inst_conf_split (clk, reset_synced, conf_reg, select, data_type);
+        .write_config(write_config),
+        .data(conf_reg)
+    );
+
+    ReadyValidSplitter #(select_t, type_t) inst_conf_split (
+        .clk(clk),
+        .rst_n(reset_synced),
+
+        .in(conf_reg),
+        .left(select),
+        .right(data_type)
+    );
 
     `CONFIG_INTF_TO_SIGNALS(select,    out[I].select)
     `CONFIG_INTF_TO_SIGNALS(data_type, out[I].data_type)

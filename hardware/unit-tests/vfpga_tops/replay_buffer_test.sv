@@ -4,8 +4,8 @@ import libstf::*;
 `include "axi_macros.svh"
 
 /**
- * vFPGA top of the replay buffer unit tests and example. The streams from host stream 0 go through a
- * ReplayBuffer in card memory and are sent back on host stream 0 as often as configured.
+ * vFPGA top of the replay buffer unit tests and example. The streams from host stream 0 go through
+ * a ReplayBuffer in card memory and are sent back on host stream 0 as often as configured.
  *
  * Configurations:
  *   0: ReplayBufferConfig for the ring buffer and the number of reads per stream
@@ -17,18 +17,19 @@ import libstf::*;
  *
  * The unit tests change the design with the following defines:
  *   REPLAY_BUFFER_TRANSFER_SIZE       Transfer size of the buffer in bytes
- *   REPLAY_BUFFER_TEST_EMPTY_STREAMS  Turns single-beat input streams of only zeros into empty streams
+ *   REPLAY_BUFFER_TEST_EMPTY_STREAMS  Turns single-beat input streams of only zeros into empty
+ *                                     streams
  *   REPLAY_BUFFER_THROTTLE            Applies back pressure to the buffer output
  */
 
 // -- Tie-off unused interfaces and signals --------------------------------------------------------
 always_comb notify.tie_off_m();
 
-for (genvar I = 1; I < N_STRM_AXI; I++) begin
+for (genvar I = 1; I < N_STRM_AXI; I++) begin : gen_tie_off_host
     always_comb axis_host_send[I].tie_off_m();
     always_comb axis_host_recv[I].tie_off_s();
 end
-for (genvar I = 1; I < N_CARD_AXI; I++) begin
+for (genvar I = 1; I < N_CARD_AXI; I++) begin : gen_tie_off_card
     always_comb axis_card_send[I].tie_off_m();
     always_comb axis_card_recv[I].tie_off_s();
 end
@@ -111,7 +112,7 @@ AXI4S buffer_in(.aclk(clk), .aresetn(rst_n));
 // thus becomes empty. Longer zero streams are not supported as the StreamWriter requires full
 // non-last beats.
 logic[AXI_DATA_BITS / 8 - 1:0] byte_empty;
-for (genvar I = 0; I < AXI_DATA_BITS / 8; I++) begin
+for (genvar I = 0; I < AXI_DATA_BITS / 8; I++) begin : gen_bytes
     assign byte_empty[I] = !axi_host_recv_0.tkeep[I] || axi_host_recv_0.tdata[I * 8+:8] == '0;
 end
 
@@ -201,7 +202,8 @@ assign axi_host_send_0.tdata  = throttled_out.tdata;
 assign axi_host_send_0.tkeep  = throttled_out.tkeep;
 assign axi_host_send_0.tlast  = throttled_out.tlast;
 assign axi_host_send_0.tvalid = throttled_out.tvalid && throttled_out.tkeep != '0;
-assign throttled_out.tready   = axi_host_send_0.tready || (throttled_out.tvalid && throttled_out.tkeep == '0);
+assign throttled_out.tready   = axi_host_send_0.tready
+                                || (throttled_out.tvalid && throttled_out.tkeep == '0);
 
 `AXIS_ASSIGN(axi_host_send_0, axis_host_send[0]) // AXI4S to AXI4SR
 `else
@@ -221,7 +223,7 @@ assign profiled_valid[1] = buffer_out.tvalid;
 assign profiled_ready[1] = buffer_out.tready;
 assign profiled_last[1]  = buffer_out.tlast;
 
-for (genvar I = 0; I < NUM_PROFILES; I++) begin
+for (genvar I = 0; I < NUM_PROFILES; I++) begin : gen_profiles
     data64_t stream_counter;
     logic    is_stop;
 
@@ -288,9 +290,12 @@ always_ff @(posedge clk) begin
         if (buffer_out.tvalid && buffer_out.tready) begin
             if (buffer_out.tlast) begin
                 if (expected_stream_bytes.size() == 0 || expected_num_reads.size() == 0) begin
-                    $fatal(1, "ReplayBuffer emitted a last signal without a corresponding input stream!");
-                end else if (expected_stream_bytes[0] != out_stream_bytes + $countones(buffer_out.tkeep)) begin
-                    $fatal(1, "ReplayBuffer output stream has %0d bytes but the input stream had %0d bytes!",
+                    $fatal(1,
+                        "ReplayBuffer emitted a last signal without a corresponding input stream!");
+                end else if (expected_stream_bytes[0]
+                             != out_stream_bytes + $countones(buffer_out.tkeep)) begin
+                    $fatal(1,
+                        "ReplayBuffer output stream has %0d bytes but input had %0d bytes!",
                         out_stream_bytes + $countones(buffer_out.tkeep), expected_stream_bytes[0]);
                 end
 

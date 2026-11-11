@@ -28,13 +28,13 @@ logic[FACTOR * WIDTH - 1:0] s_data;
 logic s_valid, s_ready;
 
 MehdiFIFO #(
-	.DEPTH(DEPTH),
-	.WIDTH(FACTOR * WIDTH)
+    .DEPTH(DEPTH),
+    .WIDTH(FACTOR * WIDTH)
 ) inst_fifo (
-	.i_clk(i_clk),
-	.i_rst_n(i_rst_n),
+    .i_clk(i_clk),
+    .i_rst_n(i_rst_n),
 
-	.i_data(i_data),
+    .i_data(i_data),
     .i_valid(i_valid),
     .i_ready(o_ready),
 
@@ -46,27 +46,27 @@ MehdiFIFO #(
 );
 
 always_ff @(posedge i_clk) begin
-	if (i_rst_n == 1'b0) begin
-	    s_switch <= '0;
-	end else begin
-		s_switch <= s_next_switch;
-	end
+    if (i_rst_n == 1'b0) begin
+        s_switch <= '0;
+    end else begin
+        s_switch <= s_next_switch;
+    end
 end
 
 always_comb begin
     s_next_switch = s_switch;
 
-	if (i_ready == 1'b1 && s_valid == 1'b1) begin
-		s_next_switch = s_switch + 1'b1;
-	end
+    if (i_ready == 1'b1 && s_valid == 1'b1) begin
+        s_next_switch = s_switch + 1'b1;
+    end
 end
 
 always_comb begin
-	if (i_ready == 1'b1 && s_switch == '1) begin
-		s_ready = 1'b1;
-	end else begin
-		s_ready = 1'b0;
-	end
+    if (i_ready == 1'b1 && s_switch == '1) begin
+        s_ready = 1'b1;
+    end else begin
+        s_ready = 1'b0;
+    end
 end
 
 assign o_data  = s_data[s_switch * WIDTH +: WIDTH];

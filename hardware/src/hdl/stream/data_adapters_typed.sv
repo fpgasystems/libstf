@@ -3,7 +3,7 @@
 `include "libstf_macros.svh"
 
 /**
- * Converts a NUM_ELEMENTS ndata stream containing 32bit or 64bit elements to a 64 * NUM_ELEMENTS 
+ * Converts a NUM_ELEMENTS ndata stream containing 32bit or 64bit elements to a 64 * NUM_ELEMENTS
  * AXI stream. Use this in cases where you want to have a fixed number of elements in the stream,
  * but the width of the elements in the AXI stream may differ.
  */
@@ -47,7 +47,8 @@ logic  valid, n_valid;
 
 // -- Assertions -----------------------------------------------------------------------------------
 `ifndef SYNTHESIS
-assert property (@(posedge clk) disable iff (!rst_n) !out_type.valid || GET_TYPE_WIDTH(out_type.data) == 32 || GET_TYPE_WIDTH(out_type.data) == 64)
+assert property (@(posedge clk) disable iff (!rst_n)
+    !out_type.valid || GET_TYPE_WIDTH(out_type.data) == 32 || GET_TYPE_WIDTH(out_type.data) == 64)
 else $fatal(1, "Type width %0d is not supported!", GET_TYPE_WIDTH(out_type.data));
 `endif
 
@@ -59,13 +60,13 @@ assign out_type.ready = in.valid && in.last && out.tready;
 
 assign in.ready = out_type.valid && out.tready;
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
     assign data_32bit[32 * I+:32] = in.data[I][0+:32];
 
-    for (genvar J = 0; J < 4; J++) begin
+    for (genvar J = 0; J < 4; J++) begin : gen_keep_32bit
         assign keep_32bit[I * 4 + J] = in.keep[I];
     end
-    for (genvar J = 0; J < 8; J++) begin
+    for (genvar J = 0; J < 8; J++) begin : gen_keep_64bit
         assign keep_64bit[I * 8 + J] = in.keep[I];
     end
 end
@@ -139,7 +140,7 @@ assign out.tvalid = valid;
 endmodule
 
 /**
- * Converts an 64 * NUM_ELEMENTS AXI stream containing 32bit or 64bit elements to a NUM_ELEMENTS 
+ * Converts an 64 * NUM_ELEMENTS AXI stream containing 32bit or 64bit elements to a NUM_ELEMENTS
  * ndata stream. Use this in cases where you want to have a fixed number of elements in the stream,
  * but the width of the elements in the AXI stream may differ.
  */
@@ -173,7 +174,8 @@ data64_t[NUM_ELEMENTS - 1:0] data_32bit;
 logic[NUM_ELEMENTS - 1:0]    keep_32bit, keep_64bit;
 
 // -- Assertions -----------------------------------------------------------------------------------
-assert property (@(posedge clk) disable iff (!rst_n) !in_type.valid || GET_TYPE_WIDTH(in_type.data) == 32 || GET_TYPE_WIDTH(in_type.data) == 64)
+assert property (@(posedge clk) disable iff (!rst_n)
+    !in_type.valid || GET_TYPE_WIDTH(in_type.data) == 32 || GET_TYPE_WIDTH(in_type.data) == 64)
 else $fatal(1, "Type width %0d is not supported!", GET_TYPE_WIDTH(in_type.data));
 
 assign is_32bit = GET_TYPE_WIDTH(in_type.data) == 32;
@@ -182,8 +184,9 @@ assign in_type.ready = in.tvalid && in.tlast && actual_ready;
 
 assign in.tready = in_type.valid && actual_ready;
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
-    assign data_32bit[I][0+:32] = is_upper == 1'b0 ? in.tdata[32 * I+:32] : in.tdata[32 * I + AXI_WIDTH / 2+:32];
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
+    assign data_32bit[I][0+:32] = is_upper == 1'b0 ?
+        in.tdata[32 * I+:32] : in.tdata[32 * I + AXI_WIDTH / 2+:32];
     assign data_32bit[I][32+:32] = '0;
 
     assign keep_32bit[I] = is_upper == 1'b0 ? in.tkeep[I * 4] : in.tkeep[I * 4 + AXI_WIDTH / 16];
@@ -263,7 +266,7 @@ end
 assign in_type.ready = ~keep_type.valid;
 assign in.ready = typ.valid && out.ready; // ready chaining
 
-for (genvar I = 0; I < DATABEAT_SIZE; I++) begin
+for (genvar I = 0; I < DATABEAT_SIZE; I++) begin : gen_elements
     assign out.data[I] = in.data[I];
     assign out.keep[I] = in.keep[I];
 end

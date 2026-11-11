@@ -71,7 +71,7 @@ always_ff @(posedge clk) begin
         current_id <= '0;
         processed  <= '0;
         mask       <= '0;
-        
+
         out.data  <= 'X;
         out.last  <= 'X;
         out.keep  <= 'X;

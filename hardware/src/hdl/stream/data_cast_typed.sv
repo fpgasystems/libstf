@@ -91,7 +91,8 @@ assign narrow_half = narrow_32 || narrow_16; // Each input beat fills half an ou
 
 `ifndef SYNTHESIS
 assert property (@(posedge clk) disable iff (!rst_n)
-    !(in.valid && typ.valid) || narrow_half || narrow_8 || GET_TYPE_WIDTH(typ.data) == GET_TYPE_WIDTH(in.typ))
+    !(in.valid && typ.valid) || narrow_half || narrow_8
+    || GET_TYPE_WIDTH(typ.data) == GET_TYPE_WIDTH(in.typ))
 else $fatal(1, "TypedNDataCast does not support casting type %0d to type %0d", in.typ, typ.data);
 
 assert property (@(posedge clk) disable iff (!rst_n)
@@ -100,7 +101,7 @@ else $fatal(1, "TypedNDataCast requires a dense input when narrowing");
 `endif
 
 // -- Narrowed input -------------------------------------------------------------------------------
-// The 16 bit and the 32 bit values of one input beat span two quarters, the 8 bit values one quarter.
+// The 16 and 32 bit values of one input beat span two quarters, the 8 bit values one quarter.
 data8_t[2 * QUARTER_SIZE - 1:0] data_16_bytes, data_32_bytes;
 logic  [2 * QUARTER_SIZE - 1:0] keep_16_bytes, keep_32_bytes;
 
@@ -109,7 +110,7 @@ quarter_keep_t[1:0] keep_half;
 quarter_t           data_8;
 quarter_keep_t      keep_8;
 
-for (genvar I = 0; I < NUM_32B_LANES; I++) begin
+for (genvar I = 0; I < NUM_32B_LANES; I++) begin : gen_32b_lanes
     assign data_16_bytes[2 * I]     = in.data[4 * I];
     assign data_16_bytes[2 * I + 1] = in.data[4 * I + 1];
     assign keep_16_bytes[2 * I]     = in.keep[4 * I];
@@ -119,8 +120,8 @@ for (genvar I = 0; I < NUM_32B_LANES; I++) begin
     assign keep_8[I] = in.keep[4 * I];
 end
 
-for (genvar I = 0; I < NUM_64B_LANES; I++) begin
-    for (genvar B = 0; B < 4; B++) begin
+for (genvar I = 0; I < NUM_64B_LANES; I++) begin : gen_64b_lanes
+    for (genvar B = 0; B < 4; B++) begin : gen_bytes
         assign data_32_bytes[4 * I + B] = in.data[8 * I + B];
         assign keep_32_bytes[4 * I + B] = in.keep[8 * I];
     end

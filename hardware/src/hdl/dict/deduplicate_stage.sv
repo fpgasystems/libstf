@@ -4,7 +4,7 @@
 
 module DeduplicateStage #(
     parameter int unsigned ID,
-    parameter type data_t, 
+    parameter type data_t,
     parameter int NUM_ELEMENTS,
     parameter int unsigned START_IDX_INCL,
     parameter int unsigned END_IDX_EXCL
@@ -14,7 +14,7 @@ module DeduplicateStage #(
 
     ndata_i.s     in,      // #(data_t, NUM_ELEMENTS)
     duplicate_i.s in_mask, // #(NUM_ELEMENTS)
-    
+
     ndata_i.m     out,     // #(data_t, NUM_ELEMENTS)
     duplicate_i.m out_mask // #(NUM_ELEMENTS)
 );
@@ -88,7 +88,7 @@ always_comb begin
     end
 end
 
-// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not 
+// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
 // get in trouble with with stable assertion of the interface.
 assign data.ready   = 1'b1;
 assign n_data.ready = 1'b1;

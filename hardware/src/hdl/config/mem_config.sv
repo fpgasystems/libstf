@@ -55,10 +55,16 @@ ConfigReadRegisterFile #(
 
 // -- Write ----------------------------------------------------------------------------------------
 ready_valid_i #(logic) flush_buffers(clk, reset_synced);
-for (genvar I = 0; I < NUM_STREAMS; I++) begin
+for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
     ready_valid_i #(buffer_t) buffer(clk, reset_synced), buffer_out(clk, reset_synced);
 
-    ConfigWriteFIFO #(I, MAXIMUM_NUM_ENQUEUED_BUFFERS, buffer_t) inst_buffer_fifo (clk, reset_synced, write_config, buffer);
+    ConfigWriteFIFO #(I, MAXIMUM_NUM_ENQUEUED_BUFFERS, buffer_t) inst_buffer_fifo (
+        .clk(clk),
+        .rst_n(reset_synced),
+
+        .write_config(write_config),
+        .data(buffer)
+    );
 
     SkidBuffer #(buffer_t) inst_buffer_skid_buffer (
         .clk(clk),
@@ -75,9 +81,15 @@ for (genvar I = 0; I < NUM_STREAMS; I++) begin
 end
 
 // We misuse this write register a bit just for its valid signal to give a pulse to the OutputWriter
-// to flush all remaining potentially stale buffers. We don't actually care about the data that is 
+// to flush all remaining potentially stale buffers. We don't actually care about the data that is
 // written.
-ConfigWriteReadyRegister #(NUM_STREAMS, logic) inst_flush_buffers (clk, reset_synced, write_config, flush_buffers);
+ConfigWriteReadyRegister #(NUM_STREAMS, logic) inst_flush_buffers (
+    .clk(clk),
+    .rst_n(reset_synced),
+
+    .write_config(write_config),
+    .data(flush_buffers)
+);
 
 assign flush_buffers.ready = 1'b1;
 
