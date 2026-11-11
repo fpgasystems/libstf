@@ -32,15 +32,15 @@ module ReplayBufferWriter
     input logic clk,
     input logic rst_n,
 
-    metaIntf.m sq_wr,
-    metaIntf.s cq_wr,
+    metaIntf.m sq_wr, // #(req_t)
+    metaIntf.s cq_wr, // #(ack_t)
 
     replay_buffer_config_i.writer buffer_config,
 
-    AXI4S.s in,
+    AXI4S.s in, // #(AXI_DATA_BITS)
 
     replay_buffer_link_i.m link,
-    AXI4SR.m               out
+    AXI4SR.m               out // #(AXI_DATA_BITS)
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -48,6 +48,8 @@ module ReplayBufferWriter
 // -- Parameters -----------------------------------------------------------------------------------
 localparam int AXI_DATA_BYTES = AXI_DATA_BITS / 8;
 localparam vaddress_t TRANSFER_BYTES = TRANSFER_SIZE;
+
+`ASSERT_ELAB(AXI_STRM_ID >= 0 && AXI_STRM_ID < N_CARD_AXI, "AXI_STRM_ID has to be a card stream")
 
 stream_writer_notify_i issued (.clk(clk), .rst_n(reset_synced));
 stream_writer_notify_i notify (.clk(clk), .rst_n(reset_synced));
@@ -144,7 +146,7 @@ assign notify.ready = link.ready;
 vaddress_t released_bytes, returned_bytes, unreserved_bytes;
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0 || buffer_config.valid) begin
+    if (!reset_synced || buffer_config.valid) begin
         released_bytes   <= '0;
         returned_bytes   <= '0;
         unreserved_bytes <= '0;
@@ -158,15 +160,15 @@ end
 
 // -- State machine --------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         configured <= 1'b0;
         ring_base  <= 'X;
         ring_size  <= 'X;
         ring_end   <= 'X;
 
-        transfer_vaddr    <= 'X;
+        transfer_vaddr    <= '0;
         next_stages_valid <= '0;
-        free_bytes        <= 'X;
+        free_bytes        <= '0;
 
         state <= ALLOCATE;
     end else begin
@@ -228,7 +230,7 @@ localparam int DEADLOCK_CYCLES = 1024;
 int unsigned stalled_cycles;
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         stalled_cycles <= 0;
     end else if (state == ALLOCATE && configured && !next_fits && link.holding &&
                  !notify.valid) begin
@@ -261,8 +263,8 @@ StreamWriter #(
 
     .mem_config(mem_config),
 
-    .input_data(in),
-    .output_data(out)
+    .in(in),
+    .out(out)
 );
 
 endmodule

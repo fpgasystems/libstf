@@ -21,13 +21,13 @@ module MetaIntfArbiter
     input logic clk,
     input logic rst_n,
 
-    // The interface to select form
-    metaIntf.s intf_in[N_INTERFACES],
+    // The interface to select from
+    metaIntf.s in[N_INTERFACES], // #(data_t)
 
     // The interface to assign to
-    metaIntf.m intf_out,
-    // The index of the input interface that intf_out holds
-    output logic [SELECT_BITS - 1:0] intf_out_select
+    metaIntf.m out, // #(data_t)
+    // The index of the input interface that out holds
+    output logic [SELECT_BITS - 1:0] out_select
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -38,36 +38,32 @@ localparam int N_BITS = $clog2(N_INTERFACES);
 logic [N_BITS - 1 : 0] input_stream_rr_next;
 // The actual stream we select this cycle to pipe to the output.
 // This is the round-robin stream if possible.
-// Otherwise, its the next valid stream.
+// Otherwise, it's the next valid stream.
 logic [N_BITS - 1 : 0] input_stream_select;
 
 logic can_load;
-assign can_load = ~intf_out.valid | intf_out.ready;
+assign can_load = ~out.valid | out.ready;
 
 // We keep a buffer of input for every stream
 data_t [N_INTERFACES - 1 : 0] data_buf;
 logic [N_INTERFACES - 1 : 0] buf_valid;
 
-// ----------------------------------------------------------------------------
-// Assign ready and buffers for the input
-// ----------------------------------------------------------------------------
+// -- Assign ready and buffers for the input -------------------------------------------------------
 logic [N_INTERFACES - 1 : 0] in_valid;
 data_t [N_INTERFACES - 1 : 0] in_data;
 logic [N_INTERFACES - 1 : 0] in_ready;
 
-generate
-    for(genvar stream = 0; stream < N_INTERFACES; stream++) begin : gen_interfaces
-        assign in_valid[stream]      = intf_in[stream].valid;
-        assign in_data[stream]       = intf_in[stream].data;
-        assign intf_in[stream].ready = in_ready[stream];
-    end
-endgenerate
+for (genvar STREAM = 0; STREAM < N_INTERFACES; STREAM++) begin : gen_interfaces
+    assign in_valid[STREAM]      = in[STREAM].valid;
+    assign in_data[STREAM]       = in[STREAM].data;
+    assign in[STREAM].ready      = in_ready[STREAM];
+end
 
 data_t [N_INTERFACES - 1 : 0] n_data_buf;
 logic [N_INTERFACES - 1 : 0] n_buf_valid;
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         data_buf  <= 'X;
         buf_valid <= '0;
     end else begin
@@ -95,9 +91,7 @@ always_comb begin
     end
 end
 
-// ----------------------------------------------------------------------------
-// Make the arbitration decision
-// ----------------------------------------------------------------------------
+// -- Make the arbitration decision ----------------------------------------------------------------
 always_comb begin
     // Default to stream 0 if there is not a single valid buffer entry
     input_stream_select = 0;
@@ -108,7 +102,7 @@ always_comb begin
             input_stream_select = input_stream_rr_next;
         end else begin
             // Choose any valid stream
-            for(int stream = N_INTERFACES - 1; stream >= 0; stream--) begin
+            for (int stream = N_INTERFACES - 1; stream >= 0; stream--) begin
                 if (buf_valid[stream]) begin
                     input_stream_select = stream;
                     break;
@@ -118,43 +112,41 @@ always_comb begin
     end
 end
 
-// ----------------------------------------------------------------------------
-// Assign the output and update round-robin stream selection
-// ----------------------------------------------------------------------------
-logic                     n_intf_out_valid;
-data_t                     n_intf_out_data;
-logic[SELECT_BITS - 1:0]  n_intf_out_select;
-logic[N_BITS - 1 : 0] n_input_stream_rr_next;
+// -- Assign the output and update round-robin stream selection ------------------------------------
+logic                    n_out_valid;
+data_t                   n_out_data;
+logic[SELECT_BITS - 1:0] n_out_select;
+logic[N_BITS - 1 : 0]    n_input_stream_rr_next;
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
-        intf_out.data        <= 'X;
-        intf_out.valid       <= 1'b0;
-        intf_out_select      <= 'X;
+    if (!reset_synced) begin
+        out.data             <= 'X;
+        out.valid            <= 1'b0;
+        out_select           <= 'X;
         input_stream_rr_next <= '0;
     end else begin
-        intf_out.data        <= n_intf_out_data;
-        intf_out.valid       <= n_intf_out_valid;
-        intf_out_select      <= n_intf_out_select;
+        out.data             <= n_out_data;
+        out.valid            <= n_out_valid;
+        out_select           <= n_out_select;
         input_stream_rr_next <= n_input_stream_rr_next;
     end
 end
 
 always_comb begin
-    n_intf_out_data        = intf_out.data;
-    n_intf_out_valid       = intf_out.valid;
-    n_intf_out_select      = intf_out_select;
+    n_out_data             = out.data;
+    n_out_valid            = out.valid;
+    n_out_select           = out_select;
     n_input_stream_rr_next = input_stream_rr_next;
 
     if (can_load) begin
         if (buf_valid[input_stream_select]) begin
-            n_intf_out_data        = data_buf[input_stream_select];
-            n_intf_out_valid       = 1'b1;
-            n_intf_out_select      = SELECT_BITS'(input_stream_select);
+            n_out_data             = data_buf[input_stream_select];
+            n_out_valid            = 1'b1;
+            n_out_select           = SELECT_BITS'(input_stream_select);
             n_input_stream_rr_next =
                 (input_stream_rr_next == N_INTERFACES - 1) ? '0 : input_stream_rr_next + 1;
         end else begin
-            n_intf_out_valid = 1'b0;
+            n_out_valid = 1'b0;
         end
     end
 end

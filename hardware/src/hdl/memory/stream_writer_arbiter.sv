@@ -28,12 +28,12 @@ module StreamWriterArbiter
     // Writer side
     metaIntf.s sq_wr_in[N_WRITERS],  // #(req_t)
     metaIntf.m cq_wr_out[N_WRITERS], // #(ack_t)
-    AXI4SR.s   data_in[N_WRITERS],
+    AXI4SR.s   in[N_WRITERS],        // #(AXI_DATA_BITS)
 
     // Stream side
     metaIntf.m sq_wr_out, // #(req_t)
     metaIntf.s cq_wr_in,  // #(ack_t)
-    AXI4SR.m   data_out
+    AXI4SR.m   out        // #(AXI_DATA_BITS)
 );
 
 localparam int W = N_WRITERS > 1 ? $clog2(N_WRITERS) : 1;
@@ -52,7 +52,7 @@ logic [N_WRITERS - 1:0]                          in_tvalid;
 
 logic [N_WRITERS - 1:0] cq_wr_ready;
 
-// ------ Request arbitration ----------------------------------------------
+// -- Request arbitration --------------------------------------------------------------------------
 metaIntf #(.STYPE(req_t)) sq_wr_arbitrated(.aclk(clk), .aresetn(rst_n));
 logic [W - 1:0]           requester;
 
@@ -63,9 +63,9 @@ MetaIntfArbiter #(
     .clk(clk),
     .rst_n(rst_n),
 
-    .intf_in(sq_wr_in),
-    .intf_out(sq_wr_arbitrated),
-    .intf_out_select(requester)
+    .in(sq_wr_in),
+    .out(sq_wr_arbitrated),
+    .out_select(requester)
 );
 
 logic data_order_iready, cq_order_iready, request_fire;
@@ -75,7 +75,7 @@ assign sq_wr_out.valid        = sq_wr_arbitrated.valid && data_order_iready && c
 assign sq_wr_arbitrated.ready = sq_wr_out.ready && data_order_iready && cq_order_iready;
 assign request_fire           = sq_wr_out.valid && sq_wr_out.ready;
 
-// ------ Order FIFOs -------------------------------------------------------
+// -- Order FIFOs ----------------------------------------------------------------------------------
 // The data order FIFO pops at the end of a transfer's data, the cq order FIFO at its completion
 logic [W - 1:0] data_head, cq_head;
 logic           data_head_valid, cq_head_valid;
@@ -86,18 +86,18 @@ MehdiFIFO #(
     .WIDTH(W),
     .STYLE("distributed")
 ) inst_data_order_fifo (
-    .i_clk(clk),
-    .i_rst_n(rst_n),
+    .clk(clk),
+    .rst_n(rst_n),
 
-    .i_data(requester),
-    .i_valid(request_fire),
-    .i_ready(data_order_iready),
+    .in_data(requester),
+    .in_valid(request_fire),
+    .in_ready(data_order_iready),
 
-    .o_data(data_head),
-    .o_valid(data_head_valid),
-    .o_ready(data_pop),
+    .out_data(data_head),
+    .out_valid(data_head_valid),
+    .out_ready(data_pop),
 
-    .o_filling_level()
+    .filling_level()
 );
 
 MehdiFIFO #(
@@ -105,30 +105,30 @@ MehdiFIFO #(
     .WIDTH(W),
     .STYLE("distributed")
 ) inst_cq_order_fifo (
-    .i_clk(clk),
-    .i_rst_n(rst_n),
+    .clk(clk),
+    .rst_n(rst_n),
 
-    .i_data(requester),
-    .i_valid(request_fire),
-    .i_ready(cq_order_iready),
+    .in_data(requester),
+    .in_valid(request_fire),
+    .in_ready(cq_order_iready),
 
-    .o_data(cq_head),
-    .o_valid(cq_head_valid),
-    .o_ready(cq_pop),
+    .out_data(cq_head),
+    .out_valid(cq_head_valid),
+    .out_ready(cq_pop),
 
-    .o_filling_level()
+    .filling_level()
 );
 
-// ------ Data --------------------------------------------------------------
-assign data_out.tdata  = in_tdata[data_head];
-assign data_out.tkeep  = in_tkeep[data_head];
-assign data_out.tid    = in_tid[data_head];
-assign data_out.tlast  = in_tlast[data_head];
-assign data_out.tvalid = data_head_valid && in_tvalid[data_head];
+// -- Data -----------------------------------------------------------------------------------------
+assign out.tdata  = in_tdata[data_head];
+assign out.tkeep  = in_tkeep[data_head];
+assign out.tid    = in_tid[data_head];
+assign out.tlast  = in_tlast[data_head];
+assign out.tvalid = data_head_valid && in_tvalid[data_head];
 
-assign data_pop = data_out.tvalid && data_out.tready && data_out.tlast;
+assign data_pop = out.tvalid && out.tready && out.tlast;
 
-// ------ Completions -------------------------------------------------------
+// -- Completions ----------------------------------------------------------------------------------
 // Completions of other streams are dropped, like the StreamWriter does
 logic is_completion;
 assign is_completion = cq_wr_in.valid && cq_wr_in.data.strm == STRM &&
@@ -137,14 +137,14 @@ assign is_completion = cq_wr_in.valid && cq_wr_in.data.strm == STRM &&
 assign cq_wr_in.ready = !is_completion || (cq_head_valid && cq_wr_ready[cq_head]);
 assign cq_pop         = is_completion && cq_wr_in.ready;
 
-// ------ Writer connections ------------------------------------------------
+// -- Writer connections ---------------------------------------------------------------------------
 for (genvar I = 0; I < N_WRITERS; I++) begin : gen_writers
-    assign in_tdata[I]  = data_in[I].tdata;
-    assign in_tkeep[I]  = data_in[I].tkeep;
-    assign in_tid[I]    = data_in[I].tid;
-    assign in_tlast[I]  = data_in[I].tlast;
-    assign in_tvalid[I] = data_in[I].tvalid;
-    assign data_in[I].tready = data_head_valid && (data_head == W'(I)) && data_out.tready;
+    assign in_tdata[I]  = in[I].tdata;
+    assign in_tkeep[I]  = in[I].tkeep;
+    assign in_tid[I]    = in[I].tid;
+    assign in_tlast[I]  = in[I].tlast;
+    assign in_tvalid[I] = in[I].tvalid;
+    assign in[I].tready = data_head_valid && (data_head == W'(I)) && out.tready;
 
     assign cq_wr_out[I].data  = cq_wr_in.data;
     assign cq_wr_out[I].valid = is_completion && cq_head_valid && (cq_head == W'(I));

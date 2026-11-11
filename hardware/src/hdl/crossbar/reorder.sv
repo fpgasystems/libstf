@@ -20,7 +20,6 @@ module Reorder #(
 
 `RESET_RESYNC // Reset pipelining
 
-
 localparam int SERIAL_WIDTH = $bits(serial_t);
 localparam int DATA_WIDTH = $bits(data_t);
 localparam int RAM_WIDTH = DATA_WIDTH + 2;
@@ -30,7 +29,7 @@ localparam int RAM_WIDTH = DATA_WIDTH + 2;
 `ASSERT_ELAB(type(data_t) == type(out.data_t))
 
 // The serial number is the RAM address
-`ASSERT_ELAB(SERIAL_WIDTH == $clog2(DEPTH))
+`ASSERT_ELAB(DEPTH == 2 ** SERIAL_WIDTH)
 
 serial_t               ram_addr;
 logic[RAM_WIDTH - 1:0] ram_data;
@@ -115,7 +114,7 @@ always_comb begin
 end
 
 // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
-// get in trouble with with stable assertion of the interface.
+// get in trouble with the stable assertion of the interface.
 assign n_out.ready = 1'b1;
 
 endmodule

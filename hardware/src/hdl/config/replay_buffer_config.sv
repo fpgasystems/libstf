@@ -67,14 +67,14 @@ for (genvar I = 0; I < NUM_BUFFERS; I++) begin : gen_buffers
         .rst_n(reset_synced),
 
         .write_config(write_config),
-        .data(size)
+        .out(size)
     );
     ConfigWriteFIFO #(3 * I + 2, MAXIMUM_NUM_ENQUEUED_STREAMS, data32_t) inst_num_reads (
         .clk(clk),
         .rst_n(reset_synced),
 
         .write_config(write_config),
-        .data(num_reads)
+        .out(num_reads)
     );
 
     assign out[I].size  = size.data;

@@ -33,11 +33,11 @@ for (genvar I = 0; I < NUM_TUPLES; I++) begin : gen_hashers
     ) inst_hasher (
         .clk(clk),
 
-        .i_data(in.data[I].key),
-        .o_data_ready(),
+        .in_data(in.data[I].key),
+        .in_ready(),
 
-        .o_data(internal_hashes[I]),
-        .i_data_ready(out.ready)
+        .out_data(internal_hashes[I]),
+        .out_ready(out.ready)
     );
 
     assign out.tag[I] = internal_hashes[I][0+:HASH_WIDTH];
@@ -49,44 +49,44 @@ ReadyShiftRegister #($bits(tuple_t) * NUM_TUPLES, NUM_PIPE_STAGES) inst_data_sr 
     .clk(clk),
     .rst_n(rst_n),
 
-    .i_data(in.data),
-    .o_ready(),
+    .in_data(in.data),
+    .in_ready(),
 
-    .o_data(out.data),
-    .i_ready(out.ready)
+    .out_data(out.data),
+    .out_ready(out.ready)
 );
 
 ReadyShiftRegister #(NUM_TUPLES, NUM_PIPE_STAGES) inst_keep_sr (
     .clk(clk),
     .rst_n(rst_n),
 
-    .i_data(in.keep),
-    .o_ready(),
+    .in_data(in.keep),
+    .in_ready(),
 
-    .o_data(out.keep),
-    .i_ready(out.ready)
+    .out_data(out.keep),
+    .out_ready(out.ready)
 );
 
 ReadyShiftRegister #(1, NUM_PIPE_STAGES) inst_last_sr (
     .clk(clk),
     .rst_n(rst_n),
 
-    .i_data(in.last),
-    .o_ready(),
+    .in_data(in.last),
+    .in_ready(),
 
-    .o_data(out.last),
-    .i_ready(out.ready)
+    .out_data(out.last),
+    .out_ready(out.ready)
 );
 
 ReadyShiftRegister #(1, NUM_PIPE_STAGES) inst_valid_sr (
     .clk(clk),
     .rst_n(rst_n),
 
-    .i_data(in.valid),
-    .o_ready(),
+    .in_data(in.valid),
+    .in_ready(),
 
-    .o_data(out.valid),
-    .i_ready(out.ready)
+    .out_data(out.valid),
+    .out_ready(out.ready)
 );
 
 assign in.ready = out.ready;

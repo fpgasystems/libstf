@@ -193,8 +193,8 @@ OutputWriter #(
 
     .mem_config(mem_config),
 
-    .data_in(axi_host_recv),
-    .data_out(writer_out),
+    .in(axi_host_recv),
+    .out(writer_out),
 
     .notify_count() // Unused
 );

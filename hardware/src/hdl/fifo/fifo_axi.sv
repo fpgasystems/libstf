@@ -9,30 +9,30 @@ module FIFOAXI #(
     input logic clk,
     input logic rst_n,
 
-    AXI4S.s i_data,
-    AXI4S.m o_data,
+    AXI4S.s in,  // #(DATA_WIDTH)
+    AXI4S.m out, // #(DATA_WIDTH)
 
     output logic[$clog2(DEPTH):0] filling_level
 );
 
 localparam int FIFO_WIDTH = DATA_WIDTH + DATA_WIDTH / 8 + 1;
 
-`ASSERT_ELAB(DATA_WIDTH == i_data.AXI4S_DATA_BITS)
-`ASSERT_ELAB(DATA_WIDTH == o_data.AXI4S_DATA_BITS)
+`ASSERT_ELAB(DATA_WIDTH == in.AXI4S_DATA_BITS)
+`ASSERT_ELAB(DATA_WIDTH == out.AXI4S_DATA_BITS)
 
 MehdiFIFO #(DEPTH, FIFO_WIDTH, "ultra") inst_fifo (
-    .i_clk(clk),
-    .i_rst_n(rst_n),
+    .clk(clk),
+    .rst_n(rst_n),
 
-    .i_data({i_data.tdata, i_data.tkeep, i_data.tlast}),
-    .i_valid(i_data.tvalid),
-    .i_ready(i_data.tready),
+    .in_data({in.tdata, in.tkeep, in.tlast}),
+    .in_valid(in.tvalid),
+    .in_ready(in.tready),
 
-    .o_data({o_data.tdata, o_data.tkeep, o_data.tlast}),
-    .o_valid(o_data.tvalid),
-    .o_ready(o_data.tready),
+    .out_data({out.tdata, out.tkeep, out.tlast}),
+    .out_valid(out.tvalid),
+    .out_ready(out.tready),
 
-    .o_filling_level(filling_level)
+    .filling_level(filling_level)
 );
 
 endmodule

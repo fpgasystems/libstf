@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 `include "libstf_macros.svh"
 
 /**
@@ -10,11 +12,12 @@ module NullBeatSuppressor #(
     input logic clk,
     input logic rst_n,
 
-    ndata_i.s in,  // #(data_t, NUM_ELEMENTS)
-    ndata_i.m out  // #(data_t, NUM_ELEMENTS)
+    ndata_i.s in, // #(data_t, NUM_ELEMENTS)
+    ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
 `ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+`ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
 
 data_t[NUM_ELEMENTS - 1:0] hold_data,  n_hold_data;
 logic[NUM_ELEMENTS - 1:0]  hold_keep,  n_hold_keep;
@@ -94,6 +97,7 @@ module AXINullBeatSuppressor
 );
 
 `ASSERT_ELAB(AXI4S_DATA_BITS == in.AXI4S_DATA_BITS)
+`ASSERT_ELAB(AXI4S_DATA_BITS == out.AXI4S_DATA_BITS)
 
 localparam int NUM_ELEMENTS = AXI4S_DATA_BITS / 8;
 

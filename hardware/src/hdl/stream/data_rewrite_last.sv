@@ -11,14 +11,14 @@
  *
  * This module is interface-agnostic: the wrappers (TypedRewriteLast, DataRewriteLast) compute the
  * number of values carried by the current beat (`in_num_elements`) and wire up their respective
- * data/keep/typ passthrough; everything else lives here.
+ * data/keep/typ passthrough. Everything else lives here.
  */
 module RewriteLastCore
     import libstf::*;
 #(
     parameter type size_t = data32_t,
     parameter int ELEMENT_BITS = 8, // wide enough to hold in_num_elements
-    // When set, the forced-last beat is allowed to carry more values than remain; the wrapper masks
+    // When set, the forced-last beat is allowed to carry more values than remain. The wrapper masks
     // that beat's keep down to `remaining_elements` to strip the surplus. Used for reads whose
     // length was rounded up to a beat multiple. Default 0 keeps the strict no-overshoot invariant.
     parameter int ALLOW_OVERSHOOT = 0
@@ -41,6 +41,8 @@ module RewriteLastCore
     output logic                     out_valid,
     output logic                     in_ready
 );
+
+`ASSERT_ELAB(ELEMENT_BITS < $bits(size_t))
 
 typedef enum logic {
     WAITING,  // Waiting for num_elements configuration
@@ -70,7 +72,7 @@ else $fatal(1, "RewriteLastCore beat carries %0d values but only %0d more expect
 `endif
 
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         remaining      <= 'X;
         remaining_fits <= 'X;
         state          <= WAITING;
@@ -121,6 +123,7 @@ module TypedRewriteLast
 );
 
 `ASSERT_ELAB(DATABEAT_SIZE == in.DATABEAT_SIZE)
+`ASSERT_ELAB(DATABEAT_SIZE == out.DATABEAT_SIZE)
 
 // This is on purpose 1 bit wider to account for the case where keep is 0xf..f
 localparam int ELEMENT_BITS = $clog2(DATABEAT_SIZE) + 1;
@@ -213,6 +216,7 @@ module DataRewriteLast
 );
 
 `ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+`ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
 
 // This is on purpose 1 bit wider to account for the case where keep is all ones.
 localparam int ELEMENT_BITS = $clog2(NUM_ELEMENTS) + 1;
@@ -245,8 +249,8 @@ RewriteLastCore #(
 // Keep mask for the forced-last beat: the low `remaining_elements` elements stay valid, the rest
 // (rounding padding) are stripped. Each keep bit is exactly one element here.
 logic [NUM_ELEMENTS - 1:0] last_keep_mask;
-for (genvar gi = 0; gi < NUM_ELEMENTS; gi++) begin : gen_last_keep_mask
-    assign last_keep_mask[gi] = (gi < remaining_elements);
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_last_keep_mask
+    assign last_keep_mask[I] = (I < remaining_elements);
 end
 
 // -- Passthrough (with optional trailing strip on the forced-last beat) ---------------------------

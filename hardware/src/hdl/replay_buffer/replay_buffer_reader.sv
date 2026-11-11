@@ -36,15 +36,15 @@ module ReplayBufferReader
     input logic clk,
     input logic rst_n,
 
-    metaIntf.m sq_rd,
-    metaIntf.s cq_rd,
+    metaIntf.m sq_rd, // #(req_t)
+    metaIntf.s cq_rd, // #(ack_t)
 
     replay_buffer_config_i.reader buffer_config,
 
     replay_buffer_link_i.s link,
 
-    AXI4SR.s in,
-    AXI4S.m  out
+    AXI4SR.s in, // #(AXI_DATA_BITS)
+    AXI4S.m  out // #(AXI_DATA_BITS)
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -53,6 +53,9 @@ module ReplayBufferReader
 localparam int AXI_DATA_BYTES = AXI_DATA_BITS / 8;
 localparam vaddress_t MAX_READ_BYTES = MAX_TRANSFERS_PER_READ * TRANSFER_SIZE;
 localparam int MAX_OUTSTANDING_READS = 16;
+
+`ASSERT_ELAB(AXI_STRM_ID >= 0 && AXI_STRM_ID < N_CARD_AXI, "AXI_STRM_ID has to be a card stream")
+`ASSERT_ELAB(MAX_TRANSFERS_PER_READ > 0, "Every read needs to read at least one transfer")
 
 function automatic vaddress_t align(vaddress_t value);
     return (value + AXI_DATA_BYTES - 1) & ~vaddress_t'(AXI_DATA_BYTES - 1);
@@ -88,18 +91,18 @@ MehdiFIFO #(
     .DEPTH(MAX_WAITING_EXTENTS),
     .STYLE("distributed")
 ) inst_extent_fifo (
-    .i_clk(clk),
-    .i_rst_n(reset_synced),
+    .clk(clk),
+    .rst_n(reset_synced),
 
-    .i_data(tail),
-    .i_valid(extent_in_valid),
-    .i_ready(extent_in_ready),
+    .in_data(tail),
+    .in_valid(extent_in_valid),
+    .in_ready(extent_in_ready),
 
-    .o_data(extent_out),
-    .o_valid(extent_out_valid),
-    .o_ready(extent_out_ready),
+    .out_data(extent_out),
+    .out_valid(extent_out_valid),
+    .out_ready(extent_out_ready),
 
-    .o_filling_level()
+    .filling_level()
 );
 
 assign extent_in_valid = tail_valid && tail_closed;
@@ -168,18 +171,18 @@ MehdiFIFO #(
     .WIDTH($bits(release_t)),
     .DEPTH(MAX_OUTSTANDING_READS)
 ) inst_release_fifo (
-    .i_clk(clk),
-    .i_rst_n(reset_synced),
+    .clk(clk),
+    .rst_n(reset_synced),
 
-    .i_data(release_in),
-    .i_valid(release_in_valid),
-    .i_ready(release_in_ready),
+    .in_data(release_in),
+    .in_valid(release_in_valid),
+    .in_ready(release_in_ready),
 
-    .o_data(release_out),
-    .o_valid(release_out_valid),
-    .o_ready(buffer_done),
+    .out_data(release_out),
+    .out_valid(release_out_valid),
+    .out_ready(buffer_done),
 
-    .o_filling_level()
+    .filling_level()
 );
 
 // The end of the memory we already released
@@ -188,7 +191,7 @@ vaddress_t released_end;
 // If the released memory does not continue the previously released memory, it starts at the base
 // after the writer skipped the rest of the ring buffer. The release is registered for timing.
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         link.released_valid <= 1'b0;
     end else begin
         link.released_valid <= buffer_done && release_out.release_memory;
@@ -255,20 +258,20 @@ else $fatal(1, "A stream that is read multiple times does not fit into the ring 
 
 // -- State machine --------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         tail        <= 'X;
         tail_valid  <= 1'b0;
         tail_end    <= 'X;
-        tail_closed <= 'X;
+        tail_closed <= 1'b0;
 
         num_extents        <= '0;
         num_closed_streams <= '0;
 
-        remaining_reads <= 'X;
-        head_read       <= 'X;
-        head_read_max   <= 'X;
-        num_segments    <= 'X;
-        wrapped         <= 'X;
+        remaining_reads <= '0;
+        head_read       <= '0;
+        head_read_max   <= MAX_READ_BYTES;
+        num_segments    <= '0;
+        wrapped         <= 1'b0;
 
         read_valid <= 1'b0;
         read_vaddr <= 'X;
@@ -282,13 +285,13 @@ always_ff @(posedge clk) begin
         seg_end     <= '{default: 'X};
         stream_span <= 'X;
 
-        replay_seg <= 'X;
+        replay_seg <= 1'b0;
 
         ring_end <= 'X;
 
         state <= WAIT_FOR_STREAM;
     end else begin
-        // -- Extents --------------------------------------------------------------------------
+        // -- Extents ------------------------------------------------------------------------------
         if (link.valid && link.ready) begin
             if (link_continues_tail) begin
                 tail.size <= tail.size + link.size;
@@ -314,7 +317,7 @@ always_ff @(posedge clk) begin
         num_closed_streams <= num_closed_streams + (link.valid && link.ready && link.last) -
                               (extent_out_ready && extent_out.last);
 
-        // -- Reads ----------------------------------------------------------------------------
+        // -- Reads --------------------------------------------------------------------------------
         if (mem_config.valid && mem_config.ready) begin
             read_valid <= 1'b0;
         end
@@ -435,8 +438,8 @@ StreamReader #(
     .mem_config(mem_config),
     .buffer_done(buffer_done),
 
-    .input_data(in),
-    .output_data(out)
+    .in(in),
+    .out(out)
 );
 
 endmodule

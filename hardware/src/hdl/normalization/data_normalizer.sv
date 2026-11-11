@@ -17,6 +17,8 @@ module DataNormalizer #(
 );
 
 `ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+`ASSERT_ELAB(NUM_ELEMENTS > 1 && 2 ** $clog2(NUM_ELEMENTS) == NUM_ELEMENTS,
+    "NUM_ELEMENTS has to be a power of two > 1")
 
 logic[$clog2(NUM_ELEMENTS) - 1:0] offset;
 

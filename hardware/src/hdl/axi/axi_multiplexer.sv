@@ -11,8 +11,8 @@ module AXIMultiplexer
 
     ready_valid_i.s select, // #(logic[$clog2(NUM_STREAMS) - 1:0])
 
-    AXI4S.s in[NUM_STREAMS],
-    AXI4S.m out
+    AXI4S.s in[NUM_STREAMS], // #(AXI_DATA_BITS)
+    AXI4S.m out              // #(AXI_DATA_BITS)
 );
 
 ndata_i #(data8_t, AXI_DATA_BITS / 8) in_data[NUM_STREAMS](clk, rst_n);

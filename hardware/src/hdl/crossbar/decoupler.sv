@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 /**
  * The Decoupler splits up data beats of an ndata stream into individual data streams per element.
  */
@@ -14,6 +16,8 @@ module Decoupler #(
     data_i.m  out[NUM_ELEMENTS] // #(data_t)
 );
 
+`ASSERT_ELAB(NUM_ELEMENTS == in.NUM_ELEMENTS)
+
 data_i #(data_t) n_out[NUM_ELEMENTS](clk, rst_n);
 logic[NUM_ELEMENTS - 1:0] out_valid, out_ready;
 
@@ -24,7 +28,10 @@ for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_lanes
     assign out_ready[I] = out[I].ready;
 
     always_ff @(posedge clk) begin
-        if(!rst_n) begin
+        if (!rst_n) begin
+            out[I].data  <= 'X;
+            out[I].keep  <= 'X;
+            out[I].last  <= 'X;
             out[I].valid <= 1'b0;
         end else begin
             out[I].data  <= n_out[I].data;
@@ -53,7 +60,7 @@ for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_lanes
     end
 
     // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do
-    // not get in trouble with with stable assertion of the interface.
+    // not get in trouble with the stable assertion of the interface.
     assign n_out[I].ready = 1'b1;
 end
 

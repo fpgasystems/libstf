@@ -8,7 +8,7 @@
  *
  * It requires the two streams to be the same length (same number of beats)
  * otherwise it won't work. This edge case also isn't caught / asserted,
- * so it if it happens it might lead cause undefined outputs. If the two
+ * so if it happens it might cause undefined outputs. If the two
  * streams assert last on the same beat but have different keep signals
  * for each the output will be the bitwise AND of the two keeps.
  */
@@ -20,12 +20,14 @@ module NDataZip #(
     input logic clk,
     input logic rst_n,
 
-    ndata_i.s left_in, // #(left_t, NUM_ELEMENTS)
+    ndata_i.s left_in,  // #(left_t, NUM_ELEMENTS)
     ndata_i.s right_in, // #(right_t, NUM_ELEMENTS)
 
-    ndata_i.m out // #((left_t, right_t), NUM_ELEMENTS)
+    ndata_i.m out // #({left_t, right_t}, NUM_ELEMENTS)
 );
 
+`ASSERT_ELAB(NUM_ELEMENTS == left_in.NUM_ELEMENTS)
+`ASSERT_ELAB(NUM_ELEMENTS == right_in.NUM_ELEMENTS)
 `ASSERT_ELAB(NUM_ELEMENTS == out.NUM_ELEMENTS)
 
 typedef struct packed {

@@ -1,156 +1,160 @@
 `timescale 1ns / 1ps
 
+`include "libstf_macros.svh"
+
 // The old module name `FIFO` was clashing with another module in Coyote so the module was renamed
 // to `MehdiFIFO` after Dr. Mehdi Moghaddamfar who implemented it originally.
 module MehdiFIFO #(
-    parameter int DEPTH, //a power of two except 1
+    parameter int DEPTH, // A power of two > 1
     parameter int WIDTH,
     parameter STYLE = "block"
 ) (
-    input logic i_clk,
-    input logic i_rst_n,
+    input logic clk,
+    input logic rst_n,
 
-    input  logic[WIDTH - 1:0] i_data,
-    input  logic              i_valid,
-    output logic              i_ready,
+    input  logic[WIDTH - 1:0] in_data,
+    input  logic              in_valid,
+    output logic              in_ready,
 
-    output logic[WIDTH - 1:0] o_data,
-    output logic              o_valid,
-    input  logic              o_ready,
+    output logic[WIDTH - 1:0] out_data,
+    output logic              out_valid,
+    input  logic              out_ready,
 
-    output logic[$clog2(DEPTH):0] o_filling_level
+    output logic[$clog2(DEPTH):0] filling_level
 );
 
 localparam int ADDRESS_WIDTH = $clog2(DEPTH);
 
-(* ram_style = STYLE *) logic[WIDTH - 1:0] s_memory[DEPTH];
+`ASSERT_ELAB(DEPTH > 1 && 2 ** $clog2(DEPTH) == DEPTH, "DEPTH has to be a power of two > 1")
 
-logic s_write_en;
+(* ram_style = STYLE *) logic[WIDTH - 1:0] memory[DEPTH];
 
-logic[ADDRESS_WIDTH - 1:0] s_write_ptr, s_next_write_ptr, s_write_ptr_succ;
-logic[ADDRESS_WIDTH - 1:0] s_read_ptr,  s_state_read_ptr, s_next_state_read_ptr, s_read_ptr_succ;
+logic write_en;
 
-logic      s_full, s_next_full, s_empty, s_next_empty;
-logic[1:0] s_operation;
+logic[ADDRESS_WIDTH - 1:0] write_ptr, n_write_ptr, write_ptr_succ;
+logic[ADDRESS_WIDTH - 1:0] read_ptr,  state_read_ptr, n_state_read_ptr, read_ptr_succ;
+
+logic      full, n_full, empty, n_empty;
+logic[1:0] operation;
 
 // for the case that when being empty, an element is written, it takes two cycles
 // till the read can perform so this is there to make sure it all goes smoothly
-// the s_write_after_empty = '1' during that one cycle that represents this
+// the write_after_empty = '1' during that one cycle that represents this
 // particular case (cycle after the write into an empty buffer).
-logic s_write_after_empty, s_next_write_after_empty;
+logic write_after_empty, n_write_after_empty;
 
-logic[$clog2(DEPTH):0] s_filling_level, s_next_filling_level;
-logic[$clog2(DEPTH):0] s_filling_level_succ, s_filling_level_pred;
+logic[$clog2(DEPTH):0] n_filling_level;
+logic[$clog2(DEPTH):0] filling_level_succ, filling_level_pred;
 
-// memory logic
-assign s_write_en = i_valid & (~s_full);
+// -- Memory ---------------------------------------------------------------------------------------
+assign write_en = in_valid & (~full);
 
-always_ff @(posedge i_clk)
+always_ff @(posedge clk)
 begin
-    if (s_write_en == 1'b1) begin
-        s_memory[s_write_ptr] <= i_data;
+    if (write_en == 1'b1) begin
+        memory[write_ptr] <= in_data;
     end
-    o_data <= s_memory[s_read_ptr];
+    out_data <= memory[read_ptr];
 end
 
-// next state registers
-always_ff @(posedge i_clk)
+// -- State registers ------------------------------------------------------------------------------
+always_ff @(posedge clk)
 begin
-    if (i_rst_n == 1'b0) begin
-        s_state_read_ptr <= '0;
-        s_write_ptr      <= '0;
-        s_empty          <= 1'b1;
-        s_full           <= 1'b0;
+    if (!rst_n) begin
+        state_read_ptr    <= '0;
+        write_ptr         <= '0;
+        empty             <= 1'b1;
+        full              <= 1'b0;
+        write_after_empty <= 1'b0;
 
-        s_filling_level <= '0;
+        filling_level <= '0;
     end else begin
-        s_state_read_ptr <= s_next_state_read_ptr;
-        s_write_ptr      <= s_next_write_ptr;
-        s_empty          <= s_next_empty;
-        s_full           <= s_next_full;
+        state_read_ptr    <= n_state_read_ptr;
+        write_ptr         <= n_write_ptr;
+        empty             <= n_empty;
+        full              <= n_full;
+        write_after_empty <= n_write_after_empty;
 
-        s_filling_level <= s_next_filling_level;
+        filling_level <= n_filling_level;
     end
-
-    s_write_after_empty <= s_next_write_after_empty;
 end
 
-// next state logic
-assign s_write_ptr_succ     = s_write_ptr + 1'b1;
-assign s_read_ptr_succ      = s_state_read_ptr + 1'b1;
-assign s_filling_level_succ = s_filling_level + 1'b1;
-assign s_filling_level_pred = s_filling_level - 1'b1;
+// -- Next state logic -----------------------------------------------------------------------------
+assign write_ptr_succ     = write_ptr + 1'b1;
+assign read_ptr_succ      = state_read_ptr + 1'b1;
+assign filling_level_succ = filling_level + 1'b1;
+assign filling_level_pred = filling_level - 1'b1;
 
-// someone want to write to fifo || someone is reading from fifo
-assign s_operation = {i_valid, o_ready};
+// someone wants to write to fifo || someone is reading from fifo
+assign operation = {in_valid, out_ready};
 
 always_comb begin
-    s_next_write_ptr = s_write_ptr;
+    n_write_ptr = write_ptr;
 
-    s_next_full  = s_full;
-    s_next_empty = s_empty;
+    n_full  = full;
+    n_empty = empty;
 
-    s_next_write_after_empty = 1'b0;
-    s_next_state_read_ptr    = s_state_read_ptr;
-    s_read_ptr               = s_state_read_ptr;
+    n_write_after_empty = 1'b0;
+    n_state_read_ptr    = state_read_ptr;
+    read_ptr            = state_read_ptr;
 
-    s_next_filling_level = s_filling_level;
+    n_filling_level = filling_level;
 
-    case (s_operation)
+    case (operation)
         2'b00: begin
             //no one reading or trying to write, nothing should happen
         end
         2'b01: begin
             //someone is trying to read from the fifo
-            if ((s_empty == 1'b0) && (s_write_after_empty == 1'b0)) begin
-                s_next_state_read_ptr = s_read_ptr_succ;
-                s_read_ptr            = s_read_ptr_succ;
-                s_next_full           = 1'b0;
-                if (s_write_ptr == s_read_ptr_succ) begin
-                     s_next_empty = 1'b1;
+            if ((empty == 1'b0) && (write_after_empty == 1'b0)) begin
+                n_state_read_ptr = read_ptr_succ;
+                read_ptr         = read_ptr_succ;
+                n_full           = 1'b0;
+                if (write_ptr == read_ptr_succ) begin
+                     n_empty = 1'b1;
                 end
-                s_next_filling_level = s_filling_level_pred;
+                n_filling_level = filling_level_pred;
             end
         end
         2'b10: begin
             //someone is trying to write to the fifo
-            if (s_full == 1'b0) begin
-                s_next_write_ptr = s_write_ptr_succ;
-                if (s_empty == 1'b1) begin
-                    s_next_write_after_empty = 1'b1;
+            if (full == 1'b0) begin
+                n_write_ptr = write_ptr_succ;
+                if (empty == 1'b1) begin
+                    n_write_after_empty = 1'b1;
                 end
-                s_next_empty = 1'b0;
-                if (s_filling_level == ($clog2(DEPTH) + 1)'(DEPTH - 1)) begin
-                    s_next_full = 1'b1;
+                n_empty = 1'b0;
+                if (filling_level == ($clog2(DEPTH) + 1)'(DEPTH - 1)) begin
+                    n_full = 1'b1;
                 end
-                s_next_filling_level = s_filling_level_succ;
+                n_filling_level = filling_level_succ;
             end
         end
         2'b11: begin
-            if (s_empty == 1'b1) begin
-                s_next_write_ptr         = s_write_ptr_succ;
-                s_next_write_after_empty = 1'b1;
-                s_next_empty             = 1'b0;
-                s_next_filling_level     = s_filling_level_succ;
-            end else if (s_full == 1'b1) begin
-                s_next_state_read_ptr = s_read_ptr_succ;
-                s_read_ptr            = s_read_ptr_succ;
-                s_next_full           = 1'b0;
-                s_next_filling_level  = s_filling_level_pred;
+            if (empty == 1'b1) begin
+                n_write_ptr         = write_ptr_succ;
+                n_write_after_empty = 1'b1;
+                n_empty             = 1'b0;
+                n_filling_level     = filling_level_succ;
+            end else if (full == 1'b1) begin
+                n_state_read_ptr = read_ptr_succ;
+                read_ptr         = read_ptr_succ;
+                n_full           = 1'b0;
+                n_filling_level  = filling_level_pred;
             end else begin
-                if (s_write_after_empty == 1'b0) begin
-                    s_next_state_read_ptr = s_read_ptr_succ;
-                    s_read_ptr            = s_read_ptr_succ;
+                if (write_after_empty == 1'b0) begin
+                    n_state_read_ptr = read_ptr_succ;
+                    read_ptr         = read_ptr_succ;
 
                     //case where there is only 1 element in there and we do a read/write
-                    if (s_read_ptr_succ == s_write_ptr) begin
-                        s_next_write_after_empty = 1'b1;
+                    if (read_ptr_succ == write_ptr) begin
+                        n_write_after_empty = 1'b1;
                     end
                 end else begin
-                    s_next_filling_level = s_filling_level_succ;
+                    n_filling_level = filling_level_succ;
                 end
 
-                s_next_write_ptr = s_write_ptr_succ;
+                n_write_ptr = write_ptr_succ;
             end
         end
         default: begin
@@ -159,12 +163,10 @@ always_comb begin
     endcase
 end
 
-// output signals
-assign o_valid = (~s_empty) & (~s_write_after_empty);
+// -- Outputs --------------------------------------------------------------------------------------
+assign out_valid = (~empty) & (~write_after_empty);
 
 // either we are not full, or we are but we are reading-writing
-assign i_ready = (~s_full) & i_rst_n;
-
-assign o_filling_level = s_filling_level;
+assign in_ready = (~full) & rst_n;
 
 endmodule

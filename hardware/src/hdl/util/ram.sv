@@ -20,7 +20,7 @@
  *   ADDR_WIDTH        - Width of the address.
  *   DEPTH             - Number of words, at most 2**ADDR_WIDTH (the default). Only addresses below
  *                       DEPTH are valid. This can be used for non-power of two sized RAMs. The RAM
- *                       is the instead sized to power of underlying hardware component.
+ *                       is then instead sized to power of underlying hardware component.
  *   STYLE             - Target cell, "block" (BRAM) or "ultra" (URAM).
  *   READ_AFTER_WRITE  - Forward a write seen one cycle before a same-address read.
  *   READ_DURING_WRITE - Forward a write seen in the same cycle as a same-address read.
@@ -53,6 +53,9 @@ module RAM #(
 
 `ASSERT_ELAB(STYLE == "block" || STYLE == "ultra")
 `ASSERT_ELAB(DEPTH > 0 && DEPTH <= 2 ** ADDR_WIDTH)
+`ASSERT_ELAB(READ_AFTER_WRITE == 0 || READ_AFTER_WRITE == 1)
+`ASSERT_ELAB(READ_DURING_WRITE == 0 || READ_DURING_WRITE == 1)
+`ASSERT_ELAB(PACK == 0 || PACK == 1)
 
 localparam int LINE_WIDTH = STYLE == "ultra" ? 72 : 36;
 localparam int CELL_DEPTH = STYLE == "ultra" ? 4096 : 1024;

@@ -6,11 +6,11 @@
 `include "config_macros.svh"
 
 /**
- * This module takes the data from input_data and transfers it to the buffers provided by
+ * This module takes the data from the in stream and transfers it to the buffers provided by
  * mem_config via FPGA-initiated transfers. These transfers are triggered via the sq_wr interface
  * and acknowledged from the host via cq_wr.
- * Should the current buffer, provided via mem_config, become full or the input_data assert
- * the last signal, an interrupt is triggered for the host. The host than can act accordingly and,
+ * Should the current buffer, provided via mem_config, become full or the in stream assert
+ * the last signal, an interrupt is triggered for the host. The host then can act accordingly and,
  * e.g., allocate more memory. The interrupt is only triggered once all transfers to the buffer
  * completed. However, we already continue with the next buffer in the meantime. The issued
  * interface already signals once all transfers to a buffer were requested.
@@ -18,12 +18,12 @@
  * This component allows the following configurations:
  * STRM                  = The kind of Coyote stream. One of: STRM_CARD, STRM_HOST, STRM_TCP, or
  *                         STRM_RDMA
- * AXI_STRM_ID           = Id of the stream the data will be send on
+ * AXI_STRM_ID           = Id of the stream the data will be sent on
  * IS_LOCAL              = Whether this is a LOCAL_TRANSFER, i.e. between FPGA and host (1) or if
  *                         RDMA is used (0)
  * TRANSFER_LENGTH_BYTES = How many bytes each transfer to the host should have
  *
- * The output_data port should be connected to the AXI stream of the stream as configured via the
+ * The out stream should be connected to the AXI stream of the stream as configured via the
  * STRM parameter.
  *
  * IMPORTANT:
@@ -43,18 +43,18 @@ module StreamWriter
     input logic clk,
     input logic rst_n,
 
-    metaIntf.m sq_wr,
-    metaIntf.s cq_wr,
+    metaIntf.m sq_wr, // #(req_t)
+    metaIntf.s cq_wr, // #(ack_t)
 
-    stream_writer_notify_i .m notify, // This module triggers an interrupt when more
-                                      // memory is required or all transfers are completed
+    stream_writer_notify_i.m notify, // This module triggers an interrupt when more
+                                     // memory is required or all transfers are completed
     stream_writer_notify_i.m issued, // Signals as soon as all transfers to a buffer were requested,
                                      // i.e., before they completed. Ignores the ready signal.
 
     mem_config_i.s mem_config,
 
-    AXI4S.s  input_data,
-    AXI4SR.m output_data
+    AXI4S.s  in, // #(AXI_DATA_BITS)
+    AXI4SR.m out // #(AXI_DATA_BITS)
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -70,19 +70,22 @@ localparam int AXI_DATA_BYTES = (AXI_DATA_BITS / 8);
 
 // TRANSFER_LENGTH_BYTES must be a multiple of AXI_DATA_BYTES
 `ASSERT_ELAB(TRANSFER_LENGTH_BYTES % AXI_DATA_BYTES == 0)
-// This limitations is because we support only 3 bits for the stream identifier in the
+// The buffer capacity is computed with a shift by $clog2(TRANSFER_LENGTH_BYTES)
+`ASSERT_ELAB(2 ** $clog2(TRANSFER_LENGTH_BYTES) == TRANSFER_LENGTH_BYTES,
+    "TRANSFER_LENGTH_BYTES has to be a power of two")
+// This limitation is because we support only 3 bits for the stream identifier in the
 // interrupt/notify value
 `ASSERT_ELAB(N_STRM_AXI <= 8)
 
 `ifndef SYNTHESIS
 // Input stream
 assert property (@(posedge clk) disable iff (!reset_synced)
-    !input_data.tvalid || input_data.tlast || &input_data.tkeep)
-else $fatal(1, "Non-last keep signal (%h) must be all 1s!", input_data.tkeep);
+    !in.tvalid || in.tlast || &in.tkeep)
+else $fatal(1, "Non-last keep signal (%h) must be all 1s!", in.tkeep);
 assert property (@(posedge clk) disable iff (!reset_synced)
-    !input_data.tvalid || !input_data.tlast || $onehot0(input_data.tkeep + 1'b1))
+    !in.tvalid || !in.tlast || $onehot0(in.tkeep + 1'b1))
 else $fatal(1, "Last keep signal (%h) must be contiguous starting from the least significant bit!",
-    input_data.tkeep);
+    in.tkeep);
 
 // Buffers
 assert property (@(posedge clk) disable iff (!reset_synced)
@@ -101,41 +104,41 @@ logic curr_len_valid;
 logic curr_len_ready;
 
 // Suppress null data beats. Otherwise, the last interrupt is not correctly triggered
-AXI4S input_data_no_nulls(.aclk(clk), .aresetn(reset_synced));
+AXI4S in_no_nulls(.aclk(clk), .aresetn(reset_synced));
 AXINullBeatSuppressor inst_null_beat_suppressor (
     .clk(clk),
     .rst_n(reset_synced),
 
-    .in(input_data),
-    .out(input_data_no_nulls)
+    .in(in),
+    .out(in_no_nulls)
 );
 
 // After the null beat suppression, a null beat can only be the last beat of an empty stream. It
 // only enters the length FIFO (with length 0) and not the data FIFO because no transfer would ever
 // read it from there. It would otherwise end up as the first beat of the next stream.
 logic is_empty_stream;
-assign is_empty_stream = input_data_no_nulls.tvalid && input_data_no_nulls.tkeep == '0;
+assign is_empty_stream = in_no_nulls.tvalid && in_no_nulls.tkeep == '0;
 
 // The input is ready if there is space in both FIFOs
-assign input_data_no_nulls.tready = (data_fifo_in.tready || is_empty_stream) & curr_len_ready;
-assign data_fifo_in.tdata  = input_data_no_nulls.tdata;
-assign data_fifo_in.tkeep  = input_data_no_nulls.tkeep;
-assign data_fifo_in.tvalid = input_data_no_nulls.tvalid && !is_empty_stream && curr_len_ready;
-assign data_fifo_in.tlast  = input_data_no_nulls.tlast;
+assign in_no_nulls.tready = (data_fifo_in.tready || is_empty_stream) & curr_len_ready;
+assign data_fifo_in.tdata  = in_no_nulls.tdata;
+assign data_fifo_in.tkeep  = in_no_nulls.tkeep;
+assign data_fifo_in.tvalid = in_no_nulls.tvalid && !is_empty_stream && curr_len_ready;
+assign data_fifo_in.tlast  = in_no_nulls.tlast;
 
 // Whether the transfer will get full this cycle
 logic is_split;
-assign is_split = curr_len == TRANSFER_LENGTH_BYTES - AXI_DATA_BYTES || input_data_no_nulls.tlast;
+assign is_split = curr_len == TRANSFER_LENGTH_BYTES - AXI_DATA_BYTES || in_no_nulls.tlast;
 // Counts the number of bytes we will need to transfer.
 // Whenever we reached a full transfer, the length is split.
-assign curr_len_succ = curr_len + $countones(input_data_no_nulls.tkeep);
-assign curr_len_valid = is_split && input_data_no_nulls.tvalid && input_data_no_nulls.tready;
+assign curr_len_succ = curr_len + $countones(in_no_nulls.tkeep);
+assign curr_len_valid = is_split && in_no_nulls.tvalid && in_no_nulls.tready;
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         curr_len <= 0;
     end else begin
-        if (input_data_no_nulls.tvalid && input_data_no_nulls.tready) begin
+        if (in_no_nulls.tvalid && in_no_nulls.tready) begin
             if (is_split) begin
                 curr_len <= 0;
             end else begin
@@ -157,8 +160,8 @@ FIFOAXI #(
     .clk(clk),
     .rst_n(reset_synced),
 
-    .i_data(data_fifo_in),
-    .o_data(axis_data_fifo),
+    .in(data_fifo_in),
+    .out(axis_data_fifo),
 
     .filling_level()
 );
@@ -169,18 +172,18 @@ MehdiFIFO #(
     .WIDTH(TRANSFER_ADDRESS_LEN_BITS),
     .DEPTH(16)
 ) inst_len_fifo (
-    .i_clk(clk),
-    .i_rst_n(reset_synced),
+    .clk(clk),
+    .rst_n(reset_synced),
 
-    .i_data(curr_len_succ),
-    .i_valid(curr_len_valid),
-    .i_ready(curr_len_ready),
+    .in_data(curr_len_succ),
+    .in_valid(curr_len_valid),
+    .in_ready(curr_len_ready),
 
-    .o_data(next_len),
-    .o_valid(next_len_valid),
-    .o_ready(next_len_ready),
+    .out_data(next_len),
+    .out_valid(next_len_valid),
+    .out_ready(next_len_ready),
 
-    .o_filling_level()
+    .filling_level()
 );
 
 // -- Output logic ---------------------------------------------------------------------------------
@@ -252,18 +255,18 @@ MehdiFIFO #(
     .WIDTH($bits(pending_notify_t)),
     .DEPTH(PENDING_NOTIFY_DEPTH)
 ) inst_pending_notify_fifo (
-    .i_clk(clk),
-    .i_rst_n(reset_synced),
+    .clk(clk),
+    .rst_n(reset_synced),
 
-    .i_data(pending_in),
-    .i_valid(pending_in_valid),
-    .i_ready(pending_in_ready),
+    .in_data(pending_in),
+    .in_valid(pending_in_valid),
+    .in_ready(pending_in_ready),
 
-    .o_data(pending_out),
-    .o_valid(pending_out_valid),
-    .o_ready(pending_out_ready),
+    .out_data(pending_out),
+    .out_valid(pending_out_valid),
+    .out_ready(pending_out_ready),
 
-    .o_filling_level()
+    .filling_level()
 );
 
 `ifndef SYNTHESIS
@@ -313,10 +316,10 @@ end
 
 // -- State machine --------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
-        bytes_written_to_buffer   <= 'X;
-        beats_written_to_transfer <= 'X;
-        num_requests              <= 'X;
+    if (!reset_synced) begin
+        bytes_written_to_buffer   <= '0;
+        beats_written_to_transfer <= '0;
+        num_requests              <= '0;
         num_completions           <= '0;
 
         vaddr        <= 'X;
@@ -477,7 +480,7 @@ AXISkidBuffer inst_skid_buffer (
     .out(output_axis)
 );
 
-`AXIS_ASSIGN(output_axis, output_data);
-assign output_data.tid = '0;
+`AXIS_ASSIGN(output_axis, out);
+assign out.tid = '0;
 
 endmodule

@@ -30,21 +30,21 @@ logic[OFFSET_WIDTH - 1:0]       offset_pipes[NUM_PIPES];
 assign offset_pipes[0] = offset;
 
 // Generate pipeline stages
-for (genvar i = 0; i < NUM_STAGES; i++) begin : gen_stages
+for (genvar I = 0; I < NUM_STAGES; I++) begin : gen_stages
     ConstantShifter #(
-        .SHIFT_INDEX(i),
+        .SHIFT_INDEX(I),
         .data_t(data_t),
         .NUM_ELEMENTS(NUM_ELEMENTS),
-        .REGISTER(libstf::PUT_REGISTER_AT(i + 1, NUM_STAGES, REGISTER_LEVELS))
+        .REGISTER(libstf::PUT_REGISTER_AT(I + 1, NUM_STAGES, REGISTER_LEVELS))
     ) inst_shifter (
         .clk(clk),
         .rst_n(rst_n),
 
-        .in(pipes[i]),
-        .offset_in(offset_pipes[i]),
+        .in(pipes[I]),
+        .offset_in(offset_pipes[I]),
 
-        .out(pipes[i + 1]),
-        .offset_out(offset_pipes[i + 1])
+        .out(pipes[I + 1]),
+        .offset_out(offset_pipes[I + 1])
     );
 end
 

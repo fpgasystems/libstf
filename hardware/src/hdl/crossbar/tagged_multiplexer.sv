@@ -12,7 +12,7 @@ module TaggedMultiplexer #(
     parameter type data_t,
     parameter int NUM_INPUTS,
     parameter int LAST_HANDLING = 1, // 0: Wait until we see an element with a last signal for
-                                     //    every input stream and produce a dummy last element; 1:
+                                     //    every input stream and produce a dummy last element, 1:
                                      //    Directly forward the incoming elements as they are
     parameter int FILTER_KEEP = 1    // 0: Forward all elements even if the keep signal is 0, 1: Do
                                      //    not forward elements where keep is 0
@@ -30,6 +30,9 @@ module TaggedMultiplexer #(
 localparam int WAIT_ALL = 0;
 localparam int FORWARD = 1;
 
+`ASSERT_ELAB(LAST_HANDLING == WAIT_ALL || LAST_HANDLING == FORWARD)
+`ASSERT_ELAB(FILTER_KEEP == 0 || FILTER_KEEP == 1)
+
 // -- Multiplex round robin ------------------------------------------------------------------------
 logic[NUM_INPUTS - 1:0] tags, is_selected;
 data_i #(data_t) selected(clk, rst_n);
@@ -41,7 +44,7 @@ logic[NUM_INPUTS - 1:0] last_seen, n_last_seen;
 
 data_i #(data_t) mux_out(clk, rst_n), n_mux_out(clk, rst_n);
 
-for(genvar I = 0; I < NUM_INPUTS; I++) begin : gen_inputs
+for (genvar I = 0; I < NUM_INPUTS; I++) begin : gen_inputs
     // We need to reassign these values to local arrays because SystemVerilog thinks the iterator in
     // a process is not constant for arrays of interfaces
     assign in[I].ready = mux_in_ready[I];
@@ -184,7 +187,7 @@ always_comb begin
 end
 
 // Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
-// get in trouble with with stable assertion of the interface.
+// get in trouble with the stable assertion of the interface.
 assign selected.ready  = 1'b1;
 assign n_mux_out.ready = 1'b1;
 

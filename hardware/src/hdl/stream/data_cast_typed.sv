@@ -29,6 +29,7 @@ module TypedNDataCast
 );
 
 `ASSERT_ELAB(DATABEAT_SIZE == in.DATABEAT_SIZE)
+`ASSERT_ELAB(DATABEAT_SIZE == out.DATABEAT_SIZE)
 
 // The output beat is filled in quarters: one 32 bit -> 8 bit input beat fills one quarter, one
 // 32 bit -> 16 bit or 64 bit -> 32 bit input beat two quarters, and a pass-through beat all four.
@@ -52,7 +53,7 @@ logic in_fire;
 assign in_fire = in.valid && in.ready;
 
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         keep_type.data  <= 'X;
         keep_type.valid <= 1'b0;
     end else begin
@@ -153,7 +154,7 @@ assign beat_full = 3'(pos) + step == 3'(NUM_QUARTERS);
 assign in.ready = typ.valid && (!valid || out.ready);
 
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         pos   <= '0;
         data  <= 'X;
         keep  <= 'X;

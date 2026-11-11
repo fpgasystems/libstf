@@ -25,7 +25,7 @@ module GlobalConfig
     input logic clk,
     input logic rst_n,
 
-    AXI4L.s axi_ctrl,
+    AXI4L.s axi_ctrl, // #(AXI_ADDR_BITS, AXIL_DATA_BITS)
 
     write_config_i.m write_configs[NUM_CONFIGS],
     read_config_i.m  read_configs[NUM_CONFIGS]
@@ -68,9 +68,7 @@ localparam int AXI_ADDR_BITS = ADDR_LSB + ADDR_MSB;
 localparam logic[1:0] RESP_OKAY   = 2'b00;
 localparam logic[1:0] RESP_SLVERR = 2'b10;
 
-// =================================================================================================
-// Write
-// =================================================================================================
+// -- Write ----------------------------------------------------------------------------------------
 
 // Note: It is possible that the write address & data are valid but there is no valid data to write
 //       (axi_ctrl.wstrb is all zeroes). In this case we cannot set the register to valid as this
@@ -82,7 +80,7 @@ assign any_wstrb = |axi_ctrl.wstrb;
 write_config_i pre_write_splitter_config(.clk(clk), .rst_n(reset_synced));
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         pre_write_splitter_config.data  <= 'X;
         pre_write_splitter_config.addr  <= 'X;
         pre_write_splitter_config.valid <= 1'b0;
@@ -121,7 +119,7 @@ assign axi_ctrl.bresp = RESP_OKAY; // We cannot correctly handle errors here bec
                                    // RESP_OKAY.
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         axi_ctrl.bvalid <= 1'b0;
     end else begin
         if (axi_ctrl.awvalid && axi_ctrl.wvalid) begin
@@ -132,14 +130,12 @@ always_ff @(posedge clk) begin
     end
 end
 
-// =================================================================================================
-// Read
-// =================================================================================================
+// -- Read -----------------------------------------------------------------------------------------
 read_config_i pre_read_splitter_config(.clk(clk), .rst_n(reset_synced));
 read_config_i internal_read_configs[NUM_CONFIGS + 1](.clk(clk), .rst_n(reset_synced));
 
 always_ff @(posedge clk) begin
-    if(reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         pre_read_splitter_config.read_addr  <= 'X;
         pre_read_splitter_config.read_valid <= 1'b0;
     end else begin

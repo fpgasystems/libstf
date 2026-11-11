@@ -26,14 +26,14 @@ module OutputWriter
     input logic clk,
     input logic rst_n,
 
-    metaIntf.m sq_wr,
-    metaIntf.s cq_wr,
-    metaIntf.m notify,
+    metaIntf.m sq_wr,  // #(req_t)
+    metaIntf.s cq_wr,  // #(ack_t)
+    metaIntf.m notify, // #(irq_not_t)
 
     mem_config_i.s mem_config[NUM_PORTS],
 
-    AXI4S.s  data_in[NUM_PORTS],
-    AXI4SR.m data_out[NUM_STREAMS],
+    AXI4S.s  in[NUM_PORTS],    // #(AXI_DATA_BITS)
+    AXI4SR.m out[NUM_STREAMS], // #(AXI_DATA_BITS)
 
     // Counts the interrupts (notifications) sent to the host.
     output data64_t notify_count
@@ -54,15 +54,15 @@ endfunction
 `ASSERT_ELAB(NUM_PORTS <= 8, "Interrupts carry the port id in 3 bits")
 
 `ifndef SYNTHESIS
-for(genvar I = 0; I < NUM_PORTS; I++) begin : gen_port_assertions
+for (genvar I = 0; I < NUM_PORTS; I++) begin : gen_port_assertions
     assert property (@(posedge clk) disable iff (!reset_synced)
-        !data_in[I].tvalid || data_in[I].tlast || &data_in[I].tkeep)
-    else $fatal(1, "Non-last keep signal (%h) must be all 1s!", data_in[I].tkeep);
+        !in[I].tvalid || in[I].tlast || &in[I].tkeep)
+    else $fatal(1, "Non-last keep signal (%h) must be all 1s!", in[I].tkeep);
     assert property (@(posedge clk) disable iff (!reset_synced)
-        !data_in[I].tvalid || !data_in[I].tlast || $onehot0(data_in[I].tkeep + 1'b1))
+        !in[I].tvalid || !in[I].tlast || $onehot0(in[I].tkeep + 1'b1))
     else $fatal(1,
         "Last keep signal (%h) must be contiguous starting from the least significant bit!",
-        data_in[I].tkeep);
+        in[I].tkeep);
 end
 `endif
 
@@ -77,9 +77,9 @@ MetaIntfArbiter #(
 ) inst_sq_wr_arbiter (
   .clk(clk),
   .rst_n(reset_synced),
-  .intf_in(sq_wr_strm),
-  .intf_out(sq_wr),
-  .intf_out_select()
+  .in(sq_wr_strm),
+  .out(sq_wr),
+  .out_select()
 );
 
 CQDemultiplexer #(
@@ -87,8 +87,8 @@ CQDemultiplexer #(
 ) inst_cq_wr_de_mux (
   .clk(clk),
   .rst_n(reset_synced),
-  .data_in(cq_wr),
-  .data_out(cq_wr_strm)
+  .in(cq_wr),
+  .out(cq_wr_strm)
 );
 
 MetaIntfArbiter #(
@@ -97,9 +97,9 @@ MetaIntfArbiter #(
 ) inst_notify_arbiter (
   .clk(clk),
   .rst_n(reset_synced),
-  .intf_in(notify_port),
-  .intf_out(notify),
-  .intf_out_select()
+  .in(notify_port),
+  .out(notify),
+  .out_select()
 );
 
 // -- Notify counter -------------------------------------------------------------------------------
@@ -151,8 +151,8 @@ for (genvar S = 0; S < NUM_STREAMS; S++) begin : gen_streams
 
             .mem_config(mem_config[FIRST + J]),
 
-            .input_data(data_in[FIRST + J]),
-            .output_data(writer_outs[J])
+            .in(in[FIRST + J]),
+            .out(writer_outs[J])
         );
 
         // The interrupt carries the port, not the stream
@@ -192,11 +192,11 @@ for (genvar S = 0; S < NUM_STREAMS; S++) begin : gen_streams
 
             .sq_wr_in(sq_wr_writers),
             .cq_wr_out(cq_wr_writers),
-            .data_in(writer_outs),
+            .in(writer_outs),
 
             .sq_wr_out(sq_wr_stream),
             .cq_wr_in(cq_wr_strm[S]),
-            .data_out(stream_out)
+            .out(stream_out)
         );
     end
 
@@ -212,25 +212,25 @@ for (genvar S = 0; S < NUM_STREAMS; S++) begin : gen_streams
     );
 
     AXI4S stream_out_s (.aclk(clk), .aresetn(reset_synced));
-    AXI4S data_out_s   (.aclk(clk), .aresetn(reset_synced));
+    AXI4S out_s        (.aclk(clk), .aresetn(reset_synced));
 
     // The StreamWriter always sends with tid 0
     `AXIS_ASSIGN(stream_out, stream_out_s)
 
-    AXISkidBuffer inst_data_out_skid (
+    AXISkidBuffer inst_out_skid (
         .clk(clk),
         .rst_n(reset_synced),
 
         .in(stream_out_s),
-        .out(data_out_s)
+        .out(out_s)
     );
 
-    `AXIS_ASSIGN(data_out_s, data_out[S])
-    assign data_out[S].tid = '0;
+    `AXIS_ASSIGN(out_s, out[S])
+    assign out[S].tid = '0;
 `else
     `ASSERT_ELAB(N == 1, "Without the output writer every port needs its own stream")
 
-    // Tie of the interfaces we don't need
+    // Tie off the interfaces we don't need
     always_comb sq_wr_strm [S].tie_off_m();
     always_comb notify_port[FIRST].tie_off_m();
     always_comb cq_wr_strm [S].tie_off_s();
@@ -239,7 +239,7 @@ for (genvar S = 0; S < NUM_STREAMS; S++) begin : gen_streams
 
     // The output writer can be disabled for certain test cases.
     // In this case, we simply pipe through all the data
-    `AXIS_ASSIGN(data_in[FIRST], data_out[S]);
+    `AXIS_ASSIGN(in[FIRST], out[S]);
 `endif
 end
 

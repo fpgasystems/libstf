@@ -28,6 +28,7 @@ module ReadConfigSplitter
 
 `ASSERT_ELAB(NUM_CONFIGS > 1)
 `ASSERT_ELAB(ADDR_SPACE_BOUNDS[0] == 0)
+`ASSERT_ELAB(FIFO_DEPTH > 1 && 2 ** $clog2(FIFO_DEPTH) == FIFO_DEPTH)
 
 localparam int FIFO_WIDTH = $clog2(NUM_CONFIGS);
 
@@ -89,18 +90,18 @@ MehdiFIFO #(
     .DEPTH(FIFO_DEPTH),
     .WIDTH(FIFO_WIDTH)
 ) inst_read_fifo (
-    .i_clk(clk),
-    .i_rst_n(reset_synced),
+    .clk(clk),
+    .rst_n(reset_synced),
 
-    .i_data (read_port),
-    .i_valid(read_port_valid),
-    .i_ready(read_port_ready), // We assume that there is always space
+    .in_data (read_port),
+    .in_valid(read_port_valid),
+    .in_ready(read_port_ready), // We assume that there is always space
 
-    .o_data (fifo_port),
-    .o_valid(fifo_port_valid),
-    .o_ready(do_return),
+    .out_data (fifo_port),
+    .out_valid(fifo_port_valid),
+    .out_ready(do_return),
 
-    .o_filling_level()
+    .filling_level()
 );
 
 // Only ready to receive responses when we can forward them upstream

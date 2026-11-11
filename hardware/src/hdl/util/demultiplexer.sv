@@ -13,62 +13,65 @@ module Demultiplexer #(
     input logic clk,
     input logic rst_n,
 
-    input  data_t i_data,
-    output logic     i_ready,
-    input  logic     i_valid,
+    input  data_t in_data,
+    output logic  in_ready,
+    input  logic  in_valid,
 
     // The index of the stream the input should be assigned to
     input logic [N_BITS - 1: 0] stream_select,
 
-    output data_t o_data [N_STREAMS],
-    input  logic     o_ready[N_STREAMS],
-    output logic     o_valid[N_STREAMS]
+    output data_t out_data [N_STREAMS],
+    input  logic  out_ready[N_STREAMS],
+    output logic  out_valid[N_STREAMS]
 );
+
+`ASSERT_ELAB(N_STREAMS >= 2)
+`ASSERT_ELAB(N_BITS == $clog2(N_STREAMS), "N_BITS must not be overwritten")
 
 `RESET_RESYNC // Reset pipelining
 
 // The vector is padded because stream_select can in theory go out of range. An out-of-range select
-// then yields i_ready = 0 (well-defined) rather than undefined behavior.
+// then yields in_ready = 0 (well-defined) rather than undefined behavior.
 logic[2**N_BITS - 1:0] can_load_padded;
 
-data_t n_o_data [N_STREAMS];
-logic     n_o_valid[N_STREAMS];
+data_t n_out_data [N_STREAMS];
+logic  n_out_valid[N_STREAMS];
 
 always_comb begin
     can_load_padded = '0;
 
     for (int i = 0; i < N_STREAMS; i++) begin
-        can_load_padded[i] = ~o_valid[i] | o_ready[i];
+        can_load_padded[i] = ~out_valid[i] | out_ready[i];
     end
 end
 
 // Ready-chaining from the correct output stream
-assign i_ready = can_load_padded[stream_select];
+assign in_ready = can_load_padded[stream_select];
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         for (int s = 0; s < N_STREAMS; s++) begin
-            o_data[s]  <= 'X;
-            o_valid[s] <= 1'b0;
+            out_data[s]  <= 'X;
+            out_valid[s] <= 1'b0;
         end
     end else begin
         for (int s = 0; s < N_STREAMS; s++) begin
-            o_data[s]  <= n_o_data[s];
-            o_valid[s] <= n_o_valid[s];
+            out_data[s]  <= n_out_data[s];
+            out_valid[s] <= n_out_valid[s];
         end
     end
 end
 
 always_comb begin
     for (int s = 0; s < N_STREAMS; s++) begin
-        n_o_data[s]  = o_data[s];
-        n_o_valid[s] = o_valid[s];
+        n_out_data[s]  = out_data[s];
+        n_out_valid[s] = out_valid[s];
 
-        if (i_valid && i_ready && stream_select == s) begin
-            n_o_data[s]  = i_data;
-            n_o_valid[s] = 1'b1;
-        end else if (o_valid[s] && o_ready[s]) begin
-            n_o_valid[s] = 1'b0;
+        if (in_valid && in_ready && stream_select == s) begin
+            n_out_data[s]  = in_data;
+            n_out_valid[s] = 1'b1;
+        end else if (out_valid[s] && out_ready[s]) begin
+            n_out_valid[s] = 1'b0;
         end
     end
 end
@@ -76,8 +79,7 @@ end
 endmodule
 
 // This module provides a de-mux implementation for the read/write completion
-// queue. Both data_in, and data_out should be metaIntf instances that
-// use the ack_t as their data type.
+// queue. Both in and out should be metaIntf instances that use the ack_t as their data type.
 //
 // The de muxing in this module is done based on the data.dest field in the input
 // metaIntf. In other words, the output interfaces will get data, based on the
@@ -91,21 +93,21 @@ module CQDemultiplexer
     input logic         rst_n,
 
     // The input interface to demux
-    metaIntf.s          data_in,
+    metaIntf.s          in, // #(ack_t)
 
     // The output stream to assign the data to
-    metaIntf.m          data_out[N_STREAMS]
+    metaIntf.m          out[N_STREAMS] // #(ack_t)
 );
 
 `ASSERT_ELAB(N_STREAMS > 0)
 
 generate if (N_STREAMS == 1) begin : gen_single_stream
-    `READY_VALID_ASSIGN(data_in, data_out[0])
+    `READY_VALID_ASSIGN(in, out[0])
 end else begin : gen_demux
     // Intermediate signals for de_mux outputs
-    ack_t o_data_packed [N_STREAMS];
-    logic o_ready_array [N_STREAMS];
-    logic o_valid_array [N_STREAMS];
+    ack_t out_data_packed [N_STREAMS];
+    logic out_ready_array [N_STREAMS];
+    logic out_valid_array [N_STREAMS];
 
     // Use the de-muxing implementation from above
     Demultiplexer #(
@@ -115,23 +117,23 @@ end else begin : gen_demux
         .clk(clk),
         .rst_n(rst_n),
 
-        .i_data(data_in.data),
-        .i_ready(data_in.ready),
-        .i_valid(data_in.valid),
+        .in_data(in.data),
+        .in_ready(in.ready),
+        .in_valid(in.valid),
 
         // Use the dest field of the data to control the de mux!
-        .stream_select(data_in.data.dest[$clog2(N_STREAMS) - 1:0]),
+        .stream_select(in.data.dest[$clog2(N_STREAMS) - 1:0]),
 
-        .o_data(o_data_packed),
-        .o_ready(o_ready_array),
-        .o_valid(o_valid_array)
+        .out_data(out_data_packed),
+        .out_ready(out_ready_array),
+        .out_valid(out_valid_array)
     );
 
     // Unpack the outputs and connect to cq instances
-    for (genvar stream = 0; stream < N_STREAMS; stream++) begin : gen_streams
-        assign data_out[stream].data = o_data_packed[stream];
-        assign data_out[stream].valid = o_valid_array[stream];
-        assign o_ready_array[stream] = data_out[stream].ready;
+    for (genvar STREAM = 0; STREAM < N_STREAMS; STREAM++) begin : gen_streams
+        assign out[STREAM].data = out_data_packed[STREAM];
+        assign out[STREAM].valid = out_valid_array[STREAM];
+        assign out_ready_array[STREAM] = out[STREAM].ready;
     end
 end endgenerate
 

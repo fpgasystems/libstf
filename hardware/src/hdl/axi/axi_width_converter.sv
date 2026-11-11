@@ -6,7 +6,7 @@
 /**
  * Converts an AXI stream to a different width.
  *
- * Currently only same input and output width and  512bit to 256bit is supported.
+ * Currently only same input and output width and 512bit to 256bit is supported.
  */
 module AXIWidthConverter #(
     parameter int IN_WIDTH,
@@ -35,7 +35,7 @@ end else if (IN_WIDTH == 512 && OUT_WIDTH == 256) begin : gen_downsize
     assign beat_done = is_upper || !has_upper_data;
 
     always_ff @(posedge clk) begin
-        if (rst_n == 1'b0) begin
+        if (!rst_n) begin
             is_upper <= 1'b0;
         end else begin
             if (in.tvalid && out.tready) begin
@@ -60,7 +60,7 @@ end else if (IN_WIDTH == 256 && OUT_WIDTH == 512) begin : gen_upsize
     logic[31:0]  reg_keep;
 
     always_ff @(posedge clk) begin
-        if (rst_n == 1'b0) begin
+        if (!rst_n) begin
             is_upper <= 1'b0;
 
             reg_data <= 'X;

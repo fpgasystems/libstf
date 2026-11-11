@@ -25,6 +25,8 @@ module ReorderEnumerator #(
 localparam int DATA_BITS = $clog2(NUM_ELEMENTS);
 localparam int SERIAL_BEAT_BITS = $bits(serial_t) - DATA_BITS;
 
+`ASSERT_ELAB(SERIAL_BEAT_BITS > 0, "serial_t needs bits for the lane and the beat count")
+
 typedef logic[SERIAL_BEAT_BITS - 1:0] beat_serial_t;
 
 beat_serial_t serial_count[NUM_ELEMENTS];
@@ -32,7 +34,7 @@ beat_serial_t serial_count[NUM_ELEMENTS];
 assign in.ready = out.ready;
 
 always_ff @(posedge clk) begin
-    if(!rst_n) begin
+    if (!rst_n) begin
         for (int i = 0; i < NUM_ELEMENTS; i++) begin
             serial_count[i] <= '0;
         end

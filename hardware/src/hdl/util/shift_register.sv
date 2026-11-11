@@ -3,8 +3,8 @@
 `include "libstf_macros.svh"
 
 /**
- * Delays i_data by LEVELS register stages. The stages only advance while i_ready is high, so the
- * register chain stalls together with a downstream pipeline.
+ * Delays in_data by LEVELS register stages. The stages only advance while out_ready is high, so
+ * the register chain stalls together with a downstream pipeline. in_ready mirrors out_ready.
  */
 module ReadyShiftRegister #(
     parameter int WIDTH  = 1,
@@ -13,11 +13,11 @@ module ReadyShiftRegister #(
     input logic clk,
     input logic rst_n,
 
-    input  logic[WIDTH - 1:0] i_data,
-    output logic              o_ready,
+    input  logic[WIDTH - 1:0] in_data,
+    output logic              in_ready,
 
-    output logic[WIDTH - 1:0] o_data,
-    input  logic              i_ready
+    output logic[WIDTH - 1:0] out_data,
+    input  logic              out_ready
 );
 
 `ASSERT_ELAB(LEVELS > 0)
@@ -27,22 +27,22 @@ logic[LEVELS - 1:0][WIDTH - 1:0] shift_reg;
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         shift_reg <= '0;
-    end else if (i_ready) begin
-        shift_reg[LEVELS - 1] <= i_data;
+    end else if (out_ready) begin
+        shift_reg[LEVELS - 1] <= in_data;
         for (int i = 0; i < LEVELS - 1; i++) begin
             shift_reg[i] <= shift_reg[i + 1];
         end
     end
 end
 
-assign o_ready = i_ready;
+assign in_ready = out_ready;
 
-assign o_data = shift_reg[0];
+assign out_data = shift_reg[0];
 
 endmodule
 
 /**
- * Delays i_data by LEVELS register stages.
+ * Delays in_data by LEVELS register stages.
  */
 module ShiftRegister #(
     parameter int WIDTH  = 1,
@@ -51,8 +51,8 @@ module ShiftRegister #(
     input logic clk,
     input logic rst_n,
 
-    input  logic[WIDTH - 1:0] i_data,
-    output logic[WIDTH - 1:0] o_data
+    input  logic[WIDTH - 1:0] in_data,
+    output logic[WIDTH - 1:0] out_data
 );
 
 ReadyShiftRegister #(
@@ -62,11 +62,11 @@ ReadyShiftRegister #(
     .clk(clk),
     .rst_n(rst_n),
 
-    .i_data(i_data),
-    .o_ready(),
+    .in_data(in_data),
+    .in_ready(),
 
-    .o_data(o_data),
-    .i_ready(1'b1)
+    .out_data(out_data),
+    .out_ready(1'b1)
 );
 
 endmodule

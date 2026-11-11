@@ -4,7 +4,7 @@
 
 /**
  * The WriteConfigSplitter splits a write config interface into multiple config interfaces based on
- * address space bounds. I also substracts the corresponding address space bound from the address it
+ * address space bounds. It also subtracts the corresponding address space bound from the address it
  * passes on. The address space has to start at 0.
  */
 module WriteConfigSplitter
@@ -52,8 +52,8 @@ for (genvar I = 0; I < NUM_CONFIGS; I++) begin : gen_configs
         .clk(clk),
         .rst_n(reset_synced),
 
-        .i_data({internal[I].addr, internal[I].data, internal[I].valid}),
-        .o_data({     out[I].addr,      out[I].data,      out[I].valid})
+        .in_data({internal[I].addr, internal[I].data, internal[I].valid}),
+        .out_data({    out[I].addr,      out[I].data,      out[I].valid})
     );
 end
 

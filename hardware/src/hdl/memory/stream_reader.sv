@@ -6,8 +6,8 @@
 
 /**
  * This module reads the buffers provided by mem_config via FPGA-initiated transfers and
- * streams their data to output_data. The transfers are triggered via the sq_rd interface. This is
- * the reading counterpart of the StreamWriter.
+ * streams their data to the out stream. The transfers are triggered via the sq_rd interface. This
+ * is the reading counterpart of the StreamWriter.
  *
  * Each buffer is read with transfers of at most TRANSFER_LENGTH_BYTES. tlast is only set on the
  * final beat of a buffer with mem_config.last set. A buffer with size 0 and last set produces a
@@ -19,7 +19,7 @@
  * received. This relies on Coyote returning the data of a stream in the order of the requests. At
  * most MAX_OUTSTANDING_TRANSFERS transfers can be outstanding.
  *
- * The input_data port should be connected to the AXI stream of the stream as configured via the
+ * The in stream should be connected to the AXI stream of the stream as configured via the
  * STRM parameter, e.g., axis_card_recv[AXI_STRM_ID] for card memory.
  */
 module StreamReader
@@ -35,14 +35,14 @@ module StreamReader
     input logic clk,
     input logic rst_n,
 
-    metaIntf.m sq_rd,
-    metaIntf.s cq_rd,
+    metaIntf.m sq_rd, // #(req_t)
+    metaIntf.s cq_rd, // #(ack_t)
 
     mem_read_config_i.s mem_config,
     output logic        buffer_done,
 
-    AXI4SR.s input_data,
-    AXI4S.m  output_data
+    AXI4SR.s in, // #(AXI_DATA_BITS)
+    AXI4S.m  out // #(AXI_DATA_BITS)
 );
 
 `RESET_RESYNC // Reset pipelining
@@ -64,15 +64,19 @@ localparam BEAT_BITS = $clog2(AXI_DATA_BYTES);
 // TRANSFER_LENGTH_BYTES must be a multiple of AXI_DATA_BYTES
 `ASSERT_ELAB(TRANSFER_LENGTH_BYTES % AXI_DATA_BYTES == 0)
 
+`ASSERT_ELAB(MAX_OUTSTANDING_TRANSFERS > 1 &&
+    2 ** $clog2(MAX_OUTSTANDING_TRANSFERS) == MAX_OUTSTANDING_TRANSFERS,
+    "MAX_OUTSTANDING_TRANSFERS has to be a power of two > 1")
+
 `ifndef SYNTHESIS
 // Input stream
 assert property (@(posedge clk) disable iff (!reset_synced)
-    !input_data.tvalid || input_data.tlast || &input_data.tkeep)
-else $fatal(1, "Non-last keep signal (%h) must be all 1s!", input_data.tkeep);
+    !in.tvalid || in.tlast || &in.tkeep)
+else $fatal(1, "Non-last keep signal (%h) must be all 1s!", in.tkeep);
 assert property (@(posedge clk) disable iff (!reset_synced)
-    !input_data.tvalid || !input_data.tlast || $onehot0(input_data.tkeep + 1'b1))
+    !in.tvalid || !in.tlast || $onehot0(in.tkeep + 1'b1))
 else $fatal(1, "Last keep signal (%h) must be contiguous starting from the least significant bit!",
-    input_data.tkeep);
+    in.tkeep);
 
 // Buffers
 assert property (@(posedge clk) disable iff (!reset_synced)
@@ -97,18 +101,18 @@ MehdiFIFO #(
     .WIDTH($bits(outstanding_t)),
     .DEPTH(MAX_OUTSTANDING_TRANSFERS)
 ) inst_outstanding_fifo (
-    .i_clk(clk),
-    .i_rst_n(reset_synced),
+    .clk(clk),
+    .rst_n(reset_synced),
 
-    .i_data(outstanding_in),
-    .i_valid(outstanding_in_valid),
-    .i_ready(outstanding_in_ready),
+    .in_data(outstanding_in),
+    .in_valid(outstanding_in_valid),
+    .in_ready(outstanding_in_ready),
 
-    .o_data(outstanding_out),
-    .o_valid(outstanding_out_valid),
-    .o_ready(outstanding_out_ready),
+    .out_data(outstanding_out),
+    .out_valid(outstanding_out_valid),
+    .out_ready(outstanding_out_ready),
 
-    .o_filling_level()
+    .filling_level()
 );
 
 // -- Requests -------------------------------------------------------------------------------------
@@ -131,7 +135,7 @@ assign mem_config.ready = request_state == WAIT_FOR_BUFFER && outstanding_in_rea
 
 // We do not need the completions because the arrival of the data already tells us that a transfer
 // is done
-assign cq_rd.ready = 1;
+always_comb cq_rd.tie_off_s();
 
 always_comb begin
     sq_rd.data = '0; // Null everything else
@@ -169,7 +173,7 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         vaddr       <= 'X;
         remaining   <= 'X;
         buffer_last <= 'X;
@@ -219,16 +223,16 @@ AXI4S output_axis  (.aclk(clk), .aresetn(reset_synced));
 
 always_comb begin
     if (!is_empty) begin
-        internal_data.tdata  = input_data.tdata;
+        internal_data.tdata  = in.tdata;
         // The last flag has to travel with the data beat. Otherwise, the next buffer could change
         // it while the final beat of this buffer is still held in the skid buffer below.
-        internal_data.tkeep  = input_data.tkeep;
+        internal_data.tkeep  = in.tkeep;
         internal_data.tlast  = transfer_completed && outstanding_out.buffer_end &&
                                outstanding_out.buffer_last;
-        internal_data.tvalid = outstanding_out_valid && input_data.tvalid;
-        input_data.tready    = outstanding_out_valid && internal_data.tready;
+        internal_data.tvalid = outstanding_out_valid && in.tvalid;
+        in.tready            = outstanding_out_valid && internal_data.tready;
 
-        outstanding_out_ready = input_data.tvalid && input_data.tready && transfer_completed;
+        outstanding_out_ready = in.tvalid && in.tready && transfer_completed;
     end else begin
         // A buffer without data that ends a stream produces an empty stream. Its data must not
         // follow the input, which might already receive the next transfer.
@@ -236,7 +240,7 @@ always_comb begin
         internal_data.tkeep  = '0;
         internal_data.tlast  = 1'b1;
         internal_data.tvalid = outstanding_out_valid && outstanding_out.buffer_last;
-        input_data.tready    = 1'b0;
+        in.tready            = 1'b0;
 
         outstanding_out_ready = outstanding_out_valid &&
                                 (!outstanding_out.buffer_last || internal_data.tready);
@@ -246,9 +250,9 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-    if (reset_synced == 1'b0) begin
+    if (!reset_synced) begin
         beats_received <= '0;
-    end else if (input_data.tvalid && input_data.tready) begin
+    end else if (in.tvalid && in.tready) begin
         beats_received <= transfer_completed ? '0 : beats_received_succ;
     end
 end
@@ -261,6 +265,6 @@ AXISkidBuffer inst_skid_buffer (
     .out(output_axis)
 );
 
-`AXIS_ASSIGN(output_axis, output_data);
+`AXIS_ASSIGN(output_axis, out);
 
 endmodule

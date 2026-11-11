@@ -175,6 +175,9 @@ assign throttle_open = lfsr[1:0] == '0;
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         lfsr                 <= 8'h1;
+        throttled_out.tdata  <= 'X;
+        throttled_out.tkeep  <= 'X;
+        throttled_out.tlast  <= 'X;
         throttled_out.tvalid <= 1'b0;
     end else begin
         lfsr <= {lfsr[6:0], lfsr[7] ^ lfsr[5] ^ lfsr[4] ^ lfsr[3]};

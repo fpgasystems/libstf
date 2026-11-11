@@ -142,6 +142,9 @@ localparam int NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH;
 
 `ASSERT_ELAB(type(out.data_t) == type(data_t))
 `ASSERT_ELAB(AXI_WIDTH == in.AXI4S_DATA_BITS)
+`ASSERT_ELAB(AXI_WIDTH % DATA_WIDTH == 0, "AXI_WIDTH has to be a multiple of DATA_WIDTH")
+`ASSERT_ELAB(2 ** $clog2(NUM_ELEMENTS) == NUM_ELEMENTS,
+    "AXI_WIDTH / DATA_WIDTH has to be a power of two")
 
 generate if (NUM_ELEMENTS == 1) begin : gen_passthrough
 
@@ -160,7 +163,7 @@ logic[$clog2(NUM_ELEMENTS) - 1:0] counter;
 assign in.tready = out.ready && counter == NUM_ELEMENTS - 1;
 
 always_ff @(posedge clk) begin
-    if (rst_n == 1'b0) begin
+    if (!rst_n) begin
         counter <= '0;
     end else begin
         if (in.tvalid && out.ready) begin

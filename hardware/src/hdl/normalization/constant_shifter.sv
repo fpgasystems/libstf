@@ -24,6 +24,9 @@ module ConstantShifter #(
 // Calculate the shift amount from the bit index
 localparam int SHIFT = 32'd1 << SHIFT_INDEX;
 
+`ASSERT_ELAB(SHIFT_INDEX >= 0 && SHIFT_INDEX < OFFSET_WIDTH)
+`ASSERT_ELAB(SHIFT < NUM_ELEMENTS)
+
 data_t[NUM_ELEMENTS - 1:0] data_shifted;
 logic[NUM_ELEMENTS - 1:0]  keep_shifted;
 
@@ -41,7 +44,7 @@ end
 
 generate if (REGISTER == 1) begin : gen_register
     always_ff @(posedge clk) begin
-        if (!rst_n == 1'b1) begin
+        if (!rst_n) begin
             out.data  <= 'X;
             out.keep  <= 'X;
             out.last  <= 'X;

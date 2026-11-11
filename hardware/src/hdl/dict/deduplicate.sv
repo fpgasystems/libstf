@@ -30,7 +30,7 @@ module Deduplicate #(
 
     ndata_i.s in,    // #(data_t, NUM_ELEMENTS)
 
-    duplicate_i.m mask,  // #(logic[NUM_ELEMENTS + NUM_ELEMENTS * $clog2(NUM_VALUES) - 1:0])
+    duplicate_i.m mask,  // #(NUM_ELEMENTS)
     ndata_i.m out        // #(data_t, NUM_ELEMENTS)
 );
 
@@ -38,11 +38,14 @@ module Deduplicate #(
 
 localparam int unsigned N_STAGES = 4;
 
-//These boundaries were chosen to so that each deduplication stage performs roughly the same number
+//These boundaries were chosen so that each deduplication stage performs roughly the same number
 //of comparisons. In total, there are 16 choose 2 = 120 comparisons, so optimally, each stage would
 //perform 120/N_STAGES comparisons. With these boundaries, the first stage performs: 1 + 2 + 3 + 4 +
 //5 + 6 + 7 = 28 comparisons. Similarly for the remaining stages.
 localparam int IDX_BOUNDARIES[N_STAGES+1] = '{1, 8, 11, 14, 16};
+
+`ASSERT_ELAB(NUM_ELEMENTS <= IDX_BOUNDARIES[N_STAGES],
+    "The deduplication stages only cover the first 16 lanes")
 
 ndata_i     #(data_t, NUM_ELEMENTS) tmp[N_STAGES:0](clk, rst_n);
 duplicate_i #(NUM_ELEMENTS)         tmp_mask[N_STAGES:0] (); // the valid signal is unused
@@ -66,23 +69,21 @@ assign mask.duplicates = tmp_mask[N_STAGES].duplicates;
 assign mask.origins = tmp_mask[N_STAGES].origins;
 assign mask.valid = out.ready && out.valid;
 
-generate
-    for (genvar i = 1; i <= N_STAGES; i++) begin : gen_dedup_stages
-        DeduplicateStage #(
-            .ID(i - 1),
-            .data_t(data_t),
-            .NUM_ELEMENTS(NUM_ELEMENTS),
-            .START_IDX_INCL(IDX_BOUNDARIES[i-1]),
-            .END_IDX_EXCL(IDX_BOUNDARIES[i])
-        ) inst_dedup_stage (
-            .clk(clk),
-            .rst_n(rst_n),
-            .in_mask(tmp_mask[i-1]),
-            .in(tmp[i-1]),
-            .out_mask(tmp_mask[i]),
-            .out(tmp[i])
-        );
-    end
-endgenerate
+for (genvar I = 1; I <= N_STAGES; I++) begin : gen_dedup_stages
+    DeduplicateStage #(
+        .ID(I - 1),
+        .data_t(data_t),
+        .NUM_ELEMENTS(NUM_ELEMENTS),
+        .START_IDX_INCL(IDX_BOUNDARIES[I-1]),
+        .END_IDX_EXCL(IDX_BOUNDARIES[I])
+    ) inst_dedup_stage (
+        .clk(clk),
+        .rst_n(rst_n),
+        .in_mask(tmp_mask[I-1]),
+        .in(tmp[I-1]),
+        .out_mask(tmp_mask[I]),
+        .out(tmp[I])
+    );
+end
 
 endmodule

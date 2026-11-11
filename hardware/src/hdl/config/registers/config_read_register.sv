@@ -14,7 +14,7 @@ module ConfigReadRegister
     input logic clk,
     input logic rst_n,
 
-    read_config_i.s conf,
+    read_config_i.s in,
 
     input value_t value
 );
@@ -25,26 +25,26 @@ module ConfigReadRegister
 typedef enum logic {WAIT, RESPOND} state_t;
 state_t state;
 
-assign conf.read_ready = 1'b1;
+assign in.read_ready = 1'b1;
 
-assign conf.resp_data  = value;
+assign in.resp_data  = value;
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        state           <= WAIT;
-        conf.resp_error <= 'X;
-        conf.resp_valid <= 1'b0;
+        state         <= WAIT;
+        in.resp_error <= 'X;
+        in.resp_valid <= 1'b0;
     end else begin
         if (state == WAIT) begin
-            if (conf.read_valid) begin
-                state           <= RESPOND;
-                conf.resp_error <= conf.read_addr != ADDR;
-                conf.resp_valid <= 1'b1;
+            if (in.read_valid) begin
+                state         <= RESPOND;
+                in.resp_error <= in.read_addr != ADDR;
+                in.resp_valid <= 1'b1;
             end
         end else begin
-            if (conf.resp_ready) begin
-                state           <= WAIT;
-                conf.resp_valid <= 1'b0;
+            if (in.resp_ready) begin
+                state         <= WAIT;
+                in.resp_valid <= 1'b0;
             end
         end
     end
