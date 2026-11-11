@@ -1,0 +1,6 @@
+# Verible lint waivers for libSTF. Run with scripts/lint.sh.
+
+# Interfaces (snake_case types ending in _i) may be instantiated with positional ports, e.g.,
+# ndata_i #(data_t, NUM_ELEMENTS) in(clk, rst_n). Modules need named ports. The waiver matches the
+# line with the port list, so keep positional interface instantiations on a single line.
+waive --rule=module-port --regex="[a-z0-9]_i +(#|[a-z])"
