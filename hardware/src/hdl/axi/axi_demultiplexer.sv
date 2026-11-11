@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 /**
- * Demultiplexes one input AXI stream into a set of output AXI streams based on a select 
+ * Demultiplexes one input AXI stream into a set of output AXI streams based on a select
  * configuration.
  */
 module AXIDemultiplexer
@@ -40,7 +40,7 @@ DataDemultiplexer #(
     .out(out_data)
 );
 
-for (genvar I = 0; I < NUM_STREAMS; I++) begin
+for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
     assign out[I].tdata      = out_data[I].data;
     assign out[I].tkeep      = out_data[I].keep;
     assign out[I].tlast      = out_data[I].last;

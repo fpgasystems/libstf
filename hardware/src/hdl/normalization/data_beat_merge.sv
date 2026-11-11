@@ -3,8 +3,8 @@
 `include "libstf_macros.svh"
 
 /**
- * Cross-beat merge / output register stage used by the `DataNormalizer`. This module holds an 
- * output register that merges the wrapped bytes of the former data beat into the following data 
+ * Cross-beat merge / output register stage used by the `DataNormalizer`. This module holds an
+ * output register that merges the wrapped bytes of the former data beat into the following data
  * beat so that every emitted data beat (except the last) is fully packed.
  */
 module DataBeatMerge #(
@@ -37,7 +37,9 @@ always_ff @(posedge clk) begin
         register.last  <= 'X;
         register.valid <= 0;
     end else begin
-        if (!out.valid || out.ready) begin // TODO Add to condition: new data does not overflow register (but then out needs to be handled differently too)
+        if (!out.valid || out.ready) begin
+            // TODO Add to condition: new data does not overflow register (but then out needs to be
+            // handled differently too)
             for (int i = 0; i < NUM_ELEMENTS; i++) begin
                 if (register.valid && register.keep[i]) begin
                     out.data[i] <= register.data[i];
@@ -50,8 +52,10 @@ always_ff @(posedge clk) begin
                 end
             end
 
-            if (in.valid) begin // Only if valid data is coming out of the shifter, the output stage can be updated
-                if (register.valid && register.last) begin // There is some data left from the last stream that we have to flush
+            if (in.valid) begin
+                // Only if valid data is coming out of the shifter, the output stage can be updated
+                if (register.valid && register.last) begin
+                    // There is some data left from the last stream that we have to flush
                     out.keep       <= register.keep;
                     out.last       <= 1;
                     out.valid      <= 1;
@@ -62,7 +66,8 @@ always_ff @(posedge clk) begin
                         out.valid <= 1;
 
                         if (in.last) begin // Handle tlast
-                            if (register_and_shifted_keep == 0) begin // All remaining data leaves this cycle, so this is last anyway
+                            if (register_and_shifted_keep == 0) begin
+                                // All remaining data leaves this cycle, so this is last anyway
                                 out.last <= 1;
                             end else begin // Set flag so that next cycle will write output register
                                 out.last      <= 0;
@@ -76,7 +81,9 @@ always_ff @(posedge clk) begin
                         register.keep  <= register_and_shifted_keep;
                         register.valid <= |register_and_shifted_keep;
                     end else begin
-                        if (in.last) begin // If this is the last transfer, transmit output register and pipeline output directly
+                        if (in.last) begin
+                            // If this is the last transfer, transmit output register and pipeline
+                            // output directly
                             out.keep  <= register_or_shifted_keep;
                             out.last  <= 1;
                             out.valid <= 1;

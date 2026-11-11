@@ -9,7 +9,7 @@ module SkidBuffer #(
     input logic rst_n,
 
     ready_valid_i.s in, // #(data_t)
-    ready_valid_i.m out // #(data_t) 
+    ready_valid_i.m out // #(data_t)
 );
 
 ready_valid_i #(data_t) head(clk, rst_n);
@@ -43,7 +43,7 @@ always_ff @(posedge clk) begin
     end
 end
 
-// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not 
+// Assign ready to silence assertion that ready cannot be undefined. Needs to be high so we do not
 // get in trouble with with stable assertion of the interface.
 assign head.ready = 1'b1;
 
@@ -60,8 +60,8 @@ module DataSkidBuffer #(
     input logic clk,
     input logic rst_n,
 
-    data_i.s in, // #(data_t) 
-    data_i.m out // #(data_t) 
+    data_i.s in, // #(data_t)
+    data_i.m out // #(data_t)
 );
 
 typedef struct packed {
@@ -83,7 +83,7 @@ SkidBuffer #(
 ) inst_skid_buffer (
     .clk(clk),
     .rst_n(rst_n),
-    
+
     .in(skid_in),
     .out(skid_out)
 );
@@ -103,7 +103,7 @@ module NDataSkidBuffer #(
     input logic clk,
     input logic rst_n,
 
-    ndata_i.s in, // #(data_t, NUM_ELEMENTS) 
+    ndata_i.s in, // #(data_t, NUM_ELEMENTS)
     ndata_i.m out // #(data_t, NUM_ELEMENTS)
 );
 
@@ -242,8 +242,8 @@ module AXISkidBuffer
     input logic clk,
     input logic rst_n,
 
-    AXI4S.s in, // #(AXI4S_DATA_BITS) 
-    AXI4S.m out // #(AXI4S_DATA_BITS) 
+    AXI4S.s in, // #(AXI4S_DATA_BITS)
+    AXI4S.m out // #(AXI4S_DATA_BITS)
 );
 
 `ASSERT_ELAB(AXI4S_DATA_BITS == in.AXI4S_DATA_BITS)
@@ -267,7 +267,7 @@ SkidBuffer #(
 ) inst_skid_buffer (
     .clk(clk),
     .rst_n(rst_n),
-    
+
     .in(skid_in),
     .out(skid_out)
 );
@@ -288,7 +288,7 @@ module TypedNDataSkidBuffer
     input logic clk,
     input logic rst_n,
 
-    typed_ndata_i.s in, // #(DATABEAT_SIZE) 
+    typed_ndata_i.s in, // #(DATABEAT_SIZE)
     typed_ndata_i.m out // #(DATABEAT_SIZE)
 );
 
@@ -330,25 +330,25 @@ assign skid_out.ready = out.ready;
 endmodule
 
 module MetaIntfSkidBuffer #(
-    parameter type STYPE = logic[63:0],
+    parameter type data_t = logic[63:0],
     parameter int NUM_STAGES = 1
 ) (
     input logic clk,
     input logic rst_n,
 
-    metaIntf.s in, // #(STYPE)
-    metaIntf.m out // #(STYPE)
+    metaIntf.s in, // #(data_t)
+    metaIntf.m out // #(data_t)
 );
 
-ready_valid_i #(STYPE) stages[NUM_STAGES + 1](clk, rst_n);
+ready_valid_i #(data_t) stages[NUM_STAGES + 1](clk, rst_n);
 
 assign stages[0].data  = in.data;
 assign stages[0].valid = in.valid;
 assign in.ready        = stages[0].ready;
 
-for (genvar I = 0; I < NUM_STAGES; I++) begin
+for (genvar I = 0; I < NUM_STAGES; I++) begin : gen_stages
     SkidBuffer #(
-        .data_t(STYPE)
+        .data_t(data_t)
     ) inst_skid_buffer (
         .clk(clk),
         .rst_n(rst_n),

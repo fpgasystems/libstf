@@ -57,10 +57,12 @@ mem_config_i mem_config (.clk(clk), .rst_n(reset_synced));
 `ifndef SYNTHESIS
 assert property (@(posedge clk) disable iff (!reset_synced)
     !buffer_config.valid || buffer_config.base % AXI_DATA_BYTES == 0)
-else $fatal(1, "Ring buffer base (%0x) must be aligned to %0d bytes!", buffer_config.base, AXI_DATA_BYTES);
+else $fatal(1, "Ring buffer base (%0x) must be aligned to %0d bytes!", buffer_config.base,
+    AXI_DATA_BYTES);
 assert property (@(posedge clk) disable iff (!reset_synced)
     !buffer_config.valid || buffer_config.size >= 2 * TRANSFER_BYTES)
-else $fatal(1, "Ring buffer size (%0d) must fit at least two transfers of %0d bytes!", buffer_config.size, TRANSFER_BYTES);
+else $fatal(1, "Ring buffer size (%0d) must fit at least two transfers of %0d bytes!",
+    buffer_config.size, TRANSFER_BYTES);
 assert property (@(posedge clk) disable iff (!reset_synced)
     !(issued.valid && !issued.last) || issued.size == TRANSFER_BYTES)
 else $fatal(1, "Non-last transfer size (%0d) must be the transfer size!", issued.size);
@@ -108,7 +110,8 @@ assign next_buffer.vaddr = next_vaddr;
 assign next_buffer.size  = 1; // In transfers
 
 assign mem_config.buffer_data  = next_buffer;
-assign mem_config.buffer_valid = state == ALLOCATE && configured && next_stages_valid[1] && next_fits;
+assign mem_config.buffer_valid = state == ALLOCATE && configured && next_stages_valid[1] &&
+                                 next_fits;
 // A new configuration drops the buffer the StreamWriter might currently hold. The StreamWriter only
 // leaves its flush state once buffer_valid is low, which it is for two cycles because the
 // configuration clears next_stages_valid.
@@ -135,9 +138,9 @@ assign notify.ready = link.ready;
 
 // -- Unreserved bytes -----------------------------------------------------------------------------
 // Bytes become free again when the reader released them or when a non-empty stream ended before its
-// last transfer was full. In the latter case, the next stream starts right after it, so we give back
-// the rest of the transfer. For timing, we sum these up over two register stages before adding them
-// to free_bytes. This only delays reusing the memory.
+// last transfer was full. In the latter case, the next stream starts right after it, so we give
+// back the rest of the transfer. For timing, we sum these up over two register stages before adding
+// them to free_bytes. This only delays reusing the memory.
 vaddress_t released_bytes, returned_bytes, unreserved_bytes;
 
 always_ff @(posedge clk) begin
@@ -209,6 +212,7 @@ always_ff @(posedge clk) begin
                         // of the current transfer
                     end
                 end
+                default: ;
             endcase
         end
     end
@@ -216,9 +220,9 @@ end
 
 // -- Deadlock detection ---------------------------------------------------------------------------
 `ifndef SYNTHESIS
-// If the reader holds a stream it reads multiple times, it can only release memory once we wrote the
-// rest of that stream. So if the ring buffer is too full for the next transfer of the stream, and
-// no written transfer is on its way to the reader anymore, nothing can make progress.
+// If the reader holds a stream it reads multiple times, it can only release memory once we wrote
+// the rest of that stream. So if the ring buffer is too full for the next transfer of the stream,
+// and no written transfer is on its way to the reader anymore, nothing can make progress.
 localparam int DEADLOCK_CYCLES = 1024;
 
 int unsigned stalled_cycles;
@@ -226,7 +230,8 @@ int unsigned stalled_cycles;
 always_ff @(posedge clk) begin
     if (reset_synced == 1'b0) begin
         stalled_cycles <= 0;
-    end else if (state == ALLOCATE && configured && !next_fits && link.holding && !notify.valid) begin
+    end else if (state == ALLOCATE && configured && !next_fits && link.holding &&
+                 !notify.valid) begin
         stalled_cycles <= stalled_cycles + 1;
     end else begin
         stalled_cycles <= 0;
@@ -234,7 +239,9 @@ always_ff @(posedge clk) begin
 end
 
 assert property (@(posedge clk) disable iff (!reset_synced) stalled_cycles < DEADLOCK_CYCLES)
-else $fatal(1, "ReplayBuffer deadlock: A stream that is read multiple times does not fit into the ring buffer of %0d bytes!", ring_size);
+else $fatal(1,
+    "ReplayBuffer deadlock: A stream read multiple times does not fit the %0d byte ring buffer!",
+    ring_size);
 `endif
 
 // -- Stream writer --------------------------------------------------------------------------------

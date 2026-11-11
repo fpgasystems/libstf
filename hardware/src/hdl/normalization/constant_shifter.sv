@@ -29,15 +29,17 @@ logic[NUM_ELEMENTS - 1:0]  keep_shifted;
 
 always_comb begin
     if (offset_in[SHIFT_INDEX] == 1'b1) begin
-        data_shifted = {in.data[NUM_ELEMENTS - SHIFT - 1:0], in.data[NUM_ELEMENTS - 1:NUM_ELEMENTS - SHIFT]};
-        keep_shifted = {in.keep[NUM_ELEMENTS - SHIFT - 1:0], in.keep[NUM_ELEMENTS - 1:NUM_ELEMENTS - SHIFT]};
+        data_shifted = {in.data[NUM_ELEMENTS - SHIFT - 1:0],
+                        in.data[NUM_ELEMENTS - 1:NUM_ELEMENTS - SHIFT]};
+        keep_shifted = {in.keep[NUM_ELEMENTS - SHIFT - 1:0],
+                        in.keep[NUM_ELEMENTS - 1:NUM_ELEMENTS - SHIFT]};
     end else begin
         data_shifted = in.data;
         keep_shifted = in.keep;
     end
 end
 
-generate if (REGISTER == 1) begin
+generate if (REGISTER == 1) begin : gen_register
     always_ff @(posedge clk) begin
         if (!rst_n == 1'b1) begin
             out.data  <= 'X;
@@ -59,7 +61,7 @@ generate if (REGISTER == 1) begin
     end
 
     assign in.ready = !out.valid || out.ready;
-end else begin
+end else begin : gen_no_register
     assign out.data  = data_shifted;
     assign out.keep  = keep_shifted;
     assign out.last  = in.last;

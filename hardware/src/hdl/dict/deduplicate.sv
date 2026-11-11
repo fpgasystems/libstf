@@ -22,7 +22,7 @@ interface duplicate_i #(
 endinterface
 
 module Deduplicate #(
-    parameter type data_t, 
+    parameter type data_t,
     parameter int NUM_ELEMENTS
 ) (
     input logic clk,
@@ -38,10 +38,10 @@ module Deduplicate #(
 
 localparam int unsigned N_STAGES = 4;
 
-//These boundaries were chosen to so that each deduplication stage performs roughly the same number of comparisons.
-//In total, there are 16 choose 2 = 120 comparisons, so optimally, each stage would perform 120/N_STAGES comparisons.
-//With these boundaries, the first stage performs:
-//1 + 2 + 3 + 4 + 5 + 6 + 7 = 28 comparisons. Similarly for the remaining stages.
+//These boundaries were chosen to so that each deduplication stage performs roughly the same number
+//of comparisons. In total, there are 16 choose 2 = 120 comparisons, so optimally, each stage would
+//perform 120/N_STAGES comparisons. With these boundaries, the first stage performs: 1 + 2 + 3 + 4 +
+//5 + 6 + 7 = 28 comparisons. Similarly for the remaining stages.
 localparam int IDX_BOUNDARIES[N_STAGES+1] = '{1, 8, 11, 14, 16};
 
 ndata_i     #(data_t, NUM_ELEMENTS) tmp[N_STAGES:0](clk, rst_n);

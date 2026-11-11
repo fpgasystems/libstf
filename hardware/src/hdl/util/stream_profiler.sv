@@ -9,9 +9,9 @@
  * Asserting stop returns the profiler to the WAIT state, holding its counters until the next
  * valid data beat re-zeroes them.
  *
- * Idle cycles between streams are accumulated in a separate register while in the IDLE state and are
- * only added to the idle count once the next valid data beat arrives, so trailing idle cycles after
- * the final stream (with no subsequent stream) are not counted.
+ * Idle cycles between streams are accumulated in a separate register while in the IDLE state and
+ * are only added to the idle count once the next valid data beat arrives, so trailing idle cycles
+ * after the final stream (with no subsequent stream) are not counted.
  */
 module StreamProfiler
     import libstf::*;
@@ -153,6 +153,7 @@ always_comb begin
                 n_idle_acc_reg = idle_acc_reg + 1;
             end
         end
+        default: ;
     endcase
 
     if (stop_reg) begin

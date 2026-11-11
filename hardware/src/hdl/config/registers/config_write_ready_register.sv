@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 /**
- * WARNING: For now, this register does not apply back pressure to the GlobalConfig. So values may 
+ * WARNING: For now, this register does not apply back pressure to the GlobalConfig. So values may
  * be lost.
  */
 module ConfigWriteReadyRegister #(

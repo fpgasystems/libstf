@@ -19,6 +19,7 @@ module OutputWriter
     import libstf::*;
 #(
     parameter int NUM_STREAMS = N_STRM_AXI,
+    // verilog_lint: waive packed-dimensions-range-ordering
     parameter logic [0:NUM_STREAMS - 1][31:0] PORTS_PER_STREAM = '{default: 1},
     localparam int NUM_PORTS = SUM(PORTS_PER_STREAM)
 ) (
@@ -48,17 +49,20 @@ function automatic int first_port(int stream);
     return first;
 endfunction
 
-`ASSERT_ELAB(NUM_STREAMS > 0 && NUM_STREAMS <= N_STRM_AXI, "NUM_STREAMS has to be in [1, N_STRM_AXI]")
+`ASSERT_ELAB(NUM_STREAMS > 0 && NUM_STREAMS <= N_STRM_AXI,
+    "NUM_STREAMS has to be in [1, N_STRM_AXI]")
 `ASSERT_ELAB(NUM_PORTS <= 8, "Interrupts carry the port id in 3 bits")
 
 `ifndef SYNTHESIS
-for(genvar I = 0; I < NUM_PORTS; I++) begin
-    assert property (@(posedge clk) disable iff (!reset_synced) 
+for(genvar I = 0; I < NUM_PORTS; I++) begin : gen_port_assertions
+    assert property (@(posedge clk) disable iff (!reset_synced)
         !data_in[I].tvalid || data_in[I].tlast || &data_in[I].tkeep)
     else $fatal(1, "Non-last keep signal (%h) must be all 1s!", data_in[I].tkeep);
-    assert property (@(posedge clk) disable iff (!reset_synced) 
+    assert property (@(posedge clk) disable iff (!reset_synced)
         !data_in[I].tvalid || !data_in[I].tlast || $onehot0(data_in[I].tkeep + 1'b1))
-    else $fatal(1, "Last keep signal (%h) must be contiguous starting from the least significant bit!", data_in[I].tkeep);
+    else $fatal(1,
+        "Last keep signal (%h) must be contiguous starting from the least significant bit!",
+        data_in[I].tkeep);
 end
 `endif
 
@@ -69,7 +73,7 @@ metaIntf #(.STYPE(irq_not_t)) notify_port [NUM_PORTS] (.aclk(clk), .aresetn(rese
 
 MetaIntfArbiter #(
   .N_INTERFACES(NUM_STREAMS),
-  .STYPE(req_t)
+  .data_t(req_t)
 ) inst_sq_wr_arbiter (
   .clk(clk),
   .rst_n(reset_synced),
@@ -89,7 +93,7 @@ CQDemultiplexer #(
 
 MetaIntfArbiter #(
   .N_INTERFACES(NUM_PORTS),
-  .STYPE(irq_not_t)
+  .data_t(irq_not_t)
 ) inst_notify_arbiter (
   .clk(clk),
   .rst_n(reset_synced),
@@ -160,7 +164,7 @@ for (genvar S = 0; S < NUM_STREAMS; S++) begin : gen_streams
         );
 
         MetaIntfSkidBuffer #(
-            .STYPE(irq_not_t),
+            .data_t(irq_not_t),
             .NUM_STAGES(NUM_SKID_STAGES)
         ) inst_notify_skid (
             .clk(clk),
@@ -197,7 +201,7 @@ for (genvar S = 0; S < NUM_STREAMS; S++) begin : gen_streams
     end
 
     MetaIntfSkidBuffer #(
-        .STYPE(req_t),
+        .data_t(req_t),
         .NUM_STAGES(NUM_SKID_STAGES)
     ) inst_sq_wr_skid (
         .clk(clk),

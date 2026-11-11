@@ -29,9 +29,9 @@ module NDataWidthConverter #(
 `ASSERT_ELAB((IN_WIDTH & (IN_WIDTH - 1)) == 0)   // IN_WIDTH is power of 2
 `ASSERT_ELAB((OUT_WIDTH & (OUT_WIDTH - 1)) == 0) // OUT_WIDTH is power of 2
 
-generate if (IN_WIDTH == OUT_WIDTH) begin
+generate if (IN_WIDTH == OUT_WIDTH) begin : gen_passthrough
     `DATA_ASSIGN(in, out)
-end else if (IN_WIDTH < OUT_WIDTH) begin
+end else if (IN_WIDTH < OUT_WIDTH) begin : gen_upsize
     localparam int NUM_SLOTS          = OUT_WIDTH / IN_WIDTH;
     localparam int SLOT_COUNTER_WIDTH = $clog2(NUM_SLOTS);
 
@@ -99,7 +99,7 @@ end else if (IN_WIDTH < OUT_WIDTH) begin
     assign out.keep  = keep;
     assign out.last  = last;
     assign out.valid = valid;
-end else begin // OUT_WIDTH < IN_WIDTH
+end else begin : gen_downsize // OUT_WIDTH < IN_WIDTH
     localparam int NUM_SLOTS          = IN_WIDTH / OUT_WIDTH;
     localparam int SLOT_COUNTER_WIDTH = $clog2(NUM_SLOTS);
 

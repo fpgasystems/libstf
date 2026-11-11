@@ -30,7 +30,7 @@ logic[OFFSET_WIDTH - 1:0]       offset_pipes[NUM_PIPES];
 assign offset_pipes[0] = offset;
 
 // Generate pipeline stages
-for (genvar i = 0; i < NUM_STAGES; i++) begin
+for (genvar i = 0; i < NUM_STAGES; i++) begin : gen_stages
     ConstantShifter #(
         .SHIFT_INDEX(i),
         .data_t(data_t),

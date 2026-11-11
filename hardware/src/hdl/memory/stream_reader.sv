@@ -48,8 +48,9 @@ module StreamReader
 `RESET_RESYNC // Reset pipelining
 
 // -- Parameters -----------------------------------------------------------------------------------
-// These localparams are untyped on purpose. Typing them makes the Vivado source scan fail in designs
-// that do not use this module ([filemgmt 56-315]). Vivado then disables files that the design needs.
+// These localparams are untyped on purpose. Typing them makes the Vivado source scan fail in
+// designs that do not use this module ([filemgmt 56-315]). Vivado then disables files that the
+// design needs.
 
 // For RDMA, Coyote parses RDMA_READ requests into read requests of at most the PMTU
 localparam OPCODE = IS_LOCAL ? LOCAL_READ : RDMA_READ;
@@ -70,7 +71,8 @@ assert property (@(posedge clk) disable iff (!reset_synced)
 else $fatal(1, "Non-last keep signal (%h) must be all 1s!", input_data.tkeep);
 assert property (@(posedge clk) disable iff (!reset_synced)
     !input_data.tvalid || !input_data.tlast || $onehot0(input_data.tkeep + 1'b1))
-else $fatal(1, "Last keep signal (%h) must be contiguous starting from the least significant bit!", input_data.tkeep);
+else $fatal(1, "Last keep signal (%h) must be contiguous starting from the least significant bit!",
+    input_data.tkeep);
 
 // Buffers
 assert property (@(posedge clk) disable iff (!reset_synced)
@@ -83,7 +85,8 @@ else $fatal(1, "Buffer size (%0d) must be > 0 for non-last buffers!", mem_config
 // an entry with length 0, so its end is signaled in order with the data of the other buffers.
 typedef struct packed {
     logic[TRANSFER_ADDRESS_LEN_BITS - 1:0] len;          // Bytes of the transfer
-    logic                                  buffer_end;   // Whether this is the last transfer of a buffer
+    logic                                  buffer_end;   // Whether this is the last transfer of
+                                                         // a buffer
     logic                                  buffer_last;  // Whether the buffer ends the stream
 } outstanding_t;
 
@@ -120,7 +123,8 @@ vaddress_t vaddr, remaining;
 logic      buffer_last;
 data32_t   next_transfer_len;
 
-assign next_transfer_len = remaining > TRANSFER_LENGTH_BYTES ? TRANSFER_LENGTH_BYTES : data32_t'(remaining);
+assign next_transfer_len = remaining > TRANSFER_LENGTH_BYTES ? TRANSFER_LENGTH_BYTES :
+                                                               data32_t'(remaining);
 
 // A buffer without data does not need a request, so we only enqueue it as outstanding
 assign mem_config.ready = request_state == WAIT_FOR_BUFFER && outstanding_in_ready;
@@ -193,6 +197,7 @@ always_ff @(posedge clk) begin
                     end
                 end
             end
+            default: ;
         endcase
     end
 end
@@ -205,7 +210,8 @@ logic has_partial_beat, transfer_completed, is_empty;
 
 assign has_partial_beat    = |(outstanding_out.len[BEAT_BITS - 1:0]);
 assign beats_received_succ = beats_received + 1;
-assign transfer_completed  = beats_received_succ == (outstanding_out.len >> BEAT_BITS) + has_partial_beat;
+assign transfer_completed  = beats_received_succ ==
+                             (outstanding_out.len >> BEAT_BITS) + has_partial_beat;
 assign is_empty            = outstanding_out.len == '0;
 
 AXI4S internal_data(.aclk(clk), .aresetn(reset_synced));
@@ -214,10 +220,11 @@ AXI4S output_axis  (.aclk(clk), .aresetn(reset_synced));
 always_comb begin
     if (!is_empty) begin
         internal_data.tdata  = input_data.tdata;
-        // The last flag has to travel with the data beat. Otherwise, the next buffer could change it
-        // while the final beat of this buffer is still held in the skid buffer below.
+        // The last flag has to travel with the data beat. Otherwise, the next buffer could change
+        // it while the final beat of this buffer is still held in the skid buffer below.
         internal_data.tkeep  = input_data.tkeep;
-        internal_data.tlast  = transfer_completed && outstanding_out.buffer_end && outstanding_out.buffer_last;
+        internal_data.tlast  = transfer_completed && outstanding_out.buffer_end &&
+                               outstanding_out.buffer_last;
         internal_data.tvalid = outstanding_out_valid && input_data.tvalid;
         input_data.tready    = outstanding_out_valid && internal_data.tready;
 
@@ -231,7 +238,8 @@ always_comb begin
         internal_data.tvalid = outstanding_out_valid && outstanding_out.buffer_last;
         input_data.tready    = 1'b0;
 
-        outstanding_out_ready = outstanding_out_valid && (!outstanding_out.buffer_last || internal_data.tready);
+        outstanding_out_ready = outstanding_out_valid &&
+                                (!outstanding_out.buffer_last || internal_data.tready);
     end
 
     buffer_done = outstanding_out_ready && outstanding_out.buffer_end;
@@ -245,7 +253,13 @@ always_ff @(posedge clk) begin
     end
 end
 
-AXISkidBuffer inst_skid_buffer (.clk(clk), .rst_n(reset_synced), .in(internal_data), .out(output_axis));
+AXISkidBuffer inst_skid_buffer (
+    .clk(clk),
+    .rst_n(reset_synced),
+
+    .in(internal_data),
+    .out(output_axis)
+);
 
 `AXIS_ASSIGN(output_axis, output_data);
 

@@ -3,7 +3,7 @@
 `include "libstf_macros.svh"
 
 /**
- * The NDataDuplicator creates NUM_OUTPUTS output streams based on one input stream. The ready 
+ * The NDataDuplicator creates NUM_OUTPUTS output streams based on one input stream. The ready
  * signal of the input is driven when all output ready signals are high.
  */
 module NDataDuplicator #(
@@ -23,7 +23,7 @@ assign in.ready = &(seen | out_ready);
 
 always_ff @(posedge clk) begin
     if(!rst_n) begin
-        seen <= '0;     
+        seen <= '0;
     end else begin
         seen <= n_seen;
     end
@@ -39,7 +39,7 @@ always_comb begin
     end
 end
 
-for (genvar I = 0; I < NUM_OUTPUTS; I++) begin
+for (genvar I = 0; I < NUM_OUTPUTS; I++) begin : gen_outputs
     assign out_ready[I] = out[I].ready;
 
     assign out[I].data  = in.data;
@@ -51,7 +51,7 @@ end
 endmodule
 
 /**
- * The NTaggedDuplicator creates NUM_OUTPUTS output streams based on one input stream. The ready 
+ * The NTaggedDuplicator creates NUM_OUTPUTS output streams based on one input stream. The ready
  * signal of the input is driven when all output ready signals are high.
  */
 module NTaggedDuplicator #(
@@ -76,7 +76,7 @@ typedef struct packed {
 
 ndata_i #(data_tag_t, NUM_ELEMENTS) internal_in(clk, rst_n), internal_out[NUM_OUTPUTS](clk, rst_n);
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
     assign internal_in.data[I].data = in.data[I];
     assign internal_in.data[I].tag  = in.tag[I];
 end
@@ -96,8 +96,8 @@ NDataDuplicator #(
     .out(internal_out)
 );
 
-for (genvar O = 0; O < NUM_OUTPUTS; O++) begin
-    for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar O = 0; O < NUM_OUTPUTS; O++) begin : gen_outputs
+    for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
         assign out[O].data[I] = internal_out[O].data[I].data;
         assign out[O].tag[I]  = internal_out[O].data[I].tag;
     end
@@ -111,7 +111,7 @@ end
 endmodule
 
 /**
- * The DataDuplicator creates NUM_OUTPUTS output streams based on one input stream. The ready 
+ * The DataDuplicator creates NUM_OUTPUTS output streams based on one input stream. The ready
  * signal of the input is driven when all output ready signals are high.
  */
 module DataDuplicator #(
@@ -139,7 +139,7 @@ NDataDuplicator #(
     .out(internal_out)
 );
 
-for (genvar O = 0; O < NUM_OUTPUTS; O++) begin
+for (genvar O = 0; O < NUM_OUTPUTS; O++) begin : gen_outputs
     `DATA_ASSIGN(internal_out[O], out[O])
 end
 

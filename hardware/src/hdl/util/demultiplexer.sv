@@ -5,7 +5,7 @@
 // General de-muxing implementation that is used for AXI and metaIntf streams below.
 module Demultiplexer #(
     parameter int N_STREAMS = 2,
-    parameter type DATA_TYPE = logic[63:0],
+    parameter type data_t = logic[63:0],
     // Needs to be defined here because it is needed in the module definition
     // This should NOT be overwritten.
     parameter int N_BITS = $clog2(N_STREAMS)
@@ -13,14 +13,14 @@ module Demultiplexer #(
     input logic clk,
     input logic rst_n,
 
-    input  DATA_TYPE i_data,
+    input  data_t i_data,
     output logic     i_ready,
     input  logic     i_valid,
 
     // The index of the stream the input should be assigned to
     input logic [N_BITS - 1: 0] stream_select,
 
-    output DATA_TYPE o_data [N_STREAMS],
+    output data_t o_data [N_STREAMS],
     input  logic     o_ready[N_STREAMS],
     output logic     o_valid[N_STREAMS]
 );
@@ -31,7 +31,7 @@ module Demultiplexer #(
 // then yields i_ready = 0 (well-defined) rather than undefined behavior.
 logic[2**N_BITS - 1:0] can_load_padded;
 
-DATA_TYPE n_o_data [N_STREAMS];
+data_t n_o_data [N_STREAMS];
 logic     n_o_valid[N_STREAMS];
 
 always_comb begin
@@ -77,7 +77,7 @@ endmodule
 
 // This module provides a de-mux implementation for the read/write completion
 // queue. Both data_in, and data_out should be metaIntf instances that
-// use the ack_t as their STYPE.
+// use the ack_t as their data type.
 //
 // The de muxing in this module is done based on the data.dest field in the input
 // metaIntf. In other words, the output interfaces will get data, based on the
@@ -99,7 +99,7 @@ module CQDemultiplexer
 
 `ASSERT_ELAB(N_STREAMS > 0)
 
-generate if (N_STREAMS == 1) begin
+generate if (N_STREAMS == 1) begin : gen_single_stream
     `READY_VALID_ASSIGN(data_in, data_out[0])
 end else begin : gen_demux
     // Intermediate signals for de_mux outputs
@@ -110,7 +110,7 @@ end else begin : gen_demux
     // Use the de-muxing implementation from above
     Demultiplexer #(
         .N_STREAMS(N_STREAMS),
-        .DATA_TYPE(ack_t)
+        .data_t(ack_t)
     ) inst_de_mux (
         .clk(clk),
         .rst_n(rst_n),
@@ -128,7 +128,7 @@ end else begin : gen_demux
     );
 
     // Unpack the outputs and connect to cq instances
-    for (genvar stream = 0; stream < N_STREAMS; stream++) begin
+    for (genvar stream = 0; stream < N_STREAMS; stream++) begin : gen_streams
         assign data_out[stream].data = o_data_packed[stream];
         assign data_out[stream].valid = o_valid_array[stream];
         assign o_ready_array[stream] = data_out[stream].ready;

@@ -35,7 +35,8 @@ module RAM #(
     parameter int DATA_WIDTH,
     parameter int ADDR_WIDTH,
     parameter int DEPTH = 2 ** ADDR_WIDTH,
-    parameter STYLE = "block", // block or ultra. Untyped because synthesis rejects string attributes
+    // block or ultra. Untyped because synthesis rejects string attributes
+    parameter STYLE = "block",
     parameter int READ_AFTER_WRITE = 0,
     parameter int READ_DURING_WRITE = 0,
     parameter int PACK = 0
@@ -63,7 +64,8 @@ localparam int DEEPER_THAN_CELL = DEPTH > CELL_DEPTH;
 
 // Number of words packed per line, clamped to a power of two so the slot index
 // is a clean slice of the address. Packing is skipped when only one word fits.
-localparam int WORDS_PER_LINE  = !PACK || !DEEPER_THAN_CELL || LINE_WIDTH < DATA_WIDTH ? 1 : 2 ** $clog2(LINE_WIDTH / DATA_WIDTH);
+localparam int WORDS_PER_LINE  = !PACK || !DEEPER_THAN_CELL || LINE_WIDTH < DATA_WIDTH ? 1 :
+                                 2 ** $clog2(LINE_WIDTH / DATA_WIDTH);
 localparam int SLOT_BITS       = $clog2(WORDS_PER_LINE);
 localparam int LINE_ADDR_WIDTH = ADDR_WIDTH - SLOT_BITS;
 localparam int LINE_DATA_WIDTH = WORDS_PER_LINE * DATA_WIDTH;
@@ -132,7 +134,8 @@ else $fatal(1, "RAM write to address %0d beyond the depth %0d", write_addr, DEPT
 always_comb begin
     if (READ_DURING_WRITE && ram_write_enable[0] && ram_write_addr[0] == ram_read_addr) begin
         read_data = ram_write_data[0];
-    end else if (READ_AFTER_WRITE && ram_write_enable[1] && ram_write_addr[1] == ram_read_addr) begin
+    end else if (READ_AFTER_WRITE && ram_write_enable[1] &&
+                 ram_write_addr[1] == ram_read_addr) begin
         read_data = ram_write_data[1];
     end else begin
         read_data = ram_read_line[ram_read_slot * DATA_WIDTH +: DATA_WIDTH];
@@ -145,7 +148,8 @@ module ReadyRAM #(
     parameter int DATA_WIDTH,
     parameter int ADDR_WIDTH,
     parameter int DEPTH = 2 ** ADDR_WIDTH,
-    parameter STYLE = "block", // block or ultra. Untyped because synthesis rejects string attributes
+    // block or ultra. Untyped because synthesis rejects string attributes
+    parameter STYLE = "block",
     parameter int READ_AFTER_WRITE = 0,
     parameter int READ_DURING_WRITE = 0,
     parameter int PACK = 0

@@ -16,11 +16,11 @@ always_comb sq_wr.tie_off_m();
 always_comb cq_rd.tie_off_s();
 always_comb cq_wr.tie_off_s();
 
-for (genvar I = 1; I < N_STRM_AXI; I++) begin
+for (genvar I = 1; I < N_STRM_AXI; I++) begin : gen_tie_off_host
     always_comb axis_host_recv[I].tie_off_s();
     always_comb axis_host_send[I].tie_off_m();
 end
-for (genvar I = 0; I < N_CARD_AXI; I++) begin
+for (genvar I = 0; I < N_CARD_AXI; I++) begin : gen_tie_off_card
     always_comb axis_card_send[I].tie_off_m();
     always_comb axis_card_recv[I].tie_off_s();
 end
@@ -63,8 +63,8 @@ AXIToNData #(
 `DATA_ASSIGN(ndata_in, hasher_in)
 
 StreamHasher #(
-    .tuple_t(hasher_data_t), 
-    .NUM_TUPLES(NUM_ELEMENTS), 
+    .tuple_t(hasher_data_t),
+    .NUM_TUPLES(NUM_ELEMENTS),
     .HASH_WIDTH(HASH_WIDTH)
 ) inst_hasher (
     .clk(clk),

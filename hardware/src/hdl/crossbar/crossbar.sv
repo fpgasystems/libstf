@@ -18,7 +18,7 @@ module Crossbar #(
     data_i.m   out[NUM_OUTPUTS] // #(data_t)
 );
 
-// We need this generate wrapper to fix some issue that we found in ParCore. 
+// We need this generate wrapper to fix some issue that we found in ParCore.
 // We did not find a good explanation why we need it though.
 generate
 
@@ -33,10 +33,10 @@ tagged_i #(data_t, logic) matched[NUM_INPUTS][NUM_OUTPUTS](clk, reset_synced);
 tagged_i #(data_t, logic) mux_in[NUM_OUTPUTS][NUM_INPUTS](clk, reset_synced);
 
 logic[NUM_INPUTS-1:0][NUM_OUTPUTS-1:0] mux_ready_transposed;
-    
-for (genvar I = 0; I < NUM_INPUTS; I++) begin
+
+for (genvar I = 0; I < NUM_INPUTS; I++) begin : gen_inputs
     assign in[I].ready = skid_pipe[I][0].ready;
-    
+
     assign skid_pipe[I][0].data  = in[I].data;
     assign skid_pipe[I][0].tag   = in[I].tag;
     assign skid_pipe[I][0].keep  = in[I].keep;
@@ -45,14 +45,20 @@ for (genvar I = 0; I < NUM_INPUTS; I++) begin
 end
 
 // SkidBuffer pipeline
-for (genvar I = 0; I < NUM_INPUTS; I++) begin
-    for (genvar J = 0; J < NUM_SKID_STAGES; J++) begin
-        TaggedSkidBuffer #(data_t, tag_t) inst_skid_buffer (.clk(clk), .rst_n(reset_synced), .in(skid_pipe[I][J]), .out(skid_pipe[I][J + 1]));
+for (genvar I = 0; I < NUM_INPUTS; I++) begin : gen_skid_pipes
+    for (genvar J = 0; J < NUM_SKID_STAGES; J++) begin : gen_stages
+        TaggedSkidBuffer #(data_t, tag_t) inst_skid_buffer (
+            .clk(clk),
+            .rst_n(reset_synced),
+
+            .in(skid_pipe[I][J]),
+            .out(skid_pipe[I][J + 1])
+        );
     end
 end
 
 // Duplicators
-for (genvar I = 0; I < NUM_INPUTS; I++) begin
+for (genvar I = 0; I < NUM_INPUTS; I++) begin : gen_duplicators
     // The copies are buffered after the tag matching below, so the duplicator has no skid buffers
     TaggedDuplicator #(
         .data_t(data_t),
@@ -67,7 +73,7 @@ for (genvar I = 0; I < NUM_INPUTS; I++) begin
         .out(duplicator_out[I])
     );
 
-    for (genvar O = 0; O < NUM_OUTPUTS; O++) begin
+    for (genvar O = 0; O < NUM_OUTPUTS; O++) begin : gen_tag_matchers
         logic tag_matches;
         assign tag_matches = duplicator_out[I][O].tag == O;
 
@@ -89,11 +95,17 @@ for (genvar I = 0; I < NUM_INPUTS; I++) begin
             end
         end
 
-        TaggedSkidBuffer #(data_t, logic) inst_skid_buffer (clk, reset_synced, matched[I][O], mux_in[O][I]);
-    end
-end 
+        TaggedSkidBuffer #(data_t, logic) inst_skid_buffer (
+            .clk(clk),
+            .rst_n(reset_synced),
 
-for (genvar O = 0; O < NUM_OUTPUTS; O++) begin
+            .in(matched[I][O]),
+            .out(mux_in[O][I])
+        );
+    end
+end
+
+for (genvar O = 0; O < NUM_OUTPUTS; O++) begin : gen_outputs
     TaggedMultiplexer #(
         .data_t(data_t),
         .NUM_INPUTS(NUM_INPUTS),
@@ -106,7 +118,7 @@ for (genvar O = 0; O < NUM_OUTPUTS; O++) begin
         .in(mux_in[O]),
         .out(out[O])
     );
-end 
+end
 
 endgenerate
 

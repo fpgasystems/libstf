@@ -103,8 +103,8 @@ MehdiFIFO #(
 );
 
 assign extent_in_valid = tail_valid && tail_closed;
-// A transfer either continues the tail or starts the next tail once the closed tail moved to the FIFO.
-// The vaddr is only compared while it is valid, so ready is always defined.
+// A transfer either continues the tail or starts the next tail once the closed tail moved to the
+// FIFO. The vaddr is only compared while it is valid, so ready is always defined.
 assign link.ready = !tail_valid || (!tail_closed && (!link.valid || link.vaddr == tail_end));
 
 // How many extents that end a stream were closed but not yet read
@@ -139,13 +139,13 @@ always_comb begin
     end
 end
 
-// The stored stream: segment 0 and, if the stream wraps around the end of the ring buffer, segment 1
+// The stored stream: segment 0 and, if it wraps around the end of the ring buffer, segment 1
 vaddress_t seg_vaddr[2], seg_size[2], seg_end[2];
 logic      wrapped;
 logic[1:0] num_segments;
 logic      replay_seg;
-// The bytes the stored stream occupies in the ring buffer, including the bytes the writer skipped at
-// the end of the ring buffer between its segments
+// The bytes the stored stream occupies in the ring buffer, including the bytes the writer skipped
+// at the end of the ring buffer between its segments
 vaddress_t stream_span;
 
 // We cannot release anything of a stream we read multiple times before we got all of it
@@ -194,7 +194,8 @@ always_ff @(posedge clk) begin
         link.released_valid <= buffer_done && release_out.release_memory;
     end
 
-    link.released_bytes <= (release_out.start != released_end ? ring_end - released_end : '0) + release_out.span;
+    link.released_bytes <= (release_out.start != released_end ? ring_end - released_end : '0) +
+                           release_out.span;
     if (buffer_done && release_out.release_memory) begin
         released_end <= release_out.end_vaddr;
     end
@@ -233,10 +234,10 @@ assign head_size_aligned = align(head.size);
 assign read_more         = head.size > head_read_max;
 assign first_read_size   = read_more ? MAX_READ_BYTES : head_available;
 
-// We take the oldest extent from the FIFO once we read all of it. If the FIFO is not empty, it holds
-// the head, so we compare its output directly.
-assign extent_out_ready = state == FIRST_READ && !read_valid && num_extents != 0 && extent_out_valid &&
-                          extent_out.size <= head_read_max;
+// We take the oldest extent from the FIFO once we read all of it. If the FIFO is not empty, it
+// holds the head, so we compare its output directly.
+assign extent_out_ready = state == FIRST_READ && !read_valid && num_extents != 0 &&
+                          extent_out_valid && extent_out.size <= head_read_max;
 
 assign buffer_config.num_reads_ready = state == WAIT_FOR_STREAM;
 
@@ -332,9 +333,10 @@ always_ff @(posedge clk) begin
             end
 
             FIRST_READ: begin
-                if (!read_valid && head_valid && (head_available != 0 || (head_closed && head.size == 0))) begin
-                    // Read what was written of the oldest extent. A closed extent without data is an
-                    // empty stream.
+                if (!read_valid && head_valid &&
+                    (head_available != 0 || (head_closed && head.size == 0))) begin
+                    // Read what was written of the oldest extent. A closed extent without data is
+                    // an empty stream.
                     read_valid <= 1'b1;
                     read_vaddr <= head.vaddr + head_read;
                     read_size  <= first_read_size;
@@ -342,8 +344,10 @@ always_ff @(posedge clk) begin
 
                     read_release.release_memory <= remaining_reads == 0;
                     read_release.start          <= head.vaddr + head_read;
-                    read_release.span           <= read_more ? MAX_READ_BYTES : head_size_aligned - head_read;
-                    read_release.end_vaddr      <= head.vaddr + (read_more ? head_read_max : head_size_aligned);
+                    read_release.span           <= read_more ? MAX_READ_BYTES :
+                                                               head_size_aligned - head_read;
+                    read_release.end_vaddr      <= head.vaddr +
+                                                   (read_more ? head_read_max : head_size_aligned);
 
                     head_read     <= read_more ? head_read_max : head.size;
                     head_read_max <= (read_more ? head_read_max : head.size) + MAX_READ_BYTES;
@@ -399,6 +403,7 @@ always_ff @(posedge clk) begin
                     end
                 end
             end
+            default: ;
         endcase
 
         // Reset everything for a new ring buffer

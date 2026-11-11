@@ -49,10 +49,11 @@ NDataWidthConverter #(
 
 assign internal.ready = out.tready;
 
-for (genvar I = 0; I < NUM_AXI_ELEMENTS; I++) begin
-    assign out.tdata[I * AXI_ELEMENT_WIDTH+:AXI_ELEMENT_WIDTH] = AXI_ELEMENT_WIDTH'(internal.data[I]);
+for (genvar I = 0; I < NUM_AXI_ELEMENTS; I++) begin : gen_elements
+    assign out.tdata[I * AXI_ELEMENT_WIDTH+:AXI_ELEMENT_WIDTH] =
+        AXI_ELEMENT_WIDTH'(internal.data[I]);
 
-    for (genvar J = 0; J < AXI_ELEMENT_SIZE; J++) begin
+    for (genvar J = 0; J < AXI_ELEMENT_SIZE; J++) begin : gen_keep_bytes
         assign out.tkeep[I * AXI_ELEMENT_SIZE + J] = internal.keep[I];
     end
 end
@@ -110,7 +111,7 @@ AXIWidthConverter #(
 
 assign internal.tready = out.ready;
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_elements
     assign out.data[I] = internal.tdata[I * AXI_ELEMENT_WIDTH+:$bits(data_t)];
     assign out.keep[I] = internal.tkeep[I * AXI_ELEMENT_SIZE];
 end
@@ -121,7 +122,7 @@ assign out.valid = internal.tvalid;
 endmodule
 
 /**
- * Converts an AXI stream to a data stream. If the last data beat of the incoming stream is not 
+ * Converts an AXI stream to a data stream. If the last data beat of the incoming stream is not
  * full, this returns data beats that have a low keep.
  */
 module AXIToData #(
@@ -142,7 +143,7 @@ localparam int NUM_ELEMENTS = AXI_WIDTH / DATA_WIDTH;
 `ASSERT_ELAB(type(out.data_t) == type(data_t))
 `ASSERT_ELAB(AXI_WIDTH == in.AXI4S_DATA_BITS)
 
-generate if (NUM_ELEMENTS == 1) begin
+generate if (NUM_ELEMENTS == 1) begin : gen_passthrough
 
 `ASSERT_ELAB(DATA_WIDTH == AXI_WIDTH)
 
@@ -152,7 +153,7 @@ assign out.last  = in.tlast;
 assign out.valid = in.tvalid;
 assign out.data  = in.tdata;
 
-end else begin
+end else begin : gen_serialize
 
 logic[$clog2(NUM_ELEMENTS) - 1:0] counter;
 

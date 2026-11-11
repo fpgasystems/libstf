@@ -3,7 +3,7 @@
 /**
  * This module delays the reset signal by one cycle by buffering it in a register.
  *
- * This can be used to break long reset chains which can lead to timing issues and designs that are 
+ * This can be used to break long reset chains which can lead to timing issues and designs that are
  * difficult to place & optimize.
  */
 module ResetResync (

@@ -18,7 +18,7 @@ module AXIMultiplexer
 ndata_i #(data8_t, AXI_DATA_BITS / 8) in_data[NUM_STREAMS](clk, rst_n);
 ndata_i #(data8_t, AXI_DATA_BITS / 8) out_data(clk, rst_n);
 
-for (genvar I = 0; I < NUM_STREAMS; I++) begin
+for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
     assign in_data[I].data  = in[I].tdata;
     assign in_data[I].keep  = in[I].tkeep;
     assign in_data[I].last  = in[I].tlast;

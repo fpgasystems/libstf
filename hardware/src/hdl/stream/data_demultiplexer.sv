@@ -3,7 +3,7 @@
 `include "libstf_macros.svh"
 
 /**
- * Demultiplexes one input data stream into a set of output data streams based on a select 
+ * Demultiplexes one input data stream into a set of output data streams based on a select
  * configuration.
  */
 module DataDemultiplexer #(
@@ -21,7 +21,7 @@ module DataDemultiplexer #(
 typedef logic[$clog2(NUM_STREAMS) - 1:0] select_t;
 
 // If we don't pull this into an internal register we have to assign valid to ready which is bad
-select_t select_reg; 
+select_t select_reg;
 logic    select_reg_valid;
 
 logic selected_stream_ready;
@@ -56,7 +56,7 @@ assign select.ready          = !select_reg_valid || was_last_data_beat;
 
 assign in.ready = selected_stream_ready;
 
-for (genvar I = 0; I < NUM_STREAMS; I++) begin
+for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
     assign is_selected[I] = I == select_reg;
     assign stream_ready[I] = out[I].ready;
 
@@ -106,7 +106,7 @@ DataDemultiplexer #(
     .out(untyped_out)
 );
 
-for (genvar I = 0; I < NUM_STREAMS; I++) begin
+for (genvar I = 0; I < NUM_STREAMS; I++) begin : gen_streams
     `DATA_ASSIGN(untyped_out[I], out[I])
     assign out[I].typ = in.typ;
 end

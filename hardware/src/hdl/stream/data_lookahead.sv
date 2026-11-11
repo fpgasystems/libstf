@@ -67,7 +67,7 @@ assign out.data[NUM_ELEMENTS - 1:0] = data;
 assign out.keep[NUM_ELEMENTS - 1:0] = keep;
 
 // The waiting input beat only belongs to the same stream in GLUE
-for (genvar I = 0; I < PREVIEW_SIZE; I++) begin
+for (genvar I = 0; I < PREVIEW_SIZE; I++) begin : gen_preview
     assign out.data[NUM_ELEMENTS + I] = state == GLUE ? in.data[I] : '0;
     assign out.keep[NUM_ELEMENTS + I] = state == GLUE && in.valid && in.keep[I];
 end

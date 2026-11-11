@@ -75,7 +75,7 @@ end
 
 assign out.data  = hold_data;
 assign out.keep  = hold_keep;
-assign out.last  = hold_last || (in.valid && is_null_last); 
+assign out.last  = hold_last || (in.valid && is_null_last);
 assign out.valid = hold_valid && (hold_last || (in.valid && is_last_or_not_null));
 
 endmodule
@@ -89,8 +89,8 @@ module AXINullBeatSuppressor
     input logic clk,
     input logic rst_n,
 
-    AXI4S.s in, // #(AXI4S_DATA_BITS) 
-    AXI4S.m out // #(AXI4S_DATA_BITS) 
+    AXI4S.s in, // #(AXI4S_DATA_BITS)
+    AXI4S.m out // #(AXI4S_DATA_BITS)
 );
 
 `ASSERT_ELAB(AXI4S_DATA_BITS == in.AXI4S_DATA_BITS)
@@ -111,7 +111,7 @@ NullBeatSuppressor #(
 ) inst_null_beat_suppressor (
     .clk(clk),
     .rst_n(rst_n),
-    
+
     .in(ndata_in),
     .out(ndata_out)
 );

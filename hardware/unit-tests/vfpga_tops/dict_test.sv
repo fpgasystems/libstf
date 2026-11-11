@@ -13,10 +13,10 @@ always_comb sq_wr.tie_off_m();
 always_comb cq_rd.tie_off_s();
 always_comb cq_wr.tie_off_s();
 
-for (genvar I = 2; I < N_STRM_AXI; I++) begin
+for (genvar I = 2; I < N_STRM_AXI; I++) begin : gen_tie_off_host
     always_comb axis_host_recv[I].tie_off_s();
 end
-for (genvar I = 0; I < N_CARD_AXI; I++) begin
+for (genvar I = 0; I < N_CARD_AXI; I++) begin : gen_tie_off_card
     always_comb axis_card_send[I].tie_off_m();
     always_comb axis_card_recv[I].tie_off_s();
 end
@@ -75,7 +75,13 @@ ready_valid_i #(type_t) data_type(clk, rst_n);
 ready_valid_i #(type_t) dup_out[2](clk, rst_n);
 
 `CONFIG_SIGNALS_TO_INTF(stream_config[0].data_type, data_type)
-ReadyValidDuplicator #(2) inst_data_type_duplicate (clk, rst_n, data_type, dup_out);
+ReadyValidDuplicator #(2) inst_data_type_duplicate (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .in(data_type),
+    .out(dup_out)
+);
 
 assign stream_config[0].select_ready = 1'b1;
 
@@ -137,10 +143,10 @@ NDataToAXITyped #(
     .out(axi_out[0])
 );
 
-for (genvar I = 1; I < N_STRM_AXI; I++) begin
+for (genvar I = 1; I < N_STRM_AXI; I++) begin : gen_tie_off_out
     always_comb axi_out[I].tie_off_m();
 end
 
-for (genvar I = 0; I < N_STRM_AXI; I++) begin
+for (genvar I = 0; I < N_STRM_AXI; I++) begin : gen_host_send
     `AXIS_ASSIGN(axi_out[I], axis_host_send[I])
 end

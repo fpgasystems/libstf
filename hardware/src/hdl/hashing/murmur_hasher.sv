@@ -11,7 +11,7 @@ module MurMurHasher #(
 
     input  logic[KEY_WIDTH - 1:0] i_data,
     output logic o_data_ready,
-    
+
     output logic[HASH_WIDTH - 1:0] o_data,
     input  logic i_data_ready
 );
@@ -36,11 +36,13 @@ end
 always_ff @(posedge clk) begin
     if(i_data_ready) begin
         xor_key_0  <= key_0 ^ bitshift_key_0;
-        mult_key_1 <= (KEY_WIDTH == 32) ? (xor_key_0 * 32'h85ebca6b) : (xor_key_0 * 64'hff51afd7ed558ccd);
-        
+        mult_key_1 <= (KEY_WIDTH == 32) ? (xor_key_0 * 32'h85ebca6b) :
+                                          (xor_key_0 * 64'hff51afd7ed558ccd);
+
         xor_key_2  <= key_2 ^ bitshift_key_2;
-        mult_key_3 <= (KEY_WIDTH == 32) ? (xor_key_2 * 32'hc2b2ae35) : (xor_key_2 * 64'hc4ceb9fe1a85ec53);
-        
+        mult_key_3 <= (KEY_WIDTH == 32) ? (xor_key_2 * 32'hc2b2ae35) :
+                                          (xor_key_2 * 64'hc4ceb9fe1a85ec53);
+
         xor_key_4 <= key_4 ^ bitshift_key_4;
 
         o_data <= xor_key_4[HASH_WIDTH - 1:0];

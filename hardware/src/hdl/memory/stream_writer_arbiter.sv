@@ -38,8 +38,10 @@ module StreamWriterArbiter
 
 localparam int W = N_WRITERS > 1 ? $clog2(N_WRITERS) : 1;
 
-`ASSERT_ELAB(DATA_ORDER_DEPTH > 1 && 2**$clog2(DATA_ORDER_DEPTH) == DATA_ORDER_DEPTH, "DATA_ORDER_DEPTH has to be a power of two > 1")
-`ASSERT_ELAB(CQ_ORDER_DEPTH > 1 && 2**$clog2(CQ_ORDER_DEPTH) == CQ_ORDER_DEPTH, "CQ_ORDER_DEPTH has to be a power of two > 1")
+`ASSERT_ELAB(DATA_ORDER_DEPTH > 1 && 2**$clog2(DATA_ORDER_DEPTH) == DATA_ORDER_DEPTH,
+    "DATA_ORDER_DEPTH has to be a power of two > 1")
+`ASSERT_ELAB(CQ_ORDER_DEPTH > 1 && 2**$clog2(CQ_ORDER_DEPTH) == CQ_ORDER_DEPTH,
+    "CQ_ORDER_DEPTH has to be a power of two > 1")
 
 // Interface arrays cannot be indexed dynamically
 logic [N_WRITERS - 1:0][AXI_DATA_BITS - 1:0]     in_tdata;
@@ -56,7 +58,7 @@ logic [W - 1:0]           requester;
 
 MetaIntfArbiter #(
     .N_INTERFACES(N_WRITERS),
-    .STYPE(req_t)
+    .data_t(req_t)
 ) inst_sq_wr_arbiter (
     .clk(clk),
     .rst_n(rst_n),
@@ -129,13 +131,14 @@ assign data_pop = data_out.tvalid && data_out.tready && data_out.tlast;
 // ------ Completions -------------------------------------------------------
 // Completions of other streams are dropped, like the StreamWriter does
 logic is_completion;
-assign is_completion = cq_wr_in.valid && cq_wr_in.data.strm == STRM && cq_wr_in.data.dest == AXI_STRM_ID;
+assign is_completion = cq_wr_in.valid && cq_wr_in.data.strm == STRM &&
+                       cq_wr_in.data.dest == AXI_STRM_ID;
 
 assign cq_wr_in.ready = !is_completion || (cq_head_valid && cq_wr_ready[cq_head]);
 assign cq_pop         = is_completion && cq_wr_in.ready;
 
 // ------ Writer connections ------------------------------------------------
-for (genvar I = 0; I < N_WRITERS; I++) begin
+for (genvar I = 0; I < N_WRITERS; I++) begin : gen_writers
     assign in_tdata[I]  = data_in[I].tdata;
     assign in_tkeep[I]  = data_in[I].tkeep;
     assign in_tid[I]    = data_in[I].tid;

@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 /**
- * The ReadyValidDuplicator creates NUM_OUTPUTS outputs based on one input. The ready signal of 
+ * The ReadyValidDuplicator creates NUM_OUTPUTS outputs based on one input. The ready signal of
  * the input is driven when all output ready signals are high.
  */
 module ReadyValidDuplicator #(
@@ -21,7 +21,7 @@ assign in.ready = &(seen | out_ready);
 
 always_ff @(posedge clk) begin
     if(!rst_n) begin
-        seen <= '0;     
+        seen <= '0;
     end else begin
         seen <= n_seen;
     end
@@ -37,7 +37,7 @@ always_comb begin
     end
 end
 
-for (genvar I = 0; I < NUM_OUTPUTS; I++) begin
+for (genvar I = 0; I < NUM_OUTPUTS; I++) begin : gen_outputs
     assign out_ready[I] = out[I].ready;
 
     assign out[I].data  = in.data;
@@ -64,7 +64,7 @@ assign out.valid = left.valid && right.valid;
 endmodule
 
 /**
- * The ReadyValidSplitter splits one input into two outputs based on the given parameter types. The 
+ * The ReadyValidSplitter splits one input into two outputs based on the given parameter types. The
  * ready signal of the input is driven after both output ready signals have been high.
  */
 module ReadyValidSplitter #(
@@ -93,7 +93,7 @@ assign in.ready = &(seen | out_ready);
 
 always_ff @(posedge clk) begin
     if(!rst_n) begin
-        seen <= '0;     
+        seen <= '0;
     end else begin
         seen <= n_seen;
     end

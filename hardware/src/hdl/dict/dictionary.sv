@@ -3,17 +3,17 @@
 `include "libstf_macros.svh"
 
 /**
- * This module is able to materialize a column based on a random sequences of column identifiers 
+ * This module is able to materialize a column based on a random sequences of column identifiers
  * (e.g., the build-side result of a hash join).
- * 
+ *
  * It has two phases:
- * 1. The column values are ingested through the in_values interface and stored in an internal BRAM 
+ * 1. The column values are ingested through the in_values interface and stored in an internal BRAM
  *    cache.
- * 2. The column ids are streamed through the in_ids interface and the corresponding values are 
+ * 2. The column ids are streamed through the in_ids interface and the corresponding values are
  *    returned through the out interface.
- * 
- * The module is implemented as NUM_BANKS CachedMaterializerBanks which implement a BRAM cache each 
- * and a surrounding crossbar setup which shuffles the column identifiers to their corresponding 
+ *
+ * The module is implemented as NUM_BANKS CachedMaterializerBanks which implement a BRAM cache each
+ * and a surrounding crossbar setup which shuffles the column identifiers to their corresponding
  * bank based on the lowest bits and reorders the returned values into the same order.
  */
 module Dictionary #(
@@ -81,7 +81,7 @@ tagged_i #(id_t, full_serial_t) decoupler_out[NUM_ELEMENTS](clk, rst_n);
 data_i #(value_t) value_decoupler_out[NUM_BANKS](clk, rst_n);
 
 valid_i #(logic[NUM_ELEMENTS:0]) coupler_mask(clk, rst_n); // NUM_ELEMENTS keep bits and 1 last bit
-duplicate_i #(NUM_ELEMENTS) deduplicate_mask(); 
+duplicate_i #(NUM_ELEMENTS) deduplicate_mask();
 
 tagged_i #(serial_id_t, bank_t) pre_cross_in[NUM_ELEMENTS](clk, rst_n);
 data_i   #(serial_id_t)                pre_cross_out[NUM_BANKS](clk, rst_n);
@@ -177,7 +177,7 @@ ReorderDecoupler #(
     .out(decoupler_out)
 );
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_pre_crossbar_lanes
     assign decoupler_out[I].ready = pre_cross_in[I].ready;
 
     assign pre_cross_in[I].data.id     = decoupler_out[I].data[ID_BITS - 1:LOG_NUM_BANKS];
@@ -203,7 +203,7 @@ Crossbar #(
 );
 
 // 2. Banks to materialize the values
-for (genvar I = 0; I < NUM_BANKS; I++) begin
+for (genvar I = 0; I < NUM_BANKS; I++) begin : gen_banks
     DictionaryBank #(
         .value_t(value_t),
         .id_t(bank_id_t),
@@ -221,7 +221,8 @@ for (genvar I = 0; I < NUM_BANKS; I++) begin
     assign bank_out[I].ready = post_cross_in[I].ready;
 
     assign post_cross_in[I].data.value  = bank_out[I].data.value;
-    assign post_cross_in[I].data.serial = bank_out[I].data.serial[LOG_NUM_ELEMENTS+:LOG_MAX_IN_TRANSIT];
+    assign post_cross_in[I].data.serial =
+        bank_out[I].data.serial[LOG_NUM_ELEMENTS+:LOG_MAX_IN_TRANSIT];
     assign post_cross_in[I].tag         = bank_out[I].data.serial[0+:LOG_NUM_ELEMENTS];
     assign post_cross_in[I].keep        = bank_out[I].keep;
     assign post_cross_in[I].last        = bank_out[I].last;
@@ -244,7 +245,7 @@ Crossbar #(
   .out(post_cross_out)
 );
 
-for (genvar I = 0; I < NUM_ELEMENTS; I++) begin
+for (genvar I = 0; I < NUM_ELEMENTS; I++) begin : gen_post_crossbar_lanes
     assign post_cross_out[I].ready = reorder_in[I].ready;
 
     assign reorder_in[I].data  = post_cross_out[I].data.value;

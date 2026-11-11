@@ -30,8 +30,12 @@ AXI4S #(DATA_WIDTH) axis_reg (.aclk(clk), .aresetn(rst_n));
 
 genvar i;
 generate
-for (i = 0; i < FACTOR; i++) begin
-    assign data_flattened[FIFO_WIDTH * i +: FIFO_WIDTH] = {i_data.tdata[DATA_WIDTH * i +: DATA_WIDTH], i_data.tkeep[DATA_WIDTH / 8 * i +: DATA_WIDTH / 8], i == FACTOR - 1 ? i_data.tlast : 1'b0};
+for (i = 0; i < FACTOR; i++) begin : gen_flatten
+    assign data_flattened[FIFO_WIDTH * i +: FIFO_WIDTH] = {
+        i_data.tdata[DATA_WIDTH * i +: DATA_WIDTH],
+        i_data.tkeep[DATA_WIDTH / 8 * i +: DATA_WIDTH / 8],
+        i == FACTOR - 1 ? i_data.tlast : 1'b0
+    };
 end
 endgenerate
 
