@@ -158,6 +158,22 @@ class DictTest(DictTestMixin, ConfiguredTestCase):
         # Assert
         self.assert_simulation_output()
 
+    def test_64bit_odd_beats_then_32bit(self):
+        # 20 64-bit values take 3 beats. The 32-bit stream after them has to start with the lower
+        # half of its first beat again.
+        values_0 = Stream(StreamType.UNSIGNED_INT_64, list(range(0, 20)))
+        values_1 = Stream(StreamType.UNSIGNED_INT_32, list(range(1000, 1500)))
+        self.expression = DictExpression(
+            [values_0, values_1],
+            [list(range(0, 20)), list(range(0, 500))]
+        )
+
+        # Act
+        self.simulate_fpga()
+
+        # Assert
+        self.assert_simulation_output()
+
     def test_duplicate_32bit_full(self):
         values = Stream(StreamType.UNSIGNED_INT_32, list(range(0, 50)))
         ids = [j for i in range(0, 50) for j in repeat(i, 8)]

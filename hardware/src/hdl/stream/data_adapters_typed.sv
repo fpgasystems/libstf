@@ -197,7 +197,8 @@ always_ff @(posedge clk) begin
     if (!rst_n) begin
         is_upper <= 1'b0;
     end else begin
-        if (in_type.valid && in.tvalid && out.ready) begin
+        // Only 32-bit elements split an AXI beat into a lower and an upper half
+        if (is_32bit && in_type.valid && in.tvalid && out.ready) begin
             is_upper <= ~is_upper;
         end
     end
