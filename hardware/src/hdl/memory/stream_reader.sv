@@ -222,12 +222,9 @@ assign is_empty            = outstanding_out.len == '0;
 AXI4S internal_data(.aclk(clk), .aresetn(reset_synced));
 AXI4S output_axis  (.aclk(clk), .aresetn(reset_synced));
 
-// The data of an empty beat does not matter because its keep is zero. Passing it through always
-// saves a 512-bit mux in front of the skid buffer.
-assign internal_data.tdata = in.tdata;
-
 always_comb begin
     if (!is_empty) begin
+        internal_data.tdata  = in.tdata;
         // The last flag has to travel with the data beat. Otherwise, the next buffer could change
         // it while the final beat of this buffer is still held in the skid buffer below.
         internal_data.tkeep  = in.tkeep;
@@ -238,8 +235,9 @@ always_comb begin
 
         outstanding_out_ready = in.tvalid && in.tready && transfer_completed;
     end else begin
-        // A buffer without data that ends a stream produces an empty stream. Its keep and last must
-        // not follow the input, which might already receive the next transfer.
+        // A buffer without data that ends a stream produces an empty stream. Its data must not
+        // follow the input, which might already receive the next transfer.
+        internal_data.tdata  = '0;
         internal_data.tkeep  = '0;
         internal_data.tlast  = 1'b1;
         internal_data.tvalid = outstanding_out_valid && outstanding_out.buffer_last;
