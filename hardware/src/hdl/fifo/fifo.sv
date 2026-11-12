@@ -34,8 +34,8 @@ logic write_en;
 logic[ADDRESS_WIDTH - 1:0] write_ptr, n_write_ptr, write_ptr_succ;
 logic[ADDRESS_WIDTH - 1:0] read_ptr,  state_read_ptr, n_state_read_ptr, read_ptr_succ;
 
-logic      full, n_full, empty, n_empty;
-logic[1:0] operation;
+logic full, n_full, empty, n_empty;
+logic read_fire, write_fire;
 
 // for the case that when being empty, an element is written, it takes two cycles
 // till the read can perform so this is there to make sure it all goes smoothly
@@ -44,7 +44,6 @@ logic[1:0] operation;
 logic write_after_empty, n_write_after_empty;
 
 logic[$clog2(DEPTH):0] n_filling_level;
-logic[$clog2(DEPTH):0] filling_level_succ, filling_level_pred;
 
 // -- Memory ---------------------------------------------------------------------------------------
 assign write_en = in_valid & (~full);
@@ -80,93 +79,45 @@ begin
 end
 
 // -- Next state logic -----------------------------------------------------------------------------
-assign write_ptr_succ     = write_ptr + 1'b1;
-assign read_ptr_succ      = state_read_ptr + 1'b1;
-assign filling_level_succ = filling_level + 1'b1;
-assign filling_level_pred = filling_level - 1'b1;
+assign read_fire  = out_ready & ~empty & ~write_after_empty;
+assign write_fire = in_valid & ~full;
 
-// someone wants to write to fifo || someone is reading from fifo
-assign operation = {in_valid, out_ready};
+assign write_ptr_succ = write_ptr + 1'b1;
+assign read_ptr_succ  = state_read_ptr + 1'b1;
 
 always_comb begin
+    read_ptr    = state_read_ptr;
     n_write_ptr = write_ptr;
 
-    n_full  = full;
-    n_empty = empty;
+    if (read_fire) begin
+        read_ptr = read_ptr_succ;
+    end
+    if (write_fire) begin
+        n_write_ptr = write_ptr_succ;
+    end
 
-    n_write_after_empty = 1'b0;
-    n_state_read_ptr    = state_read_ptr;
-    read_ptr            = state_read_ptr;
+    n_state_read_ptr = read_ptr;
+    n_filling_level  = filling_level + write_fire - read_fire;
 
-    n_filling_level = filling_level;
+    if (full) begin
+        n_full = ~read_fire;
+    end else begin
+        n_full = write_fire & ~read_fire & filling_level == ($clog2(DEPTH) + 1)'(DEPTH - 1);
+    end
 
-    case (operation)
-        2'b00: begin
-            //no one reading or trying to write, nothing should happen
-        end
-        2'b01: begin
-            //someone is trying to read from the fifo
-            if ((empty == 1'b0) && (write_after_empty == 1'b0)) begin
-                n_state_read_ptr = read_ptr_succ;
-                read_ptr         = read_ptr_succ;
-                n_full           = 1'b0;
-                if (write_ptr == read_ptr_succ) begin
-                     n_empty = 1'b1;
-                end
-                n_filling_level = filling_level_pred;
-            end
-        end
-        2'b10: begin
-            //someone is trying to write to the fifo
-            if (full == 1'b0) begin
-                n_write_ptr = write_ptr_succ;
-                if (empty == 1'b1) begin
-                    n_write_after_empty = 1'b1;
-                end
-                n_empty = 1'b0;
-                if (filling_level == ($clog2(DEPTH) + 1)'(DEPTH - 1)) begin
-                    n_full = 1'b1;
-                end
-                n_filling_level = filling_level_succ;
-            end
-        end
-        2'b11: begin
-            if (empty == 1'b1) begin
-                n_write_ptr         = write_ptr_succ;
-                n_write_after_empty = 1'b1;
-                n_empty             = 1'b0;
-                n_filling_level     = filling_level_succ;
-            end else if (full == 1'b1) begin
-                n_state_read_ptr = read_ptr_succ;
-                read_ptr         = read_ptr_succ;
-                n_full           = 1'b0;
-                n_filling_level  = filling_level_pred;
-            end else begin
-                if (write_after_empty == 1'b0) begin
-                    n_state_read_ptr = read_ptr_succ;
-                    read_ptr         = read_ptr_succ;
+    if (empty) begin
+        n_empty = ~write_fire;
+    end else begin
+        n_empty = read_fire & ~write_fire & read_ptr_succ == write_ptr;
+    end
 
-                    //case where there is only 1 element in there and we do a read/write
-                    if (read_ptr_succ == write_ptr) begin
-                        n_write_after_empty = 1'b1;
-                    end
-                end else begin
-                    n_filling_level = filling_level_succ;
-                end
-
-                n_write_ptr = write_ptr_succ;
-            end
-        end
-        default: begin
-            // Unknown states like 'x'
-        end
-    endcase
+    // A write into an empty FIFO, or a read and a write with only one element in the FIFO
+    n_write_after_empty = write_fire & (empty | (read_fire & read_ptr_succ == write_ptr));
 end
 
 // -- Outputs --------------------------------------------------------------------------------------
 assign out_valid = (~empty) & (~write_after_empty);
 
-// either we are not full, or we are but we are reading-writing
 assign in_ready = (~full) & rst_n;
 
 endmodule
