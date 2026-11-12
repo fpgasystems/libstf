@@ -69,8 +69,9 @@ always_comb begin
 
             for (int unsigned i = START_IDX_INCL; i < END_IDX_EXCL && i < NUM_ELEMENTS; i++) begin
                 for (int unsigned j = 0; j < i; j++) begin
-                    // j is always less than i
-                    if (in.data[i] == in.data[j]) begin
+                    // j is always less than i. Lanes without keep hold stale data and cannot be
+                    // the origin of a duplicate.
+                    if (in.keep[j] && in.data[i] == in.data[j]) begin
                         n_data.keep[i] = 1'b0;
 
                         n_mask.duplicates[i] = in.keep[i];
