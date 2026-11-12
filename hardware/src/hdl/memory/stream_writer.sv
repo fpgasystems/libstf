@@ -179,7 +179,8 @@ logic next_last;
 logic next_len_valid, next_len_ready;
 MehdiFIFO #(
     .WIDTH(TRANSFER_ADDRESS_LEN_BITS + 1),
-    .DEPTH(16)
+    .DEPTH(16),
+    .STYLE("distributed")
 ) inst_len_fifo (
     .clk(clk),
     .rst_n(reset_synced),
@@ -262,7 +263,8 @@ logic pending_in_valid, pending_in_ready, pending_out_valid, pending_out_ready;
 
 MehdiFIFO #(
     .WIDTH($bits(pending_notify_t)),
-    .DEPTH(PENDING_NOTIFY_DEPTH)
+    .DEPTH(PENDING_NOTIFY_DEPTH),
+    .STYLE("distributed")
 ) inst_pending_notify_fifo (
     .clk(clk),
     .rst_n(reset_synced),

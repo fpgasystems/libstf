@@ -169,7 +169,8 @@ logic     buffer_done;
 
 MehdiFIFO #(
     .WIDTH($bits(release_t)),
-    .DEPTH(MAX_OUTSTANDING_READS)
+    .DEPTH(MAX_OUTSTANDING_READS),
+    .STYLE("distributed")
 ) inst_release_fifo (
     .clk(clk),
     .rst_n(reset_synced),

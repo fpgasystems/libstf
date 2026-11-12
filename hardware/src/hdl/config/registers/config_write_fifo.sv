@@ -22,7 +22,11 @@ ready_valid_i #(data_t) internal(clk, rst_n);
 
 assign valid = write_config.valid && write_config.addr == ADDR;
 
-MehdiFIFO #(DEPTH, $bits(data_t)) inst_fifo (
+MehdiFIFO #(
+    .DEPTH(DEPTH),
+    .WIDTH($bits(data_t)),
+    .STYLE(DEPTH <= 64 ? "distributed" : "block")
+) inst_fifo (
     .clk(clk),
     .rst_n(rst_n),
 
