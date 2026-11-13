@@ -67,8 +67,9 @@ vaddress_t ring_end;
 // -- Extents --------------------------------------------------------------------------------------
 typedef struct packed {
     vaddress_t vaddr;
-    vaddress_t size; // In bytes
-    logic      last; // Whether the extent ends a stream
+    vaddress_t size;         // In bytes
+    vaddress_t size_aligned; // The size aligned to AXI_DATA_BYTES, stored for timing
+    logic      last;         // Whether the extent ends a stream
 } extent_t;
 
 // The newest extent, which might still grow. Once it is closed, it moves to the extent FIFO.
@@ -83,7 +84,9 @@ extent_t extent_out;
 logic    extent_in_valid, extent_in_ready, extent_out_valid, extent_out_ready;
 // The number of extents in the FIFO, which we track ourselves because the FIFO output might lag
 // behind its input
-logic[$clog2(MAX_WAITING_EXTENTS + 1) - 1:0] num_extents;
+logic[$clog2(MAX_WAITING_EXTENTS + 1) - 1:0] num_extents, n_num_extents;
+// Whether num_extents != 0. It selects the head and has a high fanout, so it is registered.
+logic has_extents;
 
 // Distributed RAM registers the output, which the read logic below needs for timing
 MehdiFIFO #(
@@ -131,7 +134,7 @@ vaddress_t head_read;     // Bytes of the oldest extent we already read
 vaddress_t head_read_max; // head_read + MAX_READ_BYTES, registered for timing
 
 always_comb begin
-    if (num_extents != 0) begin
+    if (has_extents) begin
         head        = extent_out;
         head_valid  = extent_out_valid;
         head_closed = 1'b1;
@@ -150,6 +153,8 @@ logic      replay_seg;
 // The bytes the stored stream occupies in the ring buffer, including the bytes the writer skipped
 // at the end of the ring buffer between its segments
 vaddress_t stream_span;
+// The bytes from the start of segment 0 to the end of the ring buffer, precomputed for timing
+vaddress_t seg_to_ring_end;
 
 // We cannot release anything of a stream we read multiple times before we got all of it
 assign link.holding = state == FIRST_READ && remaining_reads != 0 && num_closed_streams == 0;
@@ -169,7 +174,8 @@ logic     buffer_done;
 
 MehdiFIFO #(
     .WIDTH($bits(release_t)),
-    .DEPTH(MAX_OUTSTANDING_READS)
+    .DEPTH(MAX_OUTSTANDING_READS),
+    .STYLE("distributed")
 ) inst_release_fifo (
     .clk(clk),
     .rst_n(reset_synced),
@@ -229,17 +235,16 @@ assign release_in_valid = mem_config.valid && mem_config.ready;
 // The next read of the first read of a stream. Only the last transfer of a stream can be unaligned,
 // so head_read is aligned while bytes of the head are available. For timing, we compute the values
 // that depend on the read size for both cases in parallel.
-vaddress_t head_available, head_size_aligned, first_read_size;
+vaddress_t head_available, first_read_size;
 logic      read_more; // Whether more than MAX_READ_BYTES of the head are available
 
-assign head_available    = head.size - head_read;
-assign head_size_aligned = align(head.size);
-assign read_more         = head.size > head_read_max;
-assign first_read_size   = read_more ? MAX_READ_BYTES : head_available;
+assign head_available  = head.size - head_read;
+assign read_more       = head.size > head_read_max;
+assign first_read_size = read_more ? MAX_READ_BYTES : head_available;
 
 // We take the oldest extent from the FIFO once we read all of it. If the FIFO is not empty, it
 // holds the head, so we compare its output directly.
-assign extent_out_ready = state == FIRST_READ && !read_valid && num_extents != 0 &&
+assign extent_out_ready = state == FIRST_READ && !read_valid && has_extents &&
                           extent_out_valid && extent_out.size <= head_read_max;
 
 assign buffer_config.num_reads_ready = state == WAIT_FOR_STREAM;
@@ -257,6 +262,8 @@ else $fatal(1, "A stream that is read multiple times does not fit into the ring 
 `endif
 
 // -- State machine --------------------------------------------------------------------------------
+assign n_num_extents = num_extents + (extent_in_valid && extent_in_ready) - extent_out_ready;
+
 always_ff @(posedge clk) begin
     if (!reset_synced) begin
         tail        <= 'X;
@@ -265,6 +272,7 @@ always_ff @(posedge clk) begin
         tail_closed <= 1'b0;
 
         num_extents        <= '0;
+        has_extents        <= 1'b0;
         num_closed_streams <= '0;
 
         remaining_reads <= '0;
@@ -285,6 +293,8 @@ always_ff @(posedge clk) begin
         seg_end     <= '{default: 'X};
         stream_span <= 'X;
 
+        seg_to_ring_end <= 'X;
+
         replay_seg <= 1'b0;
 
         ring_end <= 'X;
@@ -293,14 +303,17 @@ always_ff @(posedge clk) begin
     end else begin
         // -- Extents ------------------------------------------------------------------------------
         if (link.valid && link.ready) begin
+            // Only the last transfer of a stream can be unaligned, so the aligned sizes add up
             if (link_continues_tail) begin
-                tail.size <= tail.size + link.size;
-                tail.last <= link.last;
+                tail.size         <= tail.size + link.size;
+                tail.size_aligned <= tail.size_aligned + align(link.size);
+                tail.last         <= link.last;
             end else begin
-                tail.vaddr <= link.vaddr;
-                tail.size  <= link.size;
-                tail.last  <= link.last;
-                tail_valid <= 1'b1;
+                tail.vaddr        <= link.vaddr;
+                tail.size         <= link.size;
+                tail.size_aligned <= align(link.size);
+                tail.last         <= link.last;
+                tail_valid        <= 1'b1;
             end
             tail_end    <= link.vaddr + align(link.size);
             tail_closed <= link.last;
@@ -313,7 +326,8 @@ always_ff @(posedge clk) begin
             tail_valid <= 1'b0;
         end
 
-        num_extents        <= num_extents + (extent_in_valid && extent_in_ready) - extent_out_ready;
+        num_extents        <= n_num_extents;
+        has_extents        <= n_num_extents != 0;
         num_closed_streams <= num_closed_streams + (link.valid && link.ready && link.last) -
                               (extent_out_ready && extent_out.last);
 
@@ -348,9 +362,9 @@ always_ff @(posedge clk) begin
                     read_release.release_memory <= remaining_reads == 0;
                     read_release.start          <= head.vaddr + head_read;
                     read_release.span           <= read_more ? MAX_READ_BYTES :
-                                                               head_size_aligned - head_read;
+                                                               head.size_aligned - head_read;
                     read_release.end_vaddr      <= head.vaddr +
-                                                   (read_more ? head_read_max : head_size_aligned);
+                                                   (read_more ? head_read_max : head.size_aligned);
 
                     head_read     <= read_more ? head_read_max : head.size;
                     head_read_max <= (read_more ? head_read_max : head.size) + MAX_READ_BYTES;
@@ -362,16 +376,18 @@ always_ff @(posedge clk) begin
 
                     // Remember where the stream is stored for the replays
                     if (num_segments == 0) begin
-                        seg_vaddr[0] <= head.vaddr;
-                        seg_size[0]  <= head.size;
-                        seg_end[0]   <= head.vaddr + align(head.size);
-                        stream_span  <= align(head.size);
+                        seg_vaddr[0]    <= head.vaddr;
+                        seg_size[0]     <= head.size;
+                        seg_end[0]      <= head.vaddr + head.size_aligned;
+                        stream_span     <= head.size_aligned;
+                        seg_to_ring_end <= ring_end - head.vaddr;
                     end else if (num_segments == 1) begin
+                        // Segment 0 and the skipped bytes span from seg_vaddr[0] to ring_end
                         wrapped      <= 1'b1;
                         seg_vaddr[1] <= head.vaddr;
                         seg_size[1]  <= head.size;
-                        seg_end[1]   <= head.vaddr + align(head.size);
-                        stream_span  <= stream_span + (ring_end - seg_end[0]) + align(head.size);
+                        seg_end[1]   <= head.vaddr + head.size_aligned;
+                        stream_span  <= seg_to_ring_end + head.size_aligned;
                     end
                     num_segments <= num_segments == 2 ? 2'd2 : num_segments + 1;
 
@@ -414,6 +430,7 @@ always_ff @(posedge clk) begin
             ring_end           <= buffer_config.base + buffer_config.size;
             tail_valid         <= 1'b0;
             num_extents        <= '0;
+            has_extents        <= 1'b0;
             num_closed_streams <= '0;
             read_valid         <= 1'b0;
 

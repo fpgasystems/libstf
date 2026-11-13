@@ -88,7 +88,8 @@ assign read_port_valid = out_ready && in.read_valid;
 // FIFO stores addresses of outstanding reads to match responses
 MehdiFIFO #(
     .DEPTH(FIFO_DEPTH),
-    .WIDTH(FIFO_WIDTH)
+    .WIDTH(FIFO_WIDTH),
+    .STYLE(FIFO_DEPTH <= 64 ? "distributed" : "block")
 ) inst_read_fifo (
     .clk(clk),
     .rst_n(reset_synced),

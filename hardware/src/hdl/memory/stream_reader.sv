@@ -99,7 +99,8 @@ logic outstanding_in_valid, outstanding_in_ready, outstanding_out_valid, outstan
 
 MehdiFIFO #(
     .WIDTH($bits(outstanding_t)),
-    .DEPTH(MAX_OUTSTANDING_TRANSFERS)
+    .DEPTH(MAX_OUTSTANDING_TRANSFERS),
+    .STYLE(MAX_OUTSTANDING_TRANSFERS <= 64 ? "distributed" : "block")
 ) inst_outstanding_fifo (
     .clk(clk),
     .rst_n(reset_synced),

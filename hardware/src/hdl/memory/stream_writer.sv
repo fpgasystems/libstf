@@ -124,7 +124,6 @@ assign in_no_nulls.tready = (data_fifo_in.tready || is_empty_stream) & curr_len_
 assign data_fifo_in.tdata  = in_no_nulls.tdata;
 assign data_fifo_in.tkeep  = in_no_nulls.tkeep;
 assign data_fifo_in.tvalid = in_no_nulls.tvalid && !is_empty_stream && curr_len_ready;
-assign data_fifo_in.tlast  = in_no_nulls.tlast;
 
 // Whether the transfer will get full this cycle
 logic is_split;
@@ -153,33 +152,44 @@ localparam int TARGET_DATA_DEPTH = 2 * (TRANSFER_LENGTH_BYTES / AXI_DATA_BYTES);
 // This ensures we don't go below the minimum size supported by the FIFO
 localparam int DATA_FIFO_DEPTH = TARGET_DATA_DEPTH >= 4 ? TARGET_DATA_DEPTH : 4;
 
+// The tlast of a beat is stored in the length FIFO because every last beat ends a transfer. This
+// keeps the data FIFO at 576 bits, which is exactly 8 URAMs wide, instead of 9 URAMs for 577 bits.
 AXI4S axis_data_fifo(.aclk(clk), .aresetn(reset_synced));
-FIFOAXI #(
-    .DEPTH(DATA_FIFO_DEPTH)
+MehdiFIFO #(
+    .DEPTH(DATA_FIFO_DEPTH),
+    .WIDTH(AXI_DATA_BITS + AXI_DATA_BYTES),
+    .STYLE("ultra")
 ) inst_data_fifo (
     .clk(clk),
     .rst_n(reset_synced),
 
-    .in(data_fifo_in),
-    .out(axis_data_fifo),
+    .in_data({data_fifo_in.tdata, data_fifo_in.tkeep}),
+    .in_valid(data_fifo_in.tvalid),
+    .in_ready(data_fifo_in.tready),
+
+    .out_data({axis_data_fifo.tdata, axis_data_fifo.tkeep}),
+    .out_valid(axis_data_fifo.tvalid),
+    .out_ready(axis_data_fifo.tready),
 
     .filling_level()
 );
 
 logic[TRANSFER_ADDRESS_LEN_BITS - 1:0] next_len;
+logic next_last;
 logic next_len_valid, next_len_ready;
 MehdiFIFO #(
-    .WIDTH(TRANSFER_ADDRESS_LEN_BITS),
-    .DEPTH(16)
+    .WIDTH(TRANSFER_ADDRESS_LEN_BITS + 1),
+    .DEPTH(16),
+    .STYLE("distributed")
 ) inst_len_fifo (
     .clk(clk),
     .rst_n(reset_synced),
 
-    .in_data(curr_len_succ),
+    .in_data({curr_len_succ, in_no_nulls.tlast}),
     .in_valid(curr_len_valid),
     .in_ready(curr_len_ready),
 
-    .out_data(next_len),
+    .out_data({next_len, next_last}),
     .out_valid(next_len_valid),
     .out_ready(next_len_ready),
 
@@ -253,7 +263,8 @@ logic pending_in_valid, pending_in_ready, pending_out_valid, pending_out_ready;
 
 MehdiFIFO #(
     .WIDTH($bits(pending_notify_t)),
-    .DEPTH(PENDING_NOTIFY_DEPTH)
+    .DEPTH(PENDING_NOTIFY_DEPTH),
+    .STYLE("distributed")
 ) inst_pending_notify_fifo (
     .clk(clk),
     .rst_n(reset_synced),
@@ -406,9 +417,7 @@ always_comb begin
                 end else if (pending_in_ready) begin
                     next_len_ready = 1'b1;
 
-                    // We cannot take the axis_data_fifo.tlast signal here because the FIFO output
-                    // will never become ready without a request to Coyote. However, the next_len
-                    // can only be zero if this was the last, empty transfer.
+                    // The next_len can only be zero if this was the last, empty transfer.
                     // No data, no request, or transfer. Only interrupt.
                     pending_in.last  = 1'b1;
                     pending_in_valid = 1'b1;
@@ -428,14 +437,14 @@ always_comb begin
                 if (current_transfer_completed) begin
                     next_len_ready = 1'b1;
 
-                    if (axis_data_fifo.tlast ||
+                    if (next_last ||
                         capacity < bytes_written_to_buffer + TRANSFER_LENGTH_BYTES) begin
                         // If
                         //  1. We have reached the end of the data, OR
                         //  2. The size of the current buffer does not fit an additional transfer
                         // We trigger an interrupt once all transfers completed (which will give us
                         // new memory, if more is needed) and continue with the next buffer.
-                        pending_in.last  = axis_data_fifo.tlast;
+                        pending_in.last  = next_last;
                         pending_in_valid = 1'b1;
 
                         n_output_state = WAIT_FOR_BUFFER;
