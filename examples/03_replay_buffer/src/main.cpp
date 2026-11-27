@@ -369,13 +369,18 @@ int main(int argc, char *argv[]) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // The replay buffer sends all reads of a stream before the next stream
+        // Post the input of each stream right after its outputs. Coyote queues all host commands
+        // in one FIFO, and an output command that cannot be accepted yet blocks the commands behind
+        // it. The outputs only complete once their input arrived, so posting all outputs before all
+        // inputs deadlocks the vFPGA once more than a few output commands are queued.
         size_t num_output_transfers = 0;
-        for (auto buffer : outputs) {
-            num_output_transfers +=
-                enqueue_stream_output(cthread, tlb_manager, buffer, args.stream_bytes, 0);
-        }
-        for (auto buffer : inputs) {
-            enqueue_stream_input(cthread, tlb_manager, buffer, args.stream_bytes, 0, true);
+        for (size_t stream = 0; stream < args.num_streams; stream++) {
+            for (size_t read = 0; read < args.num_reads; read++) {
+                auto output = outputs[stream * args.num_reads + read];
+                num_output_transfers +=
+                    enqueue_stream_output(cthread, tlb_manager, output, args.stream_bytes, 0);
+            }
+            enqueue_stream_input(cthread, tlb_manager, inputs[stream], args.stream_bytes, 0, true);
         }
 
         // Coyote counts the completed writes per process id, independent of who issued them. The
